@@ -39,47 +39,48 @@
 
 设置页、项目首页、新建会话、命令面板，全部取自本 fork 的实际运行界面（1440×900 @2x）。
 
-<table>
-  <tr>
-    <td width="50%"><img src="assets/i18n/settings-general.png" alt="设置 · 通用" /></td>
-    <td width="50%"><img src="assets/i18n/settings-providers.png" alt="设置 · 提供方" /></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>设置 · 通用（含界面语言选择器）</sub></td>
-    <td align="center"><sub>设置 · 提供方</sub></td>
-  </tr>
-</table>
-
-<table>
-  <tr>
-    <td width="50%"><img src="assets/i18n/projects.png" alt="项目首页" /></td>
-    <td width="50%"><img src="assets/i18n/new-chat.png" alt="新建会话" /></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>项目首页：分组标题与相对时间「刚刚 / 2小时前 / 3天前」</sub></td>
-    <td align="center"><sub>新建会话：空状态与输入框提示</sub></td>
-  </tr>
-</table>
-
-<table>
-  <tr>
-    <td width="50%"><img src="assets/i18n/settings-usage.png" alt="设置 · 用量" /></td>
-    <td width="50%"><img src="assets/i18n/command-palette.png" alt="命令面板" /></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>设置 · 用量（服务端下发的说明也已汉化）</sub></td>
-    <td align="center"><sub>命令面板（⌘K）</sub></td>
-  </tr>
-</table>
-
-<details>
-<summary>更多截图</summary>
-
 <p align="center">
-  <img src="assets/i18n/settings-labs.png" alt="设置 · 实验功能" width="800" />
+  <img src="assets/i18n/settings-general.png" alt="设置 · 通用（含界面语言选择器）" width="100%" />
+  <br />
+  <sub>设置 · 通用（含界面语言选择器）</sub>
 </p>
 
-</details>
+<p align="center">
+  <img src="assets/i18n/settings-providers.png" alt="设置 · 提供方" width="100%" />
+  <br />
+  <sub>设置 · 提供方</sub>
+</p>
+
+<p align="center">
+  <img src="assets/i18n/settings-usage.png" alt="设置 · 用量（服务端下发的说明也已汉化）" width="100%" />
+  <br />
+  <sub>设置 · 用量（服务端下发的说明也已汉化）</sub>
+</p>
+
+<p align="center">
+  <img src="assets/i18n/projects.png" alt="项目首页：分组标题与相对时间「刚刚 / 2小时前 / 3天前」" width="100%" />
+  <br />
+  <sub>项目首页：分组标题与相对时间「刚刚 / 2小时前 / 3天前」</sub>
+</p>
+
+<p align="center">
+  <img src="assets/i18n/new-chat.png" alt="新建会话：空状态与输入框提示" width="100%" />
+  <br />
+  <sub>新建会话：空状态与输入框提示</sub>
+</p>
+
+<p align="center">
+  <img src="assets/i18n/command-palette.png" alt="命令面板（⌘K）" width="100%" />
+  <br />
+  <sub>命令面板（⌘K）</sub>
+</p>
+
+<p align="center">
+  <img src="assets/i18n/settings-labs.png" alt="设置 · 实验功能" width="100%" />
+  <br />
+  <sub>设置 · 实验功能</sub>
+</p>
+
 
 <br />
 
