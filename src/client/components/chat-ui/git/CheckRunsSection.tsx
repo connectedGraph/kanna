@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import { Check, CircleSlash, Minus, X } from "lucide-react"
 import type { ChatCheckRun, ChatCheckRunState, ChatCommitChecks } from "../../../../shared/types"
+import { DEFAULT_LOCALE } from "../../../../shared/i18n"
+import { translatorFor, useT, type TFunction } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { formatDuration } from "../../messages/ResultMessage"
 import { TURN_CARD_ROW_INSET } from "../../ui/turn-card"
@@ -30,9 +32,9 @@ export function rollupFromRuns(runs: readonly ChatCheckRun[]): ChatCommitChecks 
 }
 
 /** The right edge of a row: how long a finished job took, or what an unfinished one is doing. */
-export function describeCheckRunTiming(run: ChatCheckRun): string | null {
-  if (run.state === "skipped") return "skipped"
-  if (run.state === "pending") return run.startedAt ? "running" : "pending"
+export function describeCheckRunTiming(run: ChatCheckRun, t: TFunction = translatorFor(DEFAULT_LOCALE)): string | null {
+  if (run.state === "skipped") return t("skipped")
+  if (run.state === "pending") return run.startedAt ? t("running") : t("pending")
   if (!run.startedAt || !run.completedAt) return null
   const elapsed = Date.parse(run.completedAt) - Date.parse(run.startedAt)
   // A job GitHub never really started reports the same instant for both.
@@ -143,26 +145,27 @@ function ChecksRing({ counts, total }: { counts: Record<ChatCheckRunState, numbe
  * card keeps its accessory, how long CI took on the wall clock.
  */
 function ChecksHeader({ rollup, runs }: { rollup: ChatCommitChecks; runs: readonly ChatCheckRun[] }) {
+  const t = useT()
   const counts = countCheckRuns(runs)
   const running = counts.pending > 0
   const now = useNow(running)
   const wallClock = checksWallClock(runs, now)
   const tallies = [
-    counts.failure ? <span key="failure" className="text-destructive">{counts.failure} failed</span> : null,
-    counts.pending ? <span key="pending" className="text-amber-500">{counts.pending} running</span> : null,
-    counts.skipped ? <span key="skipped">{counts.skipped} skipped</span> : null,
+    counts.failure ? <span key="failure" className="text-destructive">{t("{count} failed", { count: counts.failure })}</span> : null,
+    counts.pending ? <span key="pending" className="text-amber-500">{t("{count} running", { count: counts.pending })}</span> : null,
+    counts.skipped ? <span key="skipped">{t("{count} skipped", { count: counts.skipped })}</span> : null,
   ].filter(Boolean)
   return (
     <div className={cn("mt-1.5 mb-1 flex items-center gap-1.5 text-[12px] tracking-wide text-muted-foreground", TURN_CARD_ROW_INSET)}>
       <ChecksRing counts={counts} total={runs.length} />
       <span className="min-w-0 truncate tabular-nums">
-        <span className="font-medium text-popover-foreground">{rollup.passed}/{rollup.total}</span> passed
+        <span className="font-medium text-popover-foreground">{rollup.passed}/{rollup.total}</span> {t("passed")}
         {tallies.map((tally, index) => <span key={index}>, {tally}</span>)}
       </span>
       {wallClock ? (
         <span
           className="ml-auto shrink-0 pl-2 tabular-nums"
-          title={wallClock.running ? "Since the first job started" : "First job's start to last job's end"}
+          title={wallClock.running ? t("Since the first job started") : t("First job's start to last job's end")}
         >
           {formatDuration(Math.floor(wallClock.ms / 1_000) * 1_000)}
         </span>
@@ -186,6 +189,7 @@ export function CheckRunsSection({
   /** Opens a job's page (or the whole run, from "N more"); unset where nothing can open. */
   onOpen?: (url: string) => void
 }) {
+  const t = useT()
   if (runs.length === 0) return null
   const rollup = checks ?? rollupFromRuns(runs)
   const sorted = sortCheckRuns(runs)
@@ -197,7 +201,7 @@ export function CheckRunsSection({
       <div className="-mx-1.5 mt-2 border-t border-border/60" aria-hidden />
       <ChecksHeader rollup={rollup} runs={runs} />
       {shown.map((run, index) => {
-        const timing = describeCheckRunTiming(run)
+        const timing = describeCheckRunTiming(run, t)
         const url = run.url
         const open = onOpen && url ? () => onOpen(url) : undefined
         return (
@@ -238,7 +242,9 @@ export function CheckRunsSection({
             onOpen && rollup.url ? "cursor-pointer transition-colors hover:bg-muted/60 hover:text-foreground" : "cursor-default",
           )}
         >
-          {hiddenCount} more check{hiddenCount === 1 ? "" : "s"}
+          {hiddenCount === 1
+            ? t("{count} more check", { count: hiddenCount })
+            : t("{count} more checks", { count: hiddenCount })}
         </button>
       ) : null}
     </>

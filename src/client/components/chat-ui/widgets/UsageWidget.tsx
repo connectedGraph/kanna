@@ -10,6 +10,7 @@ import {
   UsageWindowRows,
   useUsageLimits,
 } from "../../../app/settings/UsageSection"
+import { useT } from "../../../i18n/useT"
 import { formatRelativeTime } from "../../../lib/formatters"
 import { PROVIDER_ICONS } from "../ChatPreferenceControls"
 import { Button } from "../../ui/button"
@@ -85,13 +86,14 @@ function UsageWidget({
   refreshing: boolean
   onRefresh: () => void
 }) {
+  const t = useT()
   const [expanded, setExpanded] = useWidgetExpanded(projectId, `usage:${usage.provider}`, usage.windows.length)
 
   const Icon = PROVIDER_ICONS[usage.provider]
   const summaryWindow = usage.windows[0] ?? null
   const summaryResets = summaryWindow?.resetsAt ? formatUntil(summaryWindow.resetsAt) : null
   const plan = planLabel(usage)
-  const updated = usage.updatedAt ? `Updated ${formatRelativeTime(usage.updatedAt)}` : null
+  const updated = usage.updatedAt ? t("Updated {time}", { time: formatRelativeTime(usage.updatedAt, t) }) : null
 
   const collapsedSummary = summaryWindow ? (
     <Tooltip delayDuration={0}>
@@ -111,7 +113,7 @@ function UsageWidget({
       </TooltipTrigger>
       <TooltipContent side="top" align="center">
         <div>{summaryWindow.label}</div>
-        {summaryResets ? <div className="text-muted-foreground">Resets {summaryResets}</div> : null}
+        {summaryResets ? <div className="text-muted-foreground">{t("Resets {time}", { time: summaryResets })}</div> : null}
       </TooltipContent>
     </Tooltip>
   ) : null
@@ -124,7 +126,7 @@ function UsageWidget({
         <Button
           variant="ghost"
           size="sm"
-          aria-label="Refresh usage"
+          aria-label={t("Refresh usage")}
           onClick={() => {
             if (!refreshing) onRefresh()
           }}
@@ -134,7 +136,7 @@ function UsageWidget({
           {refreshing ? <LoaderCircle className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{refreshing ? "Refreshing…" : updated ?? "Refresh usage"}</TooltipContent>
+      <TooltipContent>{refreshing ? t("Refreshing…") : updated ?? t("Refresh usage")}</TooltipContent>
     </Tooltip>
   )
 

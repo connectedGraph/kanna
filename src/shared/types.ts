@@ -8,6 +8,8 @@ export const PROTOCOL_VERSION = 1 as const
 export type AgentProvider = "claude" | "codex" | "cursor" | "grok" | "pi"
 export type LlmProviderKind = "openai" | "openrouter" | "custom"
 export type AppThemePreference = "light" | "dark" | "system"
+/** UI languages kanna ships. Widen shared/i18n LOCALES and the catalogs together. */
+export type AppLocale = "en" | "zh-CN"
 export type ChatSoundPreference = "never" | "unfocused" | "always"
 /** Same gates as the chime, applied to system notifications. Off by default: it needs a permission prompt. */
 export type ChatBrowserNotificationPreference = ChatSoundPreference
@@ -1396,6 +1398,11 @@ export interface AppSettingsSnapshot {
   analyticsEnabled: boolean
   browserSettingsMigrated: boolean
   theme: AppThemePreference
+  /**
+   * UI language. Absent means English, which is also the source language of
+   * every string (see shared/i18n). Unknown values normalize to it.
+   */
+  locale?: AppLocale
   chatSoundPreference: ChatSoundPreference
   chatSoundId: ChatSoundId
   chatBrowserNotificationPreference: ChatBrowserNotificationPreference
@@ -1491,6 +1498,7 @@ export interface AppSettingsPatch {
   analyticsEnabled?: boolean
   browserSettingsMigrated?: boolean
   theme?: AppThemePreference
+  locale?: AppLocale
   chatSoundPreference?: ChatSoundPreference
   chatSoundId?: ChatSoundId
   chatBrowserNotificationPreference?: ChatBrowserNotificationPreference

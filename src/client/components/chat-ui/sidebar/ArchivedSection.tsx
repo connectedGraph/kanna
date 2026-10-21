@@ -1,6 +1,7 @@
 import { memo, useMemo } from "react"
 import type { SidebarChatRow } from "../../../../shared/types"
 import { getArchivedThreads, type SidebarThread } from "../../../lib/thread-sections"
+import { useT } from "../../../i18n/useT"
 import { normalizeChatId } from "../../../lib/utils"
 import { SectionHeader } from "./ThreadSections"
 import { ThreadRow } from "./ThreadRow"
@@ -49,14 +50,15 @@ function ArchivedSectionImpl({
   onCopyPath,
   onOpenExternalPath,
 }: Props) {
+  const t = useT()
   const archived = useMemo(() => getArchivedThreads(threads), [threads])
   const normalizedActiveChatId = activeChatId ? normalizeChatId(activeChatId) : null
 
   return (
     <div>
-      <SectionHeader label="Archived" />
+      <SectionHeader label={t("Archived")} />
       {archived.length === 0 ? (
-        <p className="p-2 mt-4 text-center text-sm text-slate-400">No archived chats</p>
+        <p className="p-2 mt-4 text-center text-sm text-slate-400">{t("No archived chats")}</p>
       ) : (
         <div className="space-y-[2px] mb-3">
           {archived.map((thread) => (

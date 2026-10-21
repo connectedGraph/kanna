@@ -1,7 +1,11 @@
 import type { WaitingOn } from "../../shared/types"
+import type { TFunction } from "../i18n/catalogs"
 
-function counted(count: number, noun: string) {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`
+/** The English words for a count of chats or agents, as the key to translate. */
+function counted(t: TFunction, count: number, noun: "chat" | "agent") {
+  return noun === "chat"
+    ? t(count === 1 ? "{count} chat" : "{count} chats", { count })
+    : t(count === 1 ? "{count} agent" : "{count} agents", { count })
 }
 
 /**
@@ -16,9 +20,13 @@ function counted(count: number, noun: string) {
  * true. The server sends the count with the status (`WaitingOn`), so this is
  * for a server that does not yet.
  */
-export function waitingOnLabel(waitingOn?: WaitingOn | null): string {
+export function waitingOnLabel(waitingOn?: WaitingOn | null, t: TFunction = (key, vars) => {
+  // Untranslated, for a caller that has no locale: the key, filled in.
+  if (!vars) return key
+  return key.replace(/\{(\w+)\}/g, (match, name: string) => (name in vars ? String(vars[name]) : match))
+}): string {
   const parts: string[] = []
-  if (waitingOn && waitingOn.chats > 0) parts.push(counted(waitingOn.chats, "chat"))
-  if (waitingOn && waitingOn.agents > 0) parts.push(counted(waitingOn.agents, "agent"))
-  return parts.length > 0 ? `Waiting on ${parts.join(" and ")}` : "Waiting on chats"
+  if (waitingOn && waitingOn.chats > 0) parts.push(counted(t, waitingOn.chats, "chat"))
+  if (waitingOn && waitingOn.agents > 0) parts.push(counted(t, waitingOn.agents, "agent"))
+  return parts.length > 0 ? t("Waiting on {what}", { what: parts.join(t(" and ")) }) : t("Waiting on chats")
 }

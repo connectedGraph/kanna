@@ -50,6 +50,7 @@ import { TranscriptMinimap } from "./TranscriptMinimap"
 import { buildTranscriptTurns, type TranscriptTurn } from "./transcriptTurns"
 import { EmptyStateAuthCards } from "./EmptyStateAuthCards"
 import { EmptyStateUsageCards } from "./EmptyStateUsageCards"
+import { useT } from "../../i18n/useT"
 import { EmptyStateProjectChats, EmptyStateProjectPicker } from "./EmptyStateProject"
 import {
   CHAT_NAVBAR_OFFSET_PX,
@@ -506,6 +507,7 @@ const TranscriptScrollerBody = memo(function TranscriptScrollerBody({
   isLoadingOlderMessages = false,
   scrollbarGutterHostRef,
 }: ChatTranscriptViewportProps) {
+  const t = useT()
   const { scrollToEnd, scrollToMessage } = useMessageScroller()
   // Written by the minimap overlay, which owns the visibility subscription.
   // Read only by the throttled read-anchor writer, so a commit of lag costs
@@ -1388,11 +1390,11 @@ const TranscriptScrollerBody = memo(function TranscriptScrollerBody({
               <Flower strokeWidth={1.5} className={cn("size-8 text-muted-foreground", emptyStateAnimatesIn && "kanna-empty-state-flower")} />
               <div
                 className={cn(emptyStateAnimatesIn && "kanna-empty-state-text", "flex max-w-xs items-center text-center text-base font-normal text-muted-foreground")}
-                aria-label={EMPTY_STATE_TEXT}
+                aria-label={t(EMPTY_STATE_TEXT)}
               >
                 <span className="relative inline-grid place-items-start">
                   <span className="invisible col-start-1 row-start-1 flex items-center whitespace-pre">
-                    <span>{EMPTY_STATE_TEXT}</span>
+                    <span>{t(EMPTY_STATE_TEXT)}</span>
                     <span className="kanna-typewriter-cursor-slot" aria-hidden="true" />
                   </span>
                   <span className="col-start-1 row-start-1 flex items-center whitespace-pre">
@@ -1463,7 +1465,7 @@ const TranscriptScrollerBody = memo(function TranscriptScrollerBody({
             <div className="flex h-full items-center justify-center">
               <div className="flex flex-col items-center justify-center gap-3 text-center">
                 <Upload className="mx-auto size-14 text-foreground" strokeWidth={1.75} />
-                <div className="text-xl font-medium text-foreground">Drop up to 10 files</div>
+                <div className="text-xl font-medium text-foreground">{t("Drop up to 10 files")}</div>
               </div>
             </div>
           </div>

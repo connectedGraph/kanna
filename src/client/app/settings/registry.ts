@@ -112,6 +112,12 @@ export const SETTINGS_ROWS = defineRows({
     description: "Light, dark, or match the system appearance.",
     keywords: ["appearance", "dark mode", "light mode"],
   },
+  language: {
+    sectionId: "general",
+    title: "Language",
+    description: "The language kanna's interface is written in. Messages from agents and your repositories stay as they are.",
+    keywords: ["locale", "language", "translation", "chinese", "english", "zh"],
+  },
   projectIconsInChats: {
     sectionId: "general",
     title: "Project Icons in Chats",

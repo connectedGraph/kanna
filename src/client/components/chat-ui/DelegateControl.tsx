@@ -4,6 +4,7 @@ import type { AgentProvider } from "../../../shared/types"
 import { delegatedAttentionCount, delegatorDisplayTitle } from "../../lib/delegators"
 import type { SidebarThread } from "../../lib/thread-sections"
 import { useSidebarStore } from "../../stores/sidebarStore"
+import { useT } from "../../i18n/useT"
 import { InputPopover, PopoverMenuItem } from "./ChatPreferenceControls"
 import { DelegatorIcon } from "./delegator-icon"
 
@@ -41,12 +42,13 @@ export function DelegateControl({ delegators, target, projectName, onPick, onCre
   onPick: (chatId: string | null) => void
   onCreate: () => void
 }) {
+  const t = useT()
   return (
     <InputPopover
       trigger={(
         <>
           <DelegatorIcon className="h-3.5 w-3.5" />
-          <span className="max-w-[16ch] truncate">{target ? delegatorDisplayTitle(target.title) : "Delegate"}</span>
+          <span className="max-w-[16ch] truncate">{target ? delegatorDisplayTitle(target.title) : t("Delegate")}</span>
         </>
       )}
       triggerClassName={target ? "text-logo" : undefined}
@@ -71,8 +73,8 @@ export function DelegateControl({ delegators, target, projectName, onPick, onCre
             }}
             selected={false}
             icon={<SquarePen className="h-4 w-4 text-muted-foreground" />}
-            label="Don't Delegate"
-            description={`Start a new chat in ${projectName}`}
+            label={t("Don't Delegate")}
+            description={t("Start a new chat in {project}", { project: projectName })}
             trailing={target ? undefined : <Check className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
           />
           <PopoverMenuItem
@@ -82,8 +84,8 @@ export function DelegateControl({ delegators, target, projectName, onPick, onCre
             }}
             selected={false}
             icon={<Plus className="h-4 w-4 text-muted-foreground" />}
-            label="New Delegator…"
-            description="A chat that hands work to the chats under it"
+            label={t("New Delegator…")}
+            description={t("A chat that hands work to the chats under it")}
           />
         </>
       )}
@@ -97,19 +99,34 @@ function DelegatorMenuItem({ delegator, selected, onPick }: {
   selected: boolean
   onPick: () => void
 }) {
-  // As a string, so the item re-renders when what it says changes and not
-  // for every push of the sidebar.
-  const summary = useSidebarStore((state) => {
+  const t = useT()
+  // The counts as one string ("chats:wanting"), so the item re-renders when
+  // what it says changes and not for every push of the sidebar. Kept raw
+  // rather than formatted in the selector: the wording is the translator's,
+  // and a locale that changes under a mounted menu must not keep the old one.
+  const counts = useSidebarStore((state) => {
     let chats = 0
     let wanting = 0
     for (const group of state.data.projectGroups) {
       for (const chat of group.chats) if (chat.parentChatId === delegator.chatId) chats += 1
       wanting += delegatedAttentionCount(group.chats, delegator.chatId)
     }
-    if (chats === 0) return "No chats yet"
-    const total = `${chats} ${chats === 1 ? "chat" : "chats"}`
-    return wanting > 0 ? `${total}, ${wanting} ${wanting === 1 ? "wants" : "want"} you` : total
+    return `${chats}:${wanting}`
   })
+  const [chats, wanting] = counts.split(":").map(Number) as [number, number]
+  // One sentence per number pair: the translation joins the two clauses with a
+  // separator of its own, which stitching two counted fragments could not carry.
+  const summary = chats === 0
+    ? t("No chats yet")
+    : wanting === 0
+      ? (chats === 1 ? t("{count} chat", { count: chats }) : t("{count} chats", { count: chats }))
+      : chats === 1
+        ? (wanting === 1
+          ? t("{chats} chat, {wanting} wants you", { chats, wanting })
+          : t("{chats} chat, {wanting} want you", { chats, wanting }))
+        : (wanting === 1
+          ? t("{chats} chats, {wanting} wants you", { chats, wanting })
+          : t("{chats} chats, {wanting} want you", { chats, wanting }))
   return (
     <PopoverMenuItem
       onClick={onPick}

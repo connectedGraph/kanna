@@ -7,6 +7,7 @@ import { MetaCodeBlock, TranscriptMarkdown, VerticalLineContainer } from "./shar
 import { FileContentView } from "./FileContentView"
 import { SubagentTranscript } from "./SubagentTranscript"
 import { useToolPayload } from "./tool-payload-context"
+import { useT } from "../../i18n/useT"
 
 /**
  * The body of an expanded tool call.
@@ -135,11 +136,12 @@ export function subagentResultText(value: unknown): string {
  * The prompt is the bulk and comes with the fetched payload.
  */
 function SubagentInput({ message }: { message: Extract<ProcessedToolCall, { toolKind: "subagent_task" }> }) {
+  const t = useT()
   const prompt = message.input.prompt
   if (!prompt) return null
   return (
     <div>
-      <span className="font-medium text-muted-foreground">Prompt</span>
+      <span className="font-medium text-muted-foreground">{t("Prompt")}</span>
       <div className="my-1 text-xs whitespace-pre-wrap bg-muted border border-border rounded-lg p-2 max-h-64 overflow-auto w-full">
         {prompt}
       </div>
@@ -155,6 +157,7 @@ function SubagentInput({ message }: { message: Extract<ProcessedToolCall, { tool
  * the screen.
  */
 function SubagentResult({ text, isError }: { text: string; isError?: boolean }) {
+  const t = useT()
   const [expanded, setExpanded] = useState(false)
   return (
     <div>
@@ -162,7 +165,7 @@ function SubagentResult({ text, isError }: { text: string; isError?: boolean }) 
         onClick={() => setExpanded((value) => !value)}
         className="group/subagent-result cursor-pointer flex items-center gap-1 font-medium text-muted-foreground hover:opacity-60 transition-opacity"
       >
-        <span>{isError ? "Error" : "Result"}</span>
+        <span>{isError ? t("Error") : t("Result")}</span>
         <ChevronRight className={`h-4 w-4 text-muted-icon transition-all duration-200 ${expanded ? "rotate-90" : ""}`} />
       </button>
       {expanded && (
@@ -177,6 +180,7 @@ function SubagentResult({ text, isError }: { text: string; isError?: boolean }) 
 }
 
 export function ReadResultImages({ images }: { images: ReadonlyArray<ReadImageBlock> }) {
+  const t = useT()
   return (
     <div className="flex flex-col gap-3">
       {images.map((image, index) => {
@@ -186,7 +190,7 @@ export function ReadResultImages({ images }: { images: ReadonlyArray<ReadImageBl
             <img
               src={image.url ?? `data:${mimeType};base64,${image.data ?? ""}`}
               loading="lazy"
-              alt={`Read result ${index + 1}`}
+              alt={t("Read result {number}", { number: index + 1 })}
               className="max-h-[50vh] w-full object-contain bg-background"
             />
           </div>
@@ -204,6 +208,7 @@ interface Props {
 }
 
 export function ToolCallExpandedContent({ message: row, isLoading = false, localPath }: Props) {
+  const t = useT()
   // Mounting this component is the signal that the payloads are wanted; these
   // request them if the transcript arrived without them.
   const fetchedCall = useToolPayload(row.inputTrimmed ? row.id : undefined)
@@ -268,7 +273,7 @@ export function ToolCallExpandedContent({ message: row, isLoading = false, local
     // in flight, and flashing empty code blocks first would reflow twice.
     return (
       <VerticalLineContainer className="my-4 text-sm">
-        <span className="text-muted-foreground">Loading…</span>
+        <span className="text-muted-foreground">{t("Loading…")}</span>
       </VerticalLineContainer>
     )
   }
@@ -293,7 +298,7 @@ export function ToolCallExpandedContent({ message: row, isLoading = false, local
           <MetaCodeBlock label={
             isBashTool ? (
               <span className="flex items-center gap-2 w-full">
-                <span>Command</span>
+                <span>{t("Command")}</span>
                 {!!message.input.timeoutMs && (
                   <span className="text-muted-foreground">timeout: {String(message.input.timeoutMs)}ms</span>
                 )}
@@ -301,7 +306,7 @@ export function ToolCallExpandedContent({ message: row, isLoading = false, local
                   <span className="text-muted-foreground">background</span>
                 )}
               </span>
-            ) : isWriteTool ? "Contents" : "Input"
+            ) : isWriteTool ? t("Contents") : t("Input")
           } copyText={inputText}>
             {inputText}
           </MetaCodeBlock>
@@ -312,7 +317,7 @@ export function ToolCallExpandedContent({ message: row, isLoading = false, local
         {hasResult && isReadTool && !message.isError && (
           readImages.length > 0 ? (
             <div>
-              <span className="font-medium text-muted-foreground">Image</span>
+              <span className="font-medium text-muted-foreground">{t("Image")}</span>
               <div className="mt-1">
                 <ReadResultImages images={readImages} />
               </div>
@@ -332,7 +337,7 @@ export function ToolCallExpandedContent({ message: row, isLoading = false, local
           <SubagentResult text={subagentResultText(message.rawResult ?? message.result)} isError={message.isError} />
         )}
         {hasResult && !isReadTool && !isAgentTool && !(isWriteTool && !message.isError) && !(isEditTool && !message.isError) && !(isDeleteTool && !message.isError) && (
-          <MetaCodeBlock label={message.isError ? "Error" : "Result"} copyText={resultText}>
+          <MetaCodeBlock label={message.isError ? t("Error") : t("Result")} copyText={resultText}>
             {resultText}
           </MetaCodeBlock>
         )}

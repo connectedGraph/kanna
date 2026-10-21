@@ -11,6 +11,8 @@ import { ChatToolMessage, isChatToolCall } from "./ChatToolMessage"
 import { isScheduleToolCall, ScheduleToolMessage } from "./ScheduleToolMessage"
 import { DisplayToolMessage } from "./DisplayToolMessage"
 import { useToolPayloadPrefetch } from "./tool-payload-context"
+import { useT, type TFunction } from "../../i18n/useT"
+import { translate } from "../../../shared/i18n"
 
 interface Props {
   message: ProcessedToolCall
@@ -27,45 +29,50 @@ type ToolTitleSource = NormalizedToolCall extends infer T
  * A tool call's one-line name, as its transcript row shows it ("Read
  * src/app.ts", "Find `x` in files"). Shared so anywhere else that names a
  * call (the Agents card's latest step) says it the same way.
+ *
+ * The verbs are kanna's and are translated; the tool itself, the path and the
+ * pattern are not. `t` is passed in because most callers are not components.
  */
-export function formatToolCallTitle(message: ToolTitleSource, localPath?: string | null): string {
+export function formatToolCallTitle(message: ToolTitleSource, localPath?: string | null, t: TFunction = (key, vars) => translate(undefined, key, vars)): string {
   if (message.toolKind === "skill") {
-    return message.input.skill ? `Read Skill – ${message.input.skill}` : "Read Skill"
+    return message.input.skill ? t("Read Skill – {skill}", { skill: message.input.skill }) : t("Read Skill")
   }
   if (message.toolKind === "glob") {
-    return `Search files ${message.input.pattern === "**/*" ? "in all directories" : `matching ${message.input.pattern}`}`
+    return message.input.pattern === "**/*"
+      ? t("Search files in all directories")
+      : t("Search files matching {pattern}", { pattern: message.input.pattern })
   }
   if (message.toolKind === "grep") {
     const pattern = message.input.pattern
     const outputMode = message.input.outputMode
     if (outputMode === "count") {
-      return `Count \`${pattern}\` occurrences`
+      return t("Count `{pattern}` occurrences", { pattern })
     }
     if (outputMode === "content") {
-      return `Find \`${pattern}\` in text`
+      return t("Find `{pattern}` in text", { pattern })
     }
-    return `Find \`${pattern}\` in files`
+    return t("Find `{pattern}` in files", { pattern })
   }
   if (message.toolKind === "bash") {
-    return message.input.description || (message.input.command ? formatBashCommandTitle(message.input.command) : "Bash")
+    return message.input.description || (message.input.command ? formatBashCommandTitle(message.input.command) : t("Bash"))
   }
   if (message.toolKind === "web_search") {
-    return message.input.query || "Web Search"
+    return message.input.query || t("Web Search")
   }
   if (message.toolKind === "read_file") {
-    return `Read ${stripWorkspacePath(message.input.filePath, localPath)}`
+    return t("Read {path}", { path: stripWorkspacePath(message.input.filePath, localPath) })
   }
   if (message.toolKind === "write_file") {
-    return `Write ${stripWorkspacePath(message.input.filePath, localPath)}`
+    return t("Write {path}", { path: stripWorkspacePath(message.input.filePath, localPath) })
   }
   if (message.toolKind === "edit_file") {
-    return `Edit ${stripWorkspacePath(message.input.filePath, localPath)}`
+    return t("Edit {path}", { path: stripWorkspacePath(message.input.filePath, localPath) })
   }
   if (message.toolKind === "delete_file") {
-    return `Delete ${stripWorkspacePath(message.input.filePath, localPath)}`
+    return t("Delete {path}", { path: stripWorkspacePath(message.input.filePath, localPath) })
   }
   if (message.toolKind === "mcp_generic") {
-    return `${toTitleCase(message.input.tool)} from ${toTitleCase(message.input.server)}`
+    return t("{tool} from {server}", { tool: toTitleCase(message.input.tool), server: toTitleCase(message.input.server) })
   }
   if (message.toolKind === "subagent_task") {
     const agent = message.input.subagentType || message.toolName
@@ -75,13 +82,14 @@ export function formatToolCallTitle(message: ToolTitleSource, localPath?: string
 }
 
 export function ToolCallMessage({ message, isLoading = false, localPath }: Props) {
+  const t = useT()
   // Presence is the *existence* of a result entry, not its payload: a result
   // may arrive with its body left on the server, to be fetched only if the row
   // is opened.
   const hasResult = message.resultEntryId !== undefined
   const showLoadingState = !hasResult && isLoading
 
-  const name = useMemo(() => formatToolCallTitle(message, localPath), [message, localPath])
+  const name = useMemo(() => formatToolCallTitle(message, localPath, t), [message, localPath, t])
 
   const isAgent = message.toolKind === "subagent_task"
 

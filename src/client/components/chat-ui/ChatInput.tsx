@@ -15,6 +15,7 @@ import { Button } from "../ui/button"
 import { Textarea } from "../ui/textarea"
 import { ScrollArea } from "../ui/scroll-area"
 import { cn, generateUUID } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import { useComposer } from "../../hooks/useComposer"
 import { useIsStandalone } from "../../hooks/useIsStandalone"
 import { useVoiceRecorder } from "../../hooks/useVoiceRecorder"
@@ -267,6 +268,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
   delegate,
   draftKey,
 }, forwardedRef) {
+  const t = useT()
   // The draft's key: the chat's, unless the composer keeps its own.
   const draftId = draftKey ?? chatId ?? null
   // Actions only. Selecting the whole store re-rendered this component on
@@ -354,7 +356,11 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
   const projectLabel = projectRepoLabel ?? (projectPath ? abbreviatePathHead(formatPathWithTilde(projectPath), 40) : null)
   const placeholder = placeholderOverride
     // Who the message goes to, when that is not a new chat in the project.
-    ?? (delegateTarget ? `Message ${delegatorDisplayTitle(delegateTarget.title)}` : projectLabel ? `Build in ${projectLabel}` : "Build something...")
+    ?? (delegateTarget
+      ? t("Message {name}", { name: delegatorDisplayTitle(delegateTarget.title) })
+      : projectLabel
+        ? t("Build in {project}", { project: projectLabel })
+        : t("Build something…"))
 
   const activeContextWindow = useMemo(() => {
     if (providerPrefs.provider !== "claude") {
@@ -1124,7 +1130,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
             <div
               className="absolute bottom-full left-0 right-0 mb-2 z-30 max-h-64 overflow-y-auto rounded-2xl border border-border bg-popover/95 backdrop-blur-lg shadow-lg py-1"
               role="listbox"
-              aria-label="Skills"
+              aria-label={t("Skills")}
               // Counted as an open layer by everything that asks whether
               // Escape is spoken for (`hasOpenLayer`): it closes this first.
               data-state="open"
@@ -1162,7 +1168,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
             <div
               className="absolute bottom-full left-0 right-0 mb-2 z-30 max-h-64 overflow-y-auto rounded-2xl border border-border bg-popover/95 backdrop-blur-lg shadow-lg py-1"
               role="listbox"
-              aria-label="Projects"
+              aria-label={t("Projects")}
               data-state="open"
             >
               {projectMenuItems.map((project, index) => (
@@ -1261,7 +1267,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
                 type="button"
                 variant="ghost"
                 size="icon"
-                title="Discard recording"
+                title={t("Discard recording")}
                 onPointerDown={(event) => {
                   event.preventDefault()
                   discardRecording()
@@ -1367,7 +1373,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
         <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex flex-row">
           <div className={controlsScrollSpacer} />
           <label
-            aria-label="Add attachment"
+            aria-label={t("Add attachment")}
             className={cn(
               "relative md:hidden shrink-0 self-center overflow-hidden mr-0.5 cursor-pointer",
               "flex items-center gap-1.5 px-2 py-1 text-sm rounded-md transition-colors text-muted-foreground [&>svg]:shrink-0 [&>span]:whitespace-nowrap hover:bg-muted/50",
@@ -1375,12 +1381,12 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
             )}
           >
             <Paperclip className="h-3.5 w-3.5" />
-            <span>Attach</span>
+            <span>{t("Attach")}</span>
             <input
               type="file"
               multiple
               disabled={disabled}
-              aria-label="Add attachment"
+              aria-label={t("Add attachment")}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               onChange={(event) => {
                 const files = [...(event.target.files ?? [])]

@@ -18,6 +18,7 @@ import {
 } from "../../../shared/types"
 import { CHAT_MODE_LABELS, deriveComposerOptionControls } from "../../lib/composer"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import type { ComposerState } from "../../stores/chatPreferencesStore"
 import { useUnauthenticatedHarnesses } from "../../stores/providerAuthStore"
 import { PROVIDER_ICONS } from "../provider-icons"
@@ -149,6 +150,7 @@ function ModelPickerList({
   footer?: ReactNode
   searchThreshold?: number
 }) {
+  const t = useT()
   const [query, setQuery] = useState("")
   const showSearch = models.length > searchThreshold
   const trimmed = query.trim().toLowerCase()
@@ -169,7 +171,7 @@ function ModelPickerList({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => event.stopPropagation()}
-            placeholder="Filter models…"
+            placeholder={t("Filter models…")}
             spellCheck={false}
             autoCapitalize="off"
             autoCorrect="off"
@@ -178,7 +180,7 @@ function ModelPickerList({
         </div>
       ) : null}
       {filtered.length === 0 ? (
-        <div className="px-3 py-2 text-sm text-muted-foreground">No matching models</div>
+        <div className="px-3 py-2 text-sm text-muted-foreground">{t("No matching models")}</div>
       ) : (
         filtered.map((candidate) => (
           <PopoverMenuItem
@@ -259,6 +261,7 @@ export function ChatPreferenceControls({
   readOnly = false,
   readOnlyTitle,
 }: ChatPreferenceControlsProps) {
+  const t = useT()
   const providerConfig = availableProviders.find((provider) => provider.id === selectedProvider) ?? availableProviders[0]
   const unauthenticatedHarnesses = useUnauthenticatedHarnesses()
   // Keep the catalog's order, but sink disconnected harnesses to the bottom of
@@ -336,7 +339,7 @@ export function ChatPreferenceControls({
                 label={provider.label}
                 trailing={unauthenticatedHarnesses.has(provider.id) ? (
                   <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
-                    Sign In
+                    {t("Sign In")}
                   </span>
                 ) : undefined}
               />
@@ -367,7 +370,7 @@ export function ChatPreferenceControls({
               candidate.id === "gpt-5.6-luna" && codexModelOptions?.reasoningEffort === "ultra" ? (
                 <>
                   {candidate.label}{" "}
-                  <span className="text-xs font-normal text-muted-foreground">Ultra → Max</span>
+                  <span className="text-xs font-normal text-muted-foreground">{t("Ultra → Max")}</span>
                 </>
               ) : (
                 candidate.label
@@ -381,7 +384,7 @@ export function ChatPreferenceControls({
                 }}
                 selected={false}
                 icon={<Plus className="h-4 w-4 text-muted-foreground" />}
-                label="Add models…"
+                label={t("Add models…")}
               />
             ) : null}
           />
@@ -452,7 +455,7 @@ export function ChatPreferenceControls({
 
       {controls.fastMode ? (() => {
         const fastEnabled = controls.fastMode.enabled
-        const fastLabel = selectedProvider === "cursor" ? "Fast" : "Fast Mode"
+        const fastLabel = selectedProvider === "cursor" ? t("Fast") : t("Fast Mode")
         return (
           <InputPopover
             disabled={readOnly}
@@ -462,7 +465,7 @@ export function ChatPreferenceControls({
                 {fastEnabled
                   ? <Gauge className="h-3.5 w-3.5" />
                   : <Gauge className="h-3.5 w-3.5 -scale-x-100" />}
-                <span>{fastEnabled ? fastLabel : "Standard"}</span>
+                <span>{fastEnabled ? fastLabel : t("Standard")}</span>
               </>
             )}
             triggerClassName={fastEnabled ? "text-emerald-500 dark:text-emerald-400" : undefined}
@@ -476,7 +479,7 @@ export function ChatPreferenceControls({
                   }}
                   selected={!fastEnabled}
                   icon={<Gauge className="h-4 w-4 text-muted-foreground -scale-x-100" />}
-                  label="Standard"
+                  label={t("Standard")}
                 />
                 <PopoverMenuItem
                   onClick={() => {
@@ -503,7 +506,7 @@ export function ChatPreferenceControls({
             trigger={(
               <>
                 <TriggerIcon className="h-3.5 w-3.5" />
-                <span>{CHAT_MODE_LABELS[modeControl.selected].label}</span>
+                <span>{t(CHAT_MODE_LABELS[modeControl.selected].label)}</span>
               </>
             )}
             triggerClassName={modeControl.selected === "plan" ? "text-blue-400 dark:text-blue-300" : undefined}
@@ -519,8 +522,8 @@ export function ChatPreferenceControls({
                   }}
                   selected={modeControl.selected === option}
                   icon={<Icon className="h-4 w-4 text-muted-foreground" />}
-                  label={CHAT_MODE_LABELS[option].label}
-                  description={CHAT_MODE_LABELS[option].description}
+                  label={t(CHAT_MODE_LABELS[option].label)}
+                  description={t(CHAT_MODE_LABELS[option].description)}
                 />
               )
             })}

@@ -6,10 +6,12 @@ import { Button } from "../ui/button"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../ui/resizable"
 import { HotkeyTooltip, HotkeyTooltipContent, HotkeyTooltipTrigger } from "../ui/tooltip"
 import type { ProjectTerminalLayout } from "../../stores/terminalLayoutStore"
+import { useT } from "../../i18n/useT"
 import { TerminalPane } from "./TerminalPane"
 import { getMinimumTerminalWidth } from "./TerminalWorkspaceLayout"
 
 interface PaneCloseAction {
+  /** English source text; translated where it is drawn (the pane has no hook of its own). */
   label: string
   Icon: LucideIcon
 }
@@ -100,6 +102,7 @@ const TerminalWorkspacePane = memo(function TerminalWorkspacePane({
   onInitialCommandSent,
   setPaneElement,
 }: TerminalWorkspacePaneProps) {
+  const t = useT()
   const handleSetPaneElement = useCallback((element: HTMLDivElement | null) => {
     setPaneElement(terminalId, element)
   }, [setPaneElement, terminalId])
@@ -138,7 +141,7 @@ const TerminalWorkspacePane = memo(function TerminalWorkspacePane({
           <div className="flex items-center gap-2 px-3 pr-2 pt-2 pb-1">
             <div className="min-w-0 flex-1 text-left">
               <div className="flex min-w-0 items-center gap-2">
-                <div className="shrink-0 text-sm font-medium">Terminal</div>
+                <div className="shrink-0 text-sm font-medium">{t("Terminal")}</div>
                 <div className="min-w-0 truncate text-xs text-muted-foreground">
                   {path ?? ""}
                 </div>
@@ -148,7 +151,7 @@ const TerminalWorkspacePane = memo(function TerminalWorkspacePane({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Clear terminal"
+                aria-label={t("Clear terminal")}
                 onClick={handleClearTerminal}
               >
                 <Eraser className="size-3.5" />
@@ -158,7 +161,7 @@ const TerminalWorkspacePane = memo(function TerminalWorkspacePane({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    aria-label="Add terminal to the right"
+                    aria-label={t("Add terminal to the right")}
                     onClick={handleAddTerminal}
                   >
                     <Plus className="size-3.5" />
@@ -170,7 +173,7 @@ const TerminalWorkspacePane = memo(function TerminalWorkspacePane({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={closeAction.label}
+                  aria-label={t(closeAction.label)}
                   onClick={handleRemoveTerminal}
                 >
                   <closeAction.Icon className="size-3.5" />

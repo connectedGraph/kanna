@@ -5,6 +5,14 @@ import { FOCUS_FALLBACK_IGNORE_ATTRIBUTE } from "../../app/chatFocusPolicy"
 import { getProjectSidebarLabel } from "../../lib/project-label"
 import { flattenSidebarThreads } from "../../lib/thread-sections"
 import { useSidebarStore } from "../../stores/sidebarStore"
+import { useT } from "../../i18n/useT"
+
+/**
+ * The title the server gives a chat nobody has named (src/server/event-store.ts).
+ * Compared against the stored title to tell a default from a name the user
+ * typed; the only place it is translated is where it is shown.
+ */
+const UNTITLED_CHAT_TITLE = "New Chat"
 import { openContextMenuFromButton } from "../open-external-menu"
 import { ProjectIcon } from "../ui/project-icon"
 import { ThreadRowMenu, type ThreadRowMenuActions } from "./sidebar/ThreadRow"
@@ -26,6 +34,7 @@ const TITLE_LINK = "min-w-0 truncate transition-colors hover:text-foreground"
  * so the old one never flashes back in between.
  */
 export function EditableTitle({ title, onRename }: { title: string; onRename: (title: string) => void }) {
+  const t = useT()
   const [draft, setDraft] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -38,7 +47,10 @@ export function EditableTitle({ title, onRename }: { title: string; onRename: (t
     // Only on entering the field, not on each keystroke.
   }, [editing])
 
-  const shown = submitted ?? title
+  // The server titles a chat nobody has named "New Chat". That is a default,
+  // not something the user typed, so it is shown in their language; a title
+  // they typed is theirs and is left exactly as written.
+  const shown = submitted ?? (title === UNTITLED_CHAT_TITLE ? t(UNTITLED_CHAT_TITLE) : title)
   // Leaving the field ends the edit once. Removing a focused field can still
   // deliver its blur, which would otherwise save a title Escape had dropped,
   // or save one twice.
@@ -62,7 +74,7 @@ export function EditableTitle({ title, onRename }: { title: string; onRename: (t
       <span
         role="button"
         tabIndex={0}
-        title="Rename"
+        title={t("Rename")}
         onClick={beginEditing}
         onKeyDown={(event) => {
           if (event.key !== "Enter" && event.key !== " ") return
@@ -87,7 +99,7 @@ export function EditableTitle({ title, onRename }: { title: string; onRename: (t
         // which would blur this and save what Escape was pressed to drop.
         {...{ [FOCUS_FALLBACK_IGNORE_ATTRIBUTE]: "" }}
         value={draft}
-        aria-label="Chat title"
+        aria-label={t("Chat title")}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         // Selecting text in the field is not dragging what holds it (a tab).
@@ -149,6 +161,7 @@ export const ChatNavbarTitle = memo(function ChatNavbarTitle({
   /** Saves a title typed in place. */
   onRename: (title: string) => void
 }) {
+  const t = useT()
   // The group, not the row: it carries the project's name, icon and repo too.
   // Groups keep their identity across pushes that didn't touch them.
   const group = useSidebarStore((state) => state.data.projectGroups.find((item) => (
@@ -175,8 +188,8 @@ export const ChatNavbarTitle = memo(function ChatNavbarTitle({
           // repainted but that), and a press sinks it a touch.
           <button
             type="button"
-            title="Chat actions"
-            aria-label="Chat actions"
+            title={t("Chat actions")}
+            aria-label={t("Chat actions")}
             onClick={openContextMenuFromButton}
             className="relative flex shrink-0 rounded-[4px] outline-none transition-transform duration-150 ease-snappy before:absolute before:-inset-1 before:rounded-md before:bg-foreground/10 before:opacity-0 before:transition-opacity before:duration-150 hover:before:opacity-100 focus-visible:before:opacity-100 active:scale-[0.94] motion-reduce:transition-none"
           >
@@ -188,7 +201,7 @@ export const ChatNavbarTitle = memo(function ChatNavbarTitle({
       {projectName || branchName ? (
         <span className="flex min-w-0 shrink-[4] items-center gap-1.5 text-xs text-muted-foreground">
           {projectName ? (
-            <button type="button" className={TITLE_LINK} title="Show in Finder" onClick={onOpenFolder}>
+            <button type="button" className={TITLE_LINK} title={t("Show in Finder")} onClick={onOpenFolder}>
               {projectName}
             </button>
           ) : null}
@@ -197,7 +210,7 @@ export const ChatNavbarTitle = memo(function ChatNavbarTitle({
               <button
                 type="button"
                 className={`${TITLE_LINK} flex items-center gap-0.5`}
-                title={`Open on ${getRepoUrlLabel(repoUrl)}`}
+                title={t("Open on {host}", { host: getRepoUrlLabel(repoUrl) })}
                 // In this browser, not through the machine the project lives
                 // on: that is the wrong screen whenever it isn't this one.
                 onClick={() => window.open(repoUrl, "_blank", "noopener,noreferrer")}

@@ -1,6 +1,7 @@
 import { type RefObject, useState } from "react"
 import { Check, Copy, FileDiff, GitCommitHorizontal, GitMerge } from "lucide-react"
 import type { ChatBranchHistoryEntry, ChatCommitDetails } from "../../../../shared/types"
+import { useT } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { formatPromptTimestamp } from "../../messages/ResultMessage"
 import { TURN_CARD_ROW_INSET, TurnCardMessage, TurnCardMetaRow, TurnCardMetaSeparator } from "../../ui/turn-card"
@@ -34,6 +35,7 @@ export function CommitHoverCardContent({
   /** Opens one check's page on GitHub. */
   onOpenCheck?: (url: string) => void
 }) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
   const shortSha = entry.sha.slice(0, 7)
   const isMerge = (details?.parentCount ?? 0) > 1
@@ -47,7 +49,7 @@ export function CommitHoverCardContent({
       <TurnCardMetaRow>
         <button
           type="button"
-          aria-label={`Copy ${entry.sha}`}
+          aria-label={t("Copy {sha}", { sha: entry.sha })}
           onClick={() => {
             void navigator.clipboard?.writeText(entry.sha)
             setCopied(true)
@@ -62,13 +64,13 @@ export function CommitHoverCardContent({
         {isMerge ? (
           <>
             <TurnCardMetaSeparator />
-            <span className="shrink-0">Merge</span>
+            <span className="shrink-0">{t("Merge")}</span>
           </>
         ) : null}
         {details?.committerName ? (
           <>
             <TurnCardMetaSeparator />
-            <span className="truncate">committed by {details.committerName}</span>
+            <span className="truncate">{t("committed by {name}", { name: details.committerName })}</span>
           </>
         ) : null}
         <span className="ml-auto shrink-0 pl-2" title={details?.authorEmail}>{formatPromptTimestamp(entry.authoredAt)}</span>
@@ -79,7 +81,7 @@ export function CommitHoverCardContent({
       <div className="mt-1 space-y-1">
         <TurnCardMessage
           className="line-clamp-3 text-sm font-medium text-popover-foreground"
-          label="Open this commit on GitHub"
+          label={t("Open this commit on GitHub")}
           onSelect={onOpenCommit}
         >
           {entry.summary}
@@ -101,7 +103,9 @@ export function CommitHoverCardContent({
       {details && details.totalFileCount > 0 ? (
         <TurnCardMetaRow className="-mx-1.5 -mb-2 mt-2 rounded-b-lg border-t border-border/60 bg-muted/40 px-3 py-1.5">
           <FileDiff className="size-2.5 shrink-0" strokeWidth={2.5} />
-          <span>{details.totalFileCount} file{details.totalFileCount === 1 ? "" : "s"} changed</span>
+          <span>{details.totalFileCount === 1
+            ? t("{count} file changed", { count: details.totalFileCount })
+            : t("{count} files changed", { count: details.totalFileCount })}</span>
           <DiffFileStat additions={details.additions} deletions={details.deletions} className="ml-auto pl-2" />
         </TurnCardMetaRow>
       ) : null}

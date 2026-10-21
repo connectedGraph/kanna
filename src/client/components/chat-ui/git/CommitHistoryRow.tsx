@@ -1,5 +1,6 @@
 import { ArrowUp, GitCommitHorizontal } from "lucide-react"
 import type { ChatBranchHistoryEntry } from "../../../../shared/types"
+import { useT } from "../../../i18n/useT"
 import { formatRelativeTime } from "../../../lib/formatters"
 import { WidgetRow } from "../widgets/parts"
 import { ChecksIcon } from "./PullRequestState"
@@ -21,11 +22,12 @@ export function CommitHistoryRow({ entry, isPendingPush = false, className }: {
   isPendingPush?: boolean
   className?: string
 }) {
-  const relativeTime = formatRelativeTime(entry.authoredAt)
+  const t = useT()
+  const relativeTime = formatRelativeTime(entry.authoredAt, t)
   return (
     <WidgetRow
       icon={isPendingPush
-        ? <span title="Not pushed yet" aria-label="Not pushed yet" className="flex"><ArrowUp className="text-foreground" /></span>
+        ? <span title={t("Not pushed yet")} aria-label={t("Not pushed yet")} className="flex"><ArrowUp className="text-foreground" /></span>
         : <GitCommitHorizontal />}
       title={entry.summary}
       subtitle={entry.authorName || entry.tags.length > 0 ? (
@@ -42,7 +44,7 @@ export function CommitHistoryRow({ entry, isPendingPush = false, className }: {
       rowKey={entry.sha}
       className={className}
       onActivate={entry.githubUrl ? () => openInNewTab(entry.githubUrl!) : undefined}
-      aria-label={entry.githubUrl ? `Open commit ${entry.sha.slice(0, 7)} on GitHub` : undefined}
+      aria-label={entry.githubUrl ? t("Open commit {sha} on GitHub", { sha: entry.sha.slice(0, 7) }) : undefined}
     />
   )
 }

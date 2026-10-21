@@ -1,7 +1,8 @@
 import { Check } from "lucide-react"
-import { FULL_DISK_ACCESS_STEPS, useMacSetupState } from "../../components/auth/MacSetupStep"
+import { fullDiskAccessSteps, useMacSetupState } from "../../components/auth/MacSetupStep"
 import { SelectItem } from "../../components/ui/select"
 import { Switch } from "../../components/ui/switch"
+import { useT } from "../../i18n/useT"
 import { macSetup, type MacQuitBehavior } from "../../lib/macApp"
 import { SETTINGS_ROWS } from "./registry"
 import { SettingsActionButton, SettingsGroup, SettingsGroups, SettingsPlaceholder, SettingsRow, SettingsSelect } from "./shared"
@@ -19,24 +20,25 @@ const QUIT_BEHAVIOR_OPTIONS: { value: MacQuitBehavior; label: string }[] = [
  * a switch flipped in System Settings shows here too.
  */
 export function MacSection() {
+  const t = useT()
   const state = useMacSetupState(true)
 
   if (!state) {
-    return <SettingsPlaceholder loading>Checking this Mac…</SettingsPlaceholder>
+    return <SettingsPlaceholder loading>{t("Checking this Mac…")}</SettingsPlaceholder>
   }
 
   return (
     <SettingsGroups>
-      <SettingsGroup title="Staying Online">
+      <SettingsGroup title={t("Staying Online")}>
         <SettingsRow
           def={SETTINGS_ROWS.openAtLogin}
           description={state.loginItem === "requiresApproval"
-            ? "macOS wants this approved: turn Kanna on under Login Items to finish."
+            ? t("macOS wants this approved: turn Kanna on under Login Items to finish.")
             : undefined}
         >
           {state.loginItem === "requiresApproval" ? (
             <SettingsActionButton onClick={macSetup.openLoginItems}>
-              Open Login Items
+              {t("Open Login Items")}
             </SettingsActionButton>
           ) : (
             <Switch
@@ -50,10 +52,10 @@ export function MacSection() {
           def={SETTINGS_ROWS.keepAwake}
           description={
             <>
-              {SETTINGS_ROWS.keepAwake.description}
+              {t(SETTINGS_ROWS.keepAwake.description)}
               {state.lidClosingSleeps ? (
                 <span className="mt-1 block text-amber-600 dark:text-amber-400">
-                  Closing the lid sleeps this Mac. Keep it open, or connect a display to run it closed.
+                  {t("Closing the lid sleeps this Mac. Keep it open, or connect a display to run it closed.")}
                 </span>
               ) : null}
             </>
@@ -69,7 +71,7 @@ export function MacSection() {
           def={SETTINGS_ROWS.keepAwakeOnBattery}
           nested
           description={!state.pluggedIn && !state.keepAwakeOnBattery
-            ? "On battery now: this Mac sleeps when idle until it's plugged in."
+            ? t("On battery now: this Mac sleeps when idle until it's plugged in.")
             : undefined}
         >
           {/* Shows what's in effect: with Keep Awake off, nothing stays awake
@@ -90,7 +92,7 @@ export function MacSection() {
             >
               {QUIT_BEHAVIOR_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SettingsSelect>
@@ -98,25 +100,25 @@ export function MacSection() {
         ) : null}
       </SettingsGroup>
 
-      <SettingsGroup title="Permissions">
+      <SettingsGroup title={t("Permissions")}>
         <SettingsRow
           def={SETTINGS_ROWS.fullDiskAccess}
           alignStart
           description={
             <>
-              {SETTINGS_ROWS.fullDiskAccess.description}
-              {state.fullDiskAccess ? null : <span className="mt-1 block">{FULL_DISK_ACCESS_STEPS}</span>}
+              {t(SETTINGS_ROWS.fullDiskAccess.description)}
+              {state.fullDiskAccess ? null : <span className="mt-1 block">{fullDiskAccessSteps(t)}</span>}
             </>
           }
         >
           {state.fullDiskAccess ? (
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Check className="h-4 w-4 text-emerald-500" />
-              Granted
+              {t("Granted")}
             </span>
           ) : (
             <SettingsActionButton onClick={macSetup.openFullDiskAccess}>
-              Open Privacy Settings
+              {t("Open Privacy Settings")}
             </SettingsActionButton>
           )}
         </SettingsRow>

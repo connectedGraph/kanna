@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, ChevronLeft, Flower, House, Loader2, PanelLeft, 
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom"
 import { OPEN_LAYER_SELECTOR, useEdgePeek } from "./useEdgePeek"
 import { APP_NAME } from "../../shared/branding"
+import { useT } from "../i18n/useT"
 import { Button } from "../components/ui/button"
 import { StillTooltips } from "../components/ui/tooltip"
 import { buildChatJumpLocationState, type ChatJumpRole } from "../lib/chat-navigation"
@@ -358,6 +359,7 @@ function KannaSidebarImpl({
   updateSnapshot,
   onOpenChangelog,
 }: KannaSidebarProps) {
+  const t = useT()
   // The one place that wants the whole snapshot. Selected here rather than
   // passed down so a sidebar push re-renders this component and nothing above
   // it — the chat page and the transcript are untouched by it.
@@ -884,7 +886,11 @@ function KannaSidebarImpl({
   const isSettingsActive = location.pathname.startsWith("/settings")
   const isUtilityPageActive = isLocalProjectsActive || isSettingsActive
   const isConnecting = connectionStatus === "connecting" || !ready
-  const statusLabel = isConnecting ? "Connecting" : connectionStatus === "connected" ? "Connected" : "Disconnected"
+  const statusLabel = isConnecting
+    ? t("Connecting")
+    : connectionStatus === "connected"
+      ? t("Connected")
+      : t("Disconnected")
   const statusDotClass = connectionStatus === "connected" ? "bg-emerald-500" : "bg-amber-500"
   const showNightlyUpdate = isNightlyVersion(updateSnapshot?.currentVersion ?? "")
     && updateSnapshot?.nightly?.status === "available"
@@ -894,24 +900,26 @@ function KannaSidebarImpl({
     : false
   const isUpdating = updateSnapshot?.status === "updating" || updateSnapshot?.status === "restart_pending"
   const versionBadge = showDevBadge ? (
-    <VersionPill tone="dev" label="Dev" title="Development build" />
+    <VersionPill tone="dev" label={t("Dev")} title={t("Development build")} />
   ) : showNightlyUpdate ? (
     <VersionPill
       tone="nightly"
-      label="Nightly"
+      label={t("Nightly")}
       busy={isUpdating}
       disabled={isUpdating}
       onClick={() => navigate("/settings/labs#nightlyBuilds")}
-      title="New nightly available. Open Labs to build latest main."
+      title={t("New nightly available. Open Labs to build latest main.")}
     />
   ) : showUpdateButton ? (
     <VersionPill
       tone="update"
-      label="Update"
+      label={t("Update")}
       busy={isUpdating}
       disabled={isUpdating}
       onClick={onOpenChangelog}
-      title={updateSnapshot?.latestVersion ? `Update to ${updateSnapshot.latestVersion}` : "Update Kanna"}
+      title={updateSnapshot?.latestVersion
+        ? t("Update to {version}", { version: updateSnapshot.latestVersion })
+        : t("Update Kanna")}
     />
   ) : null
 
@@ -924,7 +932,7 @@ function KannaSidebarImpl({
           size="icon"
           className="fixed top-3 left-3 z-50 md:hidden"
           onClick={() => navigate("/")}
-          title="Back"
+          title={t("Back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -938,7 +946,7 @@ function KannaSidebarImpl({
               variant="ghost"
               size="icon"
               onClick={onExpand}
-              title="Expand sidebar"
+              title={t("Expand sidebar")}
               className="hover:!border-border/0 hover:!bg-transparent"
             >
               <PanelLeft className="h-5 w-5" />
@@ -1010,8 +1018,8 @@ function KannaSidebarImpl({
                 size="icon"
                 className="w-[42px] rounded-lg hover:!border-border/0 hover:!bg-transparent !border-0"
                 onClick={exitFocusMode}
-                title="Back"
-                aria-label={`Back from ${focusedProjectGroup.title}`}
+                title={t("Back")}
+                aria-label={t("Back from {project}", { project: focusedProjectGroup.title })}
               >
                 <ChevronLeft className="size-6" />
               </Button>
@@ -1024,7 +1032,7 @@ function KannaSidebarImpl({
                   isSettingsActive ? "text-foreground" : "text-muted-foreground"
                 )}
                 onClick={() => navigate("/settings/general")}
-                title="Settings"
+                title={t("Settings")}
               >
                 <Settings className="h-5 w-5" />
               </Button>
@@ -1054,7 +1062,7 @@ function KannaSidebarImpl({
               // Reachable while collapsed only in a peek, where it keeps the
               // sidebar rather than sending it away.
               onClick={collapsed ? onExpand : onCollapse}
-              title={collapsed ? "Keep sidebar open" : "Collapse sidebar"}
+              title={collapsed ? t("Keep sidebar open") : t("Collapse sidebar")}
               className="hidden md:flex group/sidebar-collapse relative items-center justify-center h-5 w-5 sm:h-6 sm:w-6"
             >
               <Flower className="absolute inset-0.5 h-4 w-4 sm:h-5 sm:w-5 text-logo transition-all duration-200 ease-out opacity-100 scale-100 group-hover/sidebar-collapse:opacity-0 group-hover/sidebar-collapse:scale-0" />
@@ -1067,7 +1075,7 @@ function KannaSidebarImpl({
             <button
               type="button"
               onClick={() => navigate("/home")}
-              title="Projects"
+              title={t("Projects")}
               className="font-logo text-base uppercase sm:text-md text-slate-600 dark:text-slate-100"
             >
               {APP_NAME}
@@ -1083,7 +1091,7 @@ function KannaSidebarImpl({
                 size="icon"
                 className="size-10 rounded-lg hover:!border-border/0 hover:!bg-transparent md:hidden"
                 onClick={() => window.dispatchEvent(new CustomEvent(OPEN_COMMAND_PALETTE_EVENT))}
-                title="Search"
+                title={t("Search")}
               >
                 <Search className="h-5 w-5" />
               </Button>
@@ -1093,7 +1101,7 @@ function KannaSidebarImpl({
               size="icon"
               onClick={newSidebarEnabled ? () => openCommandPalette() : () => navigate("/home")}
               className="size-10 rounded-lg hover:!border-border/0 hover:!bg-transparent md:hidden"
-              title={newSidebarEnabled ? "Search" : "New project"}
+              title={newSidebarEnabled ? t("Search") : t("New project")}
             >
               {newSidebarEnabled ? <Search className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
             </Button>
@@ -1106,7 +1114,7 @@ function KannaSidebarImpl({
                   "size-10 rounded-lg hover:!border-border/0 hover:!bg-transparent md:hidden",
                   isLocalProjectsActive ? "text-foreground" : "text-muted-foreground"
                 )}
-                title="Projects"
+                title={t("Projects")}
               >
                 <House className="h-5 w-5" />
               </Button>
@@ -1119,7 +1127,7 @@ function KannaSidebarImpl({
                 size="icon"
                 onClick={() => openCommandPalette("add-project")}
                 className="hidden md:inline-flex h-10 w-auto rounded-lg px-1.5 pl-2 hover:!border-border/0 hover:!bg-transparent mac-app:md:h-8"
-                title="Add project"
+                title={t("Add project")}
               >
                 <Plus className="size-4" />
               </Button>
@@ -1132,7 +1140,7 @@ function KannaSidebarImpl({
                 "hidden md:inline-flex h-10 w-auto rounded-lg pl-1.5 pr-3 hover:!border-border/0 hover:!bg-transparent mac-app:md:h-8 mac-app:md:pr-1.5",
                 !newSidebarEnabled && "pl-2 mac-app:md:pr-2"
               )}
-              title={newSidebarEnabled ? "Search" : "New project"}
+              title={newSidebarEnabled ? t("Search") : t("New project")}
             >
               {newSidebarEnabled ? <Search className="size-4" /> : <Plus className="size-4" />}
             </Button>
@@ -1172,7 +1180,7 @@ function KannaSidebarImpl({
               <button
                 type="button"
                 onClick={() => navigate("/home")}
-                title="Projects"
+                title={t("Projects")}
                 className="flex items-center gap-2 pl-[7px] pr-[9px]"
               >
                 <Flower className="size-5 text-logo" />
@@ -1198,7 +1206,7 @@ function KannaSidebarImpl({
                         className="flex w-full items-center gap-2 rounded-lg border border-border/0 px-2 py-1.5 max-md:py-2 text-sm max-md:text-base text-muted-foreground transition-colors hover:text-accent-foreground"
                       >
                         <SquarePen className="h-4 w-4 shrink-0" />
-                        <span>New Chat</span>
+                        <span>{t("New Chat")}</span>
                       </button>
                       <div className="absolute inset-y-0 right-0 flex items-center">
                         <SidebarViewSwitcher view={sidebarView} onChange={setSidebarView} />
@@ -1213,7 +1221,7 @@ function KannaSidebarImpl({
                     className="flex w-full items-center gap-2 rounded-lg border border-border/0 px-2 py-1.5 max-md:py-2 text-sm max-md:text-base text-muted-foreground transition-colors hover:border-border hover:bg-muted"
                   >
                     <Terminal className="h-4 w-4 shrink-0" />
-                    <span>Terminal</span>
+                    <span>{t("Terminal")}</span>
                   </button>
                 ) : null}
               </div>
@@ -1253,7 +1261,7 @@ function KannaSidebarImpl({
               // list blank under a pill naming the project.
               || focusedProjectGroup?.chats.length === 0
             ) ? (
-              <p className="text-sm text-slate-400 p-2 mt-6 text-center">No conversations yet</p>
+              <p className="text-sm text-slate-400 p-2 mt-6 text-center">{t("No conversations yet")}</p>
             ) : null}
 
             {/* A channel that is open is its chats, as the Chats view shows them. */}
@@ -1377,7 +1385,7 @@ function KannaSidebarImpl({
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Settings2 className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Settings</span>
+                <span className="text-sm">{t("Settings")}</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>{statusLabel}</span>
@@ -1394,9 +1402,9 @@ function KannaSidebarImpl({
         <div
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize sidebar"
+          aria-label={t("Resize sidebar")}
           tabIndex={0}
-          title="Resize sidebar"
+          title={t("Resize sidebar")}
           className={cn(
             "hidden md:block absolute -right-1 top-3 bottom-3 z-20 w-2 cursor-col-resize rounded-full",
             "focus-visible:outline-none"
@@ -1440,7 +1448,7 @@ function KannaSidebarImpl({
           variant="ghost"
           size="icon"
           onClick={collapsed ? onExpand : onCollapse}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? t("Expand sidebar") : t("Collapse sidebar")}
           className="size-7 rounded-lg text-muted-foreground hover:!border-border/0 hover:!bg-transparent"
         >
           <PanelLeft className="size-4" />
@@ -1470,6 +1478,7 @@ function KannaSidebarImpl({
  * History from before a reload counts as no forward until visited again.
  */
 function MacHistoryButtons({ overSidebar }: { overSidebar: boolean }) {
+  const t = useT()
   const location = useLocation()
   const navigationType = useNavigationType()
   const index = (window.history.state as { idx?: number } | null)?.idx ?? 0
@@ -1497,7 +1506,7 @@ function MacHistoryButtons({ overSidebar }: { overSidebar: boolean }) {
         size="icon"
         disabled={index <= 0}
         onClick={() => window.history.back()}
-        title="Back"
+        title={t("Back")}
         className={className}
       >
         <ArrowLeft className="size-4" />
@@ -1507,7 +1516,7 @@ function MacHistoryButtons({ overSidebar }: { overSidebar: boolean }) {
         size="icon"
         disabled={index >= lastIndex}
         onClick={() => window.history.forward()}
-        title="Forward"
+        title={t("Forward")}
         className={className}
       >
         <ArrowRight className="size-4" />

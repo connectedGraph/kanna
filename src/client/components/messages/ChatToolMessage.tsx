@@ -18,6 +18,8 @@ import { useTicketTranscript } from "../tickets/ticket-transcript"
 import { useTicketSummary } from "../../stores/ticketBoardStore"
 import { resultRecord, text, TOOL_CARD_CAPTION_CLASS, TOOL_CARD_MARK_SLOT_CLASS, toolCardClasses, toolCardErrorText, useToolCardPayload } from "./tool-card"
 import type { ProcessedToolCall } from "./types"
+import { useT, type TFunction } from "../../i18n/useT"
+import { translate } from "../../../shared/i18n"
 
 /**
  * The card for a chat an agent started or messaged (`create_chat`,
@@ -46,15 +48,15 @@ export function isChatToolCall(message: ProcessedToolCall): message is ChatToolC
 }
 
 /** What the call did, in the words a person would use for doing it themselves. */
-function describeCall(message: ChatToolCall, input: Record<string, unknown>, result: Record<string, unknown> | null): string {
-  if (message.toolName === "fork_chat") return "Forked"
+function describeCall(message: ChatToolCall, input: Record<string, unknown>, result: Record<string, unknown> | null, t: TFunction): string {
+  if (message.toolName === "fork_chat") return t("Forked")
   if (message.toolName === "send_message") {
-    if (input.delivery === "steer") return "Interrupted with"
+    if (input.delivery === "steer") return t("Interrupted with")
     // Known only once the call returns: whether the message started a turn or
     // is waiting behind one.
-    return result?.started === false ? "Queued" : "Sent"
+    return result?.started === false ? t("Queued") : t("Sent")
   }
-  return input.subchat === false ? "Started a chat" : "Started a sub-chat"
+  return input.subchat === false ? t("Started a chat") : t("Started a sub-chat")
 }
 
 /** A new chat's id comes back in the result. A message names its chat going in. */
@@ -73,6 +75,7 @@ export function inlineChatToolTarget(message: ChatToolCall): string | null {
 }
 
 export function ChatToolMessage({ message }: { message: ChatToolCall }) {
+  const t = useT()
   const { input, rawResult, result } = useToolCardPayload(message)
   const chatId = chatToolTarget(message, input, result)
   // A delegator's hand-off names its ticket, and draws as it (TicketHandoff).
@@ -82,7 +85,7 @@ export function ChatToolMessage({ message }: { message: ChatToolCall }) {
   const ticket = useTicketSummary(transcript.chatId, ticketRef?.ticketId)
 
   if (message.isError) {
-    return <p role="alert" className="text-sm text-destructive">{toolCardErrorText(rawResult, "The chat could not be reached.")}</p>
+    return <p role="alert" className="text-sm text-destructive">{toolCardErrorText(rawResult, t("The chat could not be reached."))}</p>
   }
 
   if (ticketRef && transcript.chatId) {
@@ -93,21 +96,21 @@ export function ChatToolMessage({ message }: { message: ChatToolCall }) {
           ticketId={ticketRef.ticketId}
           number={ticket?.number ?? ticketRef.number}
           chatId={chatId}
-          fallbackTitle={text(result?.title) ?? text(input.title) ?? "a chat"}
+          fallbackTitle={text(result?.title) ?? text(input.title) ?? t("a chat")}
           reopened={ticketRef.reopened === true}
         />
       )
     }
     // Until the board has it (a snapshot behind the call) the chat's card stands in.
-    if (ticket) return <TicketHandoffCard ticket={ticket} chatId={chatId} verb={message.toolName === "fork_chat" ? "Forked to" : "Sent to"} reopened={ticketRef.reopened === true} />
+    if (ticket) return <TicketHandoffCard ticket={ticket} chatId={chatId} verb={message.toolName === "fork_chat" ? t("Forked to") : t("Sent to")} reopened={ticketRef.reopened === true} />
   }
 
   const sent = text(input.message)
   return (
     <ChatCard
       chatId={chatId}
-      title={text(result?.title) ?? text(input.title) ?? (sent ? toMessagePreview(sent) : "Chat")}
-      caption={[describeCall(message, input, result), sent ? toMessagePreview(sent) : null].filter(Boolean).join(" · ")}
+      title={text(result?.title) ?? text(input.title) ?? (sent ? toMessagePreview(sent) : t("Chat"))}
+      caption={[describeCall(message, input, result, t), sent ? toMessagePreview(sent) : null].filter(Boolean).join(" · ")}
       pending={!message.resultEntryId}
     />
   )
@@ -151,9 +154,10 @@ export function ChatReplyQuote({ chatId, title, excerpt, interim = false, said =
   /** What the quote is, read out ahead of the chat's title and not drawn. */
   said?: string
 }) {
+  const t = useT()
   const thread = useSidebarThread(chatId)
   const currentProjectId = useContext(ReplyQuoteProjectContext)
-  return <ChatCard chatId={chatId} title={title} caption={replyCaption(thread, currentProjectId, excerpt, interim)} said={said} quote />
+  return <ChatCard chatId={chatId} title={title} caption={replyCaption(thread, currentProjectId, excerpt, interim, t)} said={t(said)} quote />
 }
 
 /**
@@ -184,11 +188,12 @@ export function replyCaption(
   currentProjectId: string | null,
   excerpt?: string | null,
   interim = false,
+  t: TFunction = (key) => translate(undefined, key),
 ): string | null {
   const parts: string[] = []
   if (thread && currentProjectId && thread.projectId !== currentProjectId) parts.push(thread.projectLabel.text)
-  if (thread?.archived) parts.push("Archived")
-  if (interim) parts.push(INTERIM_REPLY_NOTE)
+  if (thread?.archived) parts.push(t("Archived"))
+  if (interim) parts.push(t(INTERIM_REPLY_NOTE))
   if (excerpt) parts.push(excerpt)
   return parts.length > 0 ? parts.join(" · ") : null
 }

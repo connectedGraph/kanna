@@ -1,3 +1,5 @@
+import { useT } from "../../i18n/useT"
+
 function ZigZagLine({ size = 4 }: { size?: number }) {
   return (
     <svg className="flex-1" viewBox={`0 0 100 ${size}`} preserveAspectRatio="none" style={{ height: `${size}px` }}>
@@ -10,20 +12,22 @@ function ZigZagLine({ size = 4 }: { size?: number }) {
 }
 
 export function CompactBoundaryMessage() {
+  const t = useT()
   return (
     <div className="flex items-center gap-3">
       <ZigZagLine />
-      <span className="text-[11px] tracking-widest text-muted-foreground uppercase flex-shrink-0">Compacted</span>
+      <span className="text-[11px] tracking-widest text-muted-foreground uppercase flex-shrink-0">{t("Compacted")}</span>
       <ZigZagLine />
     </div>
   )
 }
 
 export function ContextClearedMessage() {
+  const t = useT()
   return (
     <div className="flex items-center gap-3">
       <ZigZagLine />
-      <span className="text-[11px] tracking-widest text-muted-foreground uppercase flex-shrink-0">Context Cleared</span>
+      <span className="text-[11px] tracking-widest text-muted-foreground uppercase flex-shrink-0">{t("Context Cleared")}</span>
       <ZigZagLine />
     </div>
   )

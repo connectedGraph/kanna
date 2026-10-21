@@ -6,7 +6,8 @@ import { MetaRow, MetaLabel } from "./shared"
 import { AnimatedShinyText } from "../ui/animated-shiny-text"
 import type { ProcessedToolCall } from "./types"
 import type { HydratedTranscriptMessage } from "../../../shared/types"
-import { foldedRunLabel, type FoldCategory } from "../../lib/fold-runs"
+import { type FoldCategory } from "../../lib/fold-runs"
+import { useT, type TFunction } from "../../i18n/useT"
 
 const TOOL_CATEGORIES: Record<string, FoldCategory> = {
   read_file: { key: "read", singular: "read", plural: "reads" },
@@ -24,8 +25,42 @@ const TOOL_CATEGORIES: Record<string, FoldCategory> = {
 
 const OTHER_CATEGORY: FoldCategory = { key: "other", singular: "tool call", plural: "tool calls" }
 
-function getToolGroupLabel(messages: HydratedTranscriptMessage[]): string {
-  return foldedRunLabel(messages, (msg) => TOOL_CATEGORIES[(msg as ProcessedToolCall).toolKind] ?? OTHER_CATEGORY)
+/**
+ * What one kind of row is called in a group's label, singular or plural.
+ * Written out rather than built from `singular`/`plural`, because the key is
+ * the English words themselves and English counts one and many differently;
+ * Chinese has one form and gives both keys the same translation.
+ */
+function countedLabel(t: TFunction, kind: string, count: number): string {
+  const vars = { count }
+  switch (kind) {
+    case "read": return count === 1 ? t("{count} read", vars) : t("{count} reads", vars)
+    case "edit": return count === 1 ? t("{count} edit", vars) : t("{count} edits", vars)
+    case "write": return count === 1 ? t("{count} write", vars) : t("{count} writes", vars)
+    case "delete": return count === 1 ? t("{count} delete", vars) : t("{count} deletes", vars)
+    case "bash": return count === 1 ? t("{count} command", vars) : t("{count} commands", vars)
+    case "grep": return count === 1 ? t("{count} search", vars) : t("{count} searches", vars)
+    case "glob": return count === 1 ? t("{count} glob", vars) : t("{count} globs", vars)
+    case "task": return count === 1 ? t("{count} agent", vars) : t("{count} agents", vars)
+    case "websearch": return count === 1 ? t("{count} web search", vars) : t("{count} web searches", vars)
+    case "skill": return count === 1 ? t("{count} skill", vars) : t("{count} skills", vars)
+    case "todo": return count === 1 ? t("{count} todo update", vars) : t("{count} todo updates", vars)
+    default: return count === 1 ? t("{count} tool call", vars) : t("{count} tool calls", vars)
+  }
+}
+
+/** What a folded group says of itself: "3 reads, 2 edits", each kind in order of first appearance. */
+function getToolGroupLabel(messages: HydratedTranscriptMessage[], t: TFunction): string {
+  const counts = new Map<string, { category: FoldCategory; count: number }>()
+  for (const message of messages) {
+    const category = TOOL_CATEGORIES[(message as ProcessedToolCall).toolKind] ?? OTHER_CATEGORY
+    const existing = counts.get(category.key)
+    if (existing) existing.count += 1
+    else counts.set(category.key, { category, count: 1 })
+  }
+  return [...counts.values()]
+    .map(({ category, count }) => countedLabel(t, category.key, count))
+    .join(t(", "))
 }
 
 interface Props {
@@ -37,7 +72,8 @@ interface Props {
 }
 
 export function CollapsedToolGroup({ messages, isLoading, localPath, expanded, onExpandedChange }: Props) {
-  const label = useMemo(() => getToolGroupLabel(messages), [messages])
+  const t = useT()
+  const label = useMemo(() => getToolGroupLabel(messages, t), [messages, t])
 
   // In progress = no result entry has arrived yet. Deliberately not "has no
   // result payload": a finished call may leave its payload on the server.
@@ -96,6 +132,7 @@ export function CollapsedGroup({ label, loading = false, count, expanded, onExpa
   onPointerEnter?: () => void
   children: ReactNode
 }) {
+  const t = useT()
   return (
     <MetaRow className="w-full" onPointerEnter={onPointerEnter}>
       <div className="flex flex-col w-full">
@@ -127,7 +164,7 @@ export function CollapsedGroup({ label, loading = false, count, expanded, onExpa
                   <div className="w-5 h-5 relative flex items-center justify-center">
                     <ChevronRight className="h-4.5 w-4.5 text-muted-icon -rotate-90" />
                   </div>
-                  <MetaLabel className="text-left">Collapse</MetaLabel>
+                  <MetaLabel className="text-left">{t("Collapse")}</MetaLabel>
                 </div>
               </button>
             )}

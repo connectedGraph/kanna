@@ -1,3 +1,4 @@
+import { useT } from "../../i18n/useT"
 import { useEffect, useRef, useState, type MutableRefObject } from "react"
 import { SerializeAddon } from "@xterm/addon-serialize"
 import { Unicode11Addon } from "@xterm/addon-unicode11"
@@ -382,6 +383,7 @@ export function TerminalPane({
   onCommandSent,
   onInitialCommandSent,
 }: Props) {
+  const t = useT()
   const { resolvedTheme } = useTheme()
   // Labs opt-in. Read from the store rather than drilled through the workspace
   // so toggling it only re-mounts the panes.
@@ -847,7 +849,7 @@ export function TerminalPane({
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden px-3 py-1">
         <div ref={containerRef} className="kanna-terminal min-h-0 min-w-0 flex-1 overflow-hidden w-full" />
       </div>
-      {error ? <div className="px-3 py-1 text-xs text-destructive">Terminal error: {error}</div> : null}
+      {error ? <div className="px-3 py-1 text-xs text-destructive">{t("Terminal error: {error}", { error })}</div> : null}
     </div>
   )
 }

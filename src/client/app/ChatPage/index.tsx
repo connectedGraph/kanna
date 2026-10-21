@@ -65,6 +65,7 @@ import { CHAT_MIN_WORKSPACE_SIZE_PERCENT, WidgetsColumn } from "./WidgetsColumn"
 import { useChatPageSidebarActions, EMPTY_DIFF_SNAPSHOT } from "./useChatPageSidebarActions"
 import { useTranscriptJumpRequest } from "./useTranscriptJumpRequest"
 import { useTranscriptPaddingBottom } from "./useTranscriptPaddingBottom"
+import { useT } from "../../i18n/useT"
 import {
   EMPTY_STATE_TEXT,
   EMPTY_STATE_TYPING_INTERVAL_MS,
@@ -88,7 +89,7 @@ const EMPTY_SCHEDULES: readonly ChatSchedule[] = []
  * chat: going from one new chat to another (switching project from the path
  * button) keeps the empty state up, and retyping it read as the page reloading.
  */
-function useEmptyStateTyping(showEmptyState: boolean) {
+function useEmptyStateTyping(showEmptyState: boolean, fullText: string) {
   const [typedEmptyStateText, setTypedEmptyStateText] = useState("")
   const [isEmptyStateTypingComplete, setIsEmptyStateTypingComplete] = useState(false)
   // Reset in the render the empty state appears, not in the effect after it:
@@ -109,16 +110,16 @@ function useEmptyStateTyping(showEmptyState: boolean) {
     let characterIndex = 0
     const interval = window.setInterval(() => {
       characterIndex += 1
-      setTypedEmptyStateText(EMPTY_STATE_TEXT.slice(0, characterIndex))
+      setTypedEmptyStateText(fullText.slice(0, characterIndex))
 
-      if (characterIndex >= EMPTY_STATE_TEXT.length) {
+      if (characterIndex >= fullText.length) {
         window.clearInterval(interval)
         setIsEmptyStateTypingComplete(true)
       }
     }, EMPTY_STATE_TYPING_INTERVAL_MS)
 
     return () => window.clearInterval(interval)
-  }, [showEmptyState])
+  }, [showEmptyState, fullText])
 
   return { typedEmptyStateText, isEmptyStateTypingComplete }
 }
@@ -326,6 +327,7 @@ const MobileSidebarPane = memo(function MobileSidebarPane({
   onClose,
   content,
 }: MobileSidebarPaneProps) {
+  const t = useT()
   if (!projectId) {
     return null
   }
@@ -344,7 +346,7 @@ const MobileSidebarPane = memo(function MobileSidebarPane({
       <button
         type="button"
         className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
-        aria-label="Close widgets"
+        aria-label={t("Close widgets")}
         onClick={onClose}
       />
       <div
@@ -459,6 +461,7 @@ function ChatWorkspace({
 }
 
 export function ChatPage() {
+  const t = useT()
   const state = useOutletContext<KannaState>()
   const layoutRootRef = useRef<HTMLDivElement>(null)
   // Publishes the navbar's height as `--chat-navbar-h` on its parent, for
@@ -813,7 +816,12 @@ export function ChatPage() {
     showRightSidebar,
   })
 
-  const { typedEmptyStateText, isEmptyStateTypingComplete } = useEmptyStateTyping(showEmptyState)
+  const { typedEmptyStateText, isEmptyStateTypingComplete } = useEmptyStateTyping(
+    showEmptyState,
+    // Typed out character by character, so it is translated here and the
+    // animation slices whatever the translation's length is.
+    t(EMPTY_STATE_TEXT),
+  )
 
   // Read off the sidebar snapshot rather than the git one: the sidebar carries
   // a resolved forge URL for every project, while `project-git` only knows a

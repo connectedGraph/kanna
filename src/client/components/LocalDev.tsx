@@ -11,6 +11,8 @@ import { isMacApp, isOnThisMac, postToMacApp } from "../lib/macApp"
 import { cn } from "../lib/utils"
 import { findCurrentMachine, useConnectionStore } from "../stores/connectionStore"
 import { CopyButton } from "./ui/copy-button"
+import { useT } from "../i18n/useT"
+import type { TFunction } from "../i18n/catalogs"
 
 /**
  * The "/" page's frame: while the server connects (or isn't running) it
@@ -149,11 +151,12 @@ function Command({ children }: { children: string }) {
 }
 
 /** Worded for the whole retry loop, so it doesn't change between attempts; the spinner is the retrying. */
-function RetryStatus({ children = "Trying again automatically" }: { children?: ReactNode }) {
+function RetryStatus({ children }: { children?: ReactNode }) {
+  const t = useT()
   return (
     <div role="status" className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
       <Loader2 className="size-3.5 shrink-0 animate-spin" />
-      <span>{children}</span>
+      <span>{children ?? t("Trying again automatically")}</span>
     </div>
   )
 }
@@ -168,10 +171,12 @@ function formatLastSeen(lastSeenAt: number) {
   return `${Math.floor(hours / 24)}d ago`
 }
 
-function machineStatus(machine: CloudMachineSummary) {
-  if (machine.kind === "e2b") return machine.online ? "Ready" : "Asleep"
-  if (machine.online) return "Online"
-  return machine.lastSeenAt === null ? "Never connected" : `Last seen ${formatLastSeen(machine.lastSeenAt)}`
+function machineStatus(machine: CloudMachineSummary, t: TFunction) {
+  if (machine.kind === "e2b") return machine.online ? t("Ready") : t("Asleep")
+  if (machine.online) return t("Online")
+  return machine.lastSeenAt === null
+    ? t("Never connected")
+    : t("Last seen {time}", { time: formatLastSeen(machine.lastSeenAt) })
 }
 
 const FLEET_ROW_CLASS = "flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors duration-150 hover:bg-muted/60"
@@ -184,6 +189,7 @@ const FLEET_ROW_CLASS = "flex w-full items-center gap-2.5 px-3 py-2.5 text-left 
  * links to other origins, so there the rows ask the app.
  */
 function FleetCard({ machines, fromMacApp }: { machines: CloudMachineSummary[]; fromMacApp: boolean }) {
+  const t = useT()
   // Online first, then most recently seen, so the likeliest switch is on top.
   const sorted = [...machines].sort((a, b) =>
     Number(b.online) - Number(a.online) || (b.lastSeenAt ?? 0) - (a.lastSeenAt ?? 0)
@@ -205,12 +211,12 @@ function FleetCard({ machines, fromMacApp }: { machines: CloudMachineSummary[]; 
               {machine.kind === "e2b" ? (
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border px-1.5 py-px text-[10px] uppercase tracking-wide text-muted-foreground">
                   <Cloud className="size-2.5" />
-                  Dev box
+                  {t("Dev box")}
                 </span>
               ) : null}
             </span>
             {/* Kept whole: a long name truncates instead. */}
-            <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">{machineStatus(machine)}</span>
+            <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">{machineStatus(machine, t)}</span>
             <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" />
           </>
         )
@@ -235,7 +241,7 @@ function FleetCard({ machines, fromMacApp }: { machines: CloudMachineSummary[]; 
         className={cn(FLEET_ROW_CLASS, "text-sm text-muted-foreground hover:text-foreground")}
       >
         <Settings2 className="size-4 shrink-0" />
-        <span className="flex-1">Manage Fleet</span>
+        <span className="flex-1">{t("Manage Fleet")}</span>
         {/* Says it leaves the app, where the machine rows' chevrons are. */}
         <ExternalLink className="size-3.5 shrink-0 opacity-60" />
       </button>
@@ -244,6 +250,7 @@ function FleetCard({ machines, fromMacApp }: { machines: CloudMachineSummary[]; 
 }
 
 function ConnectHelp({ context }: { context: ConnectHelpContext }) {
+  const t = useT()
   let icon = <Flower className="size-7 text-muted-foreground" />
   let title: string
   let body: ReactNode
@@ -262,8 +269,8 @@ function ConnectHelp({ context }: { context: ConnectHelpContext }) {
     // retries are what bring one back.
     if (machine?.kind === "e2b") {
       title = `Waking ${name}`
-      body = "Dev boxes pause when nobody is using them. This takes a few seconds."
-      status = <RetryStatus>Starting up</RetryStatus>
+      body = t("Dev boxes pause when nobody is using them. This takes a few seconds.")
+      status = <RetryStatus>{t("Starting up")}</RetryStatus>
     } else {
       title = `${name} is offline`
       body = (
@@ -273,7 +280,7 @@ function ConnectHelp({ context }: { context: ConnectHelpContext }) {
         </>
       )
       const lastSeen = machine?.lastSeenAt ?? null
-      if (lastSeen !== null) status = <RetryStatus>Last seen {formatLastSeen(lastSeen)}</RetryStatus>
+      if (lastSeen !== null) status = <RetryStatus>{t("Last seen {time}", { time: formatLastSeen(lastSeen) })}</RetryStatus>
     }
     footer = <FleetCard machines={context.others} fromMacApp={context.fromMacApp} />
   } else {
@@ -303,6 +310,7 @@ function ConnectHelp({ context }: { context: ConnectHelpContext }) {
 }
 
 function ConnectingNotice({ delayed }: { delayed: boolean }) {
+  const t = useT()
   // A transient state, so it stays quiet: no page chrome, one line.
   // Hidden through the reveal delay so fast connections never show it.
   return (
@@ -312,7 +320,7 @@ function ConnectingNotice({ delayed }: { delayed: boolean }) {
       style={delayed ? { transitionDelay: `${CONNECTING_REVEAL_DELAY_MS}ms` } : undefined}
     >
       <Loader2 className="size-5 animate-spin text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">Connecting to {APP_NAME}…</p>
+      <p className="text-sm text-muted-foreground">{t("Connecting to {app}…", { app: APP_NAME })}</p>
     </div>
   )
 }
@@ -361,6 +369,7 @@ function PreviewBar({ variant, onChange, onClose }: {
   onChange: (variant: PreviewVariant) => void
   onClose: () => void
 }) {
+  const t = useT()
   return (
     <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
       <div className="pointer-events-auto flex items-center gap-0.5 rounded-full border border-border bg-background/80 p-1 text-xs shadow-sm backdrop-blur">
@@ -377,7 +386,7 @@ function PreviewBar({ variant, onChange, onClose }: {
             {option}
           </button>
         ))}
-        <button type="button" onClick={onClose} title="Close preview" className="rounded-full p-1 text-muted-foreground hover:text-foreground">
+        <button type="button" onClick={onClose} title={t("Close preview")} className="rounded-full p-1 text-muted-foreground hover:text-foreground">
           <X className="size-3.5" />
         </button>
       </div>

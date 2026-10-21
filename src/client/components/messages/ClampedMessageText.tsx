@@ -2,6 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent, t
 import { ChevronDown } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { TranscriptMarkdown } from "./shared"
+import { useT } from "../../i18n/useT"
 
 /**
  * The text of a message sent to the agent, held to a number of lines until
@@ -289,6 +290,7 @@ export function ClampedMessageText({ text, lines, scopeRef }: {
     }
   }, [foldedOpen])
 
+  const t = useT()
   const clamped = !expanded
   return (
     <>
@@ -325,7 +327,7 @@ export function ClampedMessageText({ text, lines, scopeRef }: {
             "transition-[color,scale] duration-150 ease-snappy active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100",
           )}
         >
-          {expanded ? "Show less" : "Show more"}
+          {expanded ? t("Show less") : t("Show more")}
           <ChevronDown className={cn("size-3.5 transition-transform duration-200 ease-snappy motion-reduce:transition-none", expanded && "rotate-180")} />
         </button>
       ) : null}

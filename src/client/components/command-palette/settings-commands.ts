@@ -24,7 +24,9 @@ import type {
   ChatSoundPreference,
   SubmitWhileRunning,
 } from "../../../shared/types"
+import { DEFAULT_LOCALE, type Locale } from "../../../shared/i18n"
 import { SETTINGS_ROWS, type SettingsRowDef } from "../../app/settings/registry"
+import { translatorFor } from "../../i18n/catalogs"
 import type { MacSetupState } from "../../lib/macApp"
 
 /**
@@ -72,6 +74,11 @@ export interface SettingsCommandInput {
   theme: AppThemePreference
   /** This Mac's live state, or null outside Kanna for Mac on its own server. */
   mac: MacSetupState | null
+  /**
+   * Language the labels render in. The `onTitle`/`offTitle` they are built
+   * from stay English source text: those are keys.
+   */
+  locale?: Locale
 }
 
 /** A row's own name and search terms, so a command is found by the words its Settings row is. */
@@ -117,7 +124,8 @@ function toggle(args: {
   }
 }
 
-export function buildSettingsCommands({ appSettings, theme, mac }: SettingsCommandInput): SettingsCommand[] {
+export function buildSettingsCommands({ appSettings, theme, mac, locale = DEFAULT_LOCALE }: SettingsCommandInput): SettingsCommand[] {
+  const t = translatorFor(locale)
   const list: SettingsCommand[] = []
 
   // Every theme but the one in effect. Not search-only: the single Light/Dark
@@ -126,7 +134,7 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     if (option.value === theme) continue
     list.push({
       id: `set-theme-${option.value}`,
-      title: `Theme: ${option.label}`,
+      title: t("Theme: {theme}", { theme: t(option.label) }),
       keywords: [...rowKeywords(SETTINGS_ROWS.theme, ...option.keywords), "color scheme", "mode", option.value],
       icon: option.icon,
       searchOnly: false,
@@ -141,8 +149,8 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     list.push(toggle({
       id: "toggle-recent-chats-sidebar",
       on: appSettings.newSidebarEnabled !== false,
-      onTitle: "Enable New Sidebar",
-      offTitle: "Disable New Sidebar",
+      onTitle: t("Enable New Sidebar"),
+      offTitle: t("Disable New Sidebar"),
       row: SETTINGS_ROWS.recentChatsInSidebar,
       icon: FlaskConical,
       patch: (next) => ({ newSidebarEnabled: next }),
@@ -151,8 +159,8 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     list.push(toggle({
       id: "toggle-project-icons-in-chats",
       on: appSettings.projectIconsInChats !== false,
-      onTitle: "Show Project Icons in Chats",
-      offTitle: "Hide Project Icons in Chats",
+      onTitle: t("Show Project Icons in Chats"),
+      offTitle: t("Hide Project Icons in Chats"),
       row: SETTINGS_ROWS.projectIconsInChats,
       icon: AppWindow,
       patch: (next) => ({ projectIconsInChats: next }),
@@ -160,8 +168,8 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     list.push(toggle({
       id: "toggle-chat-tabs",
       on: appSettings.chatTabsEnabled === true,
-      onTitle: "Enable Chat Tabs",
-      offTitle: "Disable Chat Tabs",
+      onTitle: t("Enable Chat Tabs"),
+      offTitle: t("Disable Chat Tabs"),
       row: SETTINGS_ROWS.chatTabs,
       icon: PanelTop,
       patch: (next) => ({ chatTabsEnabled: next }),
@@ -169,8 +177,8 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     list.push(toggle({
       id: "toggle-widgets-peek",
       on: appSettings.widgetsPeekEnabled === true,
-      onTitle: "Enable Peek at Widgets",
-      offTitle: "Disable Peek at Widgets",
+      onTitle: t("Enable Peek at Widgets"),
+      offTitle: t("Disable Peek at Widgets"),
       row: SETTINGS_ROWS.widgetsPeek,
       icon: PanelRight,
       patch: (next) => ({ widgetsPeekEnabled: next }),
@@ -178,8 +186,8 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     list.push(toggle({
       id: "toggle-terminal-webgl",
       on: appSettings.terminal.webglRenderer,
-      onTitle: "Enable Terminal GPU Rendering",
-      offTitle: "Disable Terminal GPU Rendering",
+      onTitle: t("Enable Terminal GPU Rendering"),
+      offTitle: t("Disable Terminal GPU Rendering"),
       row: SETTINGS_ROWS.terminalWebglRenderer,
       icon: Cpu,
       patch: (next) => ({ terminal: { webglRenderer: next } }),
@@ -187,8 +195,8 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     list.push(toggle({
       id: "toggle-analytics",
       on: appSettings.analyticsEnabled !== false,
-      onTitle: "Enable Anonymous Analytics",
-      offTitle: "Disable Anonymous Analytics",
+      onTitle: t("Enable Anonymous Analytics"),
+      offTitle: t("Disable Anonymous Analytics"),
       row: SETTINGS_ROWS.anonymousAnalytics,
       icon: ChartNoAxesColumn,
       patch: (next) => ({ analyticsEnabled: next }),
@@ -198,7 +206,7 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
       if (option.value === appSettings.chatSoundPreference) continue
       list.push({
         id: `set-chat-sounds-${option.value}`,
-        title: `Chat Sounds: ${option.label}`,
+        title: t("Chat Sounds: {option}", { option: t(option.label) }),
         keywords: [...rowKeywords(SETTINGS_ROWS.chatSounds, ...option.keywords), "sound", "sounds"],
         icon: Volume2,
         searchOnly: true,
@@ -209,7 +217,7 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
       if (option.value === appSettings.chatBrowserNotificationPreference) continue
       list.push({
         id: `set-notifications-${option.value}`,
-        title: `Notifications: ${option.label}`,
+        title: t("Notifications: {option}", { option: t(option.label) }),
         keywords: [...rowKeywords(SETTINGS_ROWS.chatBrowserNotifications, ...option.keywords), "alerts", "banners"],
         icon: BellRing,
         searchOnly: true,
@@ -220,7 +228,7 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
       if (option.value === appSettings.submitWhileRunning) continue
       list.push({
         id: `set-submit-while-running-${option.value}`,
-        title: `Enter While Running: ${option.label}`,
+        title: t("Enter While Running: {option}", { option: t(option.label) }),
         keywords: [...rowKeywords(SETTINGS_ROWS.submitWhileRunning, ...option.keywords), "running", "busy"],
         icon: CornerDownLeft,
         searchOnly: true,
@@ -235,7 +243,7 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     if (mac.loginItem === "requiresApproval") {
       list.push({
         id: "mac-open-login-items",
-        title: "Approve Open at Login…",
+        title: t("Approve Open at Login…"),
         keywords: rowKeywords(SETTINGS_ROWS.openAtLogin, "login items", "system settings"),
         icon: LogIn,
         searchOnly: true,
@@ -245,7 +253,7 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
       const enabled = mac.loginItem === "enabled"
       list.push({
         id: "mac-toggle-login-item",
-        title: enabled ? "Don't Open at Login" : "Open at Login",
+        title: enabled ? t("Don't Open at Login") : t("Open at Login"),
         keywords: rowKeywords(SETTINGS_ROWS.openAtLogin, enabled ? "disable" : "enable", enabled ? "off" : "on"),
         icon: LogIn,
         searchOnly: true,
@@ -254,7 +262,7 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     }
     list.push({
       id: "mac-toggle-keep-awake",
-      title: mac.keepAwakeOnPower ? "Let This Mac Sleep" : "Keep This Mac Awake",
+      title: mac.keepAwakeOnPower ? t("Let This Mac Sleep") : t("Keep This Mac Awake"),
       keywords: rowKeywords(SETTINGS_ROWS.keepAwake, "awake", "insomnia", "no sleep", "prevent sleep", mac.keepAwakeOnPower ? "disable" : "enable"),
       icon: Coffee,
       searchOnly: true,
@@ -264,7 +272,7 @@ export function buildSettingsCommands({ appSettings, theme, mac }: SettingsComma
     if (mac.keepAwakeOnPower) {
       list.push({
         id: "mac-toggle-keep-awake-battery",
-        title: mac.keepAwakeOnBattery ? "Let This Mac Sleep on Battery" : "Keep This Mac Awake on Battery",
+        title: mac.keepAwakeOnBattery ? t("Let This Mac Sleep on Battery") : t("Keep This Mac Awake on Battery"),
         keywords: rowKeywords(SETTINGS_ROWS.keepAwakeOnBattery, "awake", "keep awake", "caffeinate"),
         icon: Battery,
         searchOnly: true,

@@ -9,6 +9,7 @@ import {
 import { paneDurationMs, prefersReducedMotion } from "../paneAnimation"
 import { useAppSettingsStore } from "../../stores/appSettingsStore"
 import { useEdgePeek } from "../useEdgePeek"
+import { useT } from "../../i18n/useT"
 
 /** The chat's narrowest, as a share of the page: beside the widget column, and beside the viewer's pane. */
 export const CHAT_MIN_WORKSPACE_SIZE_PERCENT = 20
@@ -83,6 +84,7 @@ export const WidgetsColumn = memo(function WidgetsColumn({
   onPeekChange,
   content,
 }: WidgetsColumnProps) {
+  const t = useT()
   const sliding = useColumnSlide(open, switchKey)
   // The peek (useEdgePeek): the closed column shown over the chat while the
   // mouse is at the window's right edge. Only the last 2px open it, where the
@@ -165,7 +167,7 @@ export const WidgetsColumn = memo(function WidgetsColumn({
       <div
         role="separator"
         aria-orientation="vertical"
-        aria-label="Resize widgets"
+        aria-label={t("Resize widgets")}
         aria-valuenow={Math.round(widthPx)}
         aria-valuemin={RIGHT_SIDEBAR_MIN_WIDTH_PX}
         aria-valuemax={RIGHT_SIDEBAR_MAX_WIDTH_PX}

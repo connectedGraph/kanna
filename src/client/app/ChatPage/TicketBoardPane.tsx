@@ -8,6 +8,7 @@ import { cn, normalizeChatId } from "../../lib/utils"
 import type { TicketBoard } from "../../stores/ticketBoardStore"
 import { useSectionOverrides } from "../../stores/sidebarSectionStore"
 import { openViewer } from "../../stores/viewerStore"
+import { useT } from "../../i18n/useT"
 
 /** The key "Other chats" is folded under, in the board's list of sections. */
 const OTHER_CHATS_SECTION = "other-chats"
@@ -37,6 +38,7 @@ export const TicketBoardPane = memo(function TicketBoardPane({ delegatorChatId, 
   onSelectChat: ((chatId: string) => void) | null
   onClose: () => void
 }) {
+  const t = useT()
   const expanded = useViewerPlacement()?.expanded ?? false
   // Folded until opened, and kept as it was left while the page is open (a
   // ticket opened over the board and closed again finds it as it was), as
@@ -74,8 +76,8 @@ export const TicketBoardPane = memo(function TicketBoardPane({ delegatorChatId, 
 
   return (
     <ViewerSurface
-      label={delegatorTitle ? `Tickets, ${delegatorTitle}` : "Tickets"}
-      title={<span className="font-semibold">Tickets</span>}
+      label={delegatorTitle ? t("Tickets, {delegator}", { delegator: delegatorTitle }) : t("Tickets")}
+      title={<span className="font-semibold">{t("Tickets")}</span>}
       subtitle={delegatorTitle ?? undefined}
       onClose={onClose}
       bodyClassName={expanded ? "flex flex-col overflow-hidden" : undefined}
@@ -86,7 +88,7 @@ export const TicketBoardPane = memo(function TicketBoardPane({ delegatorChatId, 
     >
       {board.tickets.length === 0 && others.length === 0 ? (
         <p className="px-4 py-6 text-sm text-muted-foreground">
-          No tickets yet. Each piece of work this delegator hands out gets one here.
+          {t("No tickets yet. Each piece of work this delegator hands out gets one here.")}
         </p>
       ) : expanded ? (
         <TicketBoardColumns tickets={board.tickets} readDoneTotal={board.readDoneTotal} nowMs={nowMs} onOpenTicket={openTicket} scrollKey={`tickets:${delegatorChatId}`} />

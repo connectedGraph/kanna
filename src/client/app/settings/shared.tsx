@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react"
 import type { ChatBrowserNotificationPreference } from "../../../shared/types"
 import { Select, SelectContent, SelectGroup, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import type { SettingsRowDef } from "./registry"
 
 /** Shared row layout + tiny helpers for the settings sections. */
@@ -326,7 +327,17 @@ export function SettingsRow({
   nested = false,
   wideControl = false,
 }: SettingsRowProps) {
-  const resolvedDescription = description === undefined ? def?.description : description
+  const t = useT()
+  /*
+   * Registry defs hold English source text, which is also the translation key
+   * (see shared/i18n): a section that passes its own JSX description skips
+   * this, and a def's words are translated here so every row translates in one
+   * place instead of at thirty call sites.
+   */
+  const resolvedTitle = title ?? (def ? t(def.title) : undefined)
+  const resolvedDescription = description === undefined
+    ? (def ? t(def.description) : undefined)
+    : description
   const hasDescription = Boolean(resolvedDescription)
   /*
    * Two layouts on one grid, switched at the column's @2xl breakpoint.
@@ -361,7 +372,7 @@ export function SettingsRow({
       >
         <div className="col-[1] row-[1] flex min-w-0 items-center gap-3 self-center text-sm font-medium text-foreground @2xl:max-w-xl">
           {icon}
-          <span className="min-w-0">{title ?? def?.title}</span>
+          <span className="min-w-0">{resolvedTitle}</span>
         </div>
         {hasDescription ? (
           <div className="col-[1/-1] row-[2] mt-0.5 text-[13px] leading-5 text-muted-foreground @2xl:col-[1] @2xl:max-w-xl">

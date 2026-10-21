@@ -7,6 +7,7 @@ import { delegatedListTitle, delegatedThreads, isUnnamedDelegator } from "../../
 import { cn } from "../../lib/utils"
 import { useSidebarStore } from "../../stores/sidebarStore"
 import { useViewerStore, type ViewerItem } from "../../stores/viewerStore"
+import { useT } from "../../i18n/useT"
 import { useOpenChat } from "../useOpenChat"
 import { useStableSidebarThreads } from "../useStableSidebarThreads"
 import { useTicketBoard } from "../../stores/ticketBoardStore"
@@ -42,6 +43,7 @@ export const DelegatedList = memo(function DelegatedList({ item, onClose }: {
   item: DelegatedItem
   onClose: () => void
 }) {
+  const t = useT()
   const delegator = useSidebarThread(item.chatId)
   const actions = useChatReferenceActions()
   const openChat = useOpenChat()
@@ -113,7 +115,7 @@ export const DelegatedList = memo(function DelegatedList({ item, onClose }: {
       <div ref={containerRef} className={cn("px-[7px] pb-2", VIEWER_END_PAD_CLASS)}>
         {threads.length === 0 || !actions || !card ? (
           <p className="px-[10px] py-6 text-sm text-muted-foreground">
-            No chats yet. The ones this delegator starts or messages are listed here.
+            {t("No chats yet. The ones this delegator starts or messages are listed here.")}
           </p>
         ) : (
           <>

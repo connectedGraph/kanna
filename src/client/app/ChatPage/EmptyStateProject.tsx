@@ -14,6 +14,7 @@ import { flattenSidebarThreads, listedThreads, type SidebarThread } from "../../
 import { cn } from "../../lib/utils"
 import { useChatHasDraft } from "../../stores/chatInputStore"
 import { useSidebarStore } from "../../stores/sidebarStore"
+import { useT } from "../../i18n/useT"
 
 const RECENT_CHAT_LIMIT = 12
 const SEARCH_RESULT_LIMIT = 20
@@ -102,6 +103,7 @@ export function EmptyStateProjectChats({ projectId, activeChatId, cascadeIn = fa
   activeChatId: string | null
   cascadeIn?: boolean
 }) {
+  const t = useT()
   const navigate = useNavigate()
   const group = useProjectGroup(projectId)
   const [nowMs] = useState(() => Date.now())
@@ -189,15 +191,17 @@ export function EmptyStateProjectChats({ projectId, activeChatId, cascadeIn = fa
             setCascadeDone(true)
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Search chats"
-          aria-label="Search this project's chats"
+          placeholder={t("Search chats")}
+          aria-label={t("Search this project's chats")}
           autoComplete="off"
           spellCheck={false}
           className="h-full min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
         />
       </label>
       {trimmedQuery && !firstMatch ? (
-        <p className="px-[30px] pt-2.5 text-sm text-muted-foreground">No chats match “{trimmedQuery}”</p>
+        <p className="px-[30px] pt-2.5 text-sm text-muted-foreground">
+          {t("No chats match “{query}”", { query: trimmedQuery })}
+        </p>
       ) : (
         // Flat, not wrapped per group: the labels' padding is what spaces
         // the groups, and the rows on either side of a label touch it.

@@ -16,6 +16,7 @@ import {
 import type { ChatAttachment } from "../../../shared/types"
 import { cn } from "../../lib/utils"
 import { classifyAttachmentIcon, type AttachmentIconKind } from "./attachmentPreview"
+import { useT } from "../../i18n/useT"
 
 type BaseAttachmentCardProps = {
   attachment: ChatAttachment
@@ -119,6 +120,7 @@ export function AttachmentFileCard({
 }
 
 function RemoveButton({ displayName, onRemove }: { displayName: string; onRemove: () => void }) {
+  const t = useT()
   return (
     <button
       type="button"
@@ -128,7 +130,7 @@ function RemoveButton({ displayName, onRemove }: { displayName: string; onRemove
         event.stopPropagation()
         onRemove()
       }}
-      aria-label={`Remove ${displayName}`}
+      aria-label={t("Remove {name}", { name: displayName })}
     >
       <X className="h-3.5 w-3.5" />
     </button>

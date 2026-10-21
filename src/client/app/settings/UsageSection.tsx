@@ -6,6 +6,8 @@ import { PROVIDER_ICONS } from "../../components/chat-ui/ChatPreferenceControls"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip"
 import { formatRelativeTime } from "../../lib/formatters"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
+import type { TFunction } from "../../i18n/catalogs"
 import type { KannaState } from "../useKannaState"
 
 const MINUTE_MS = 60_000
@@ -22,6 +24,37 @@ export function formatUntil(isoTimestamp: string): string | null {
   if (delta < DAY_MS) return `in ${Math.round(delta / HOUR_MS)}h`
   return `in ${Math.round(delta / DAY_MS)}d`
 }
+
+type UntilParts = { value: number; unit: "minute" | "hour" | "day" }
+
+/** The same distance formatUntil() prints, split up so a sentence can wrap it. */
+function untilParts(isoTimestamp: string): UntilParts | "now" | null {
+  const timestamp = Date.parse(isoTimestamp)
+  if (!Number.isFinite(timestamp)) return null
+  const delta = timestamp - Date.now()
+  if (delta <= 0) return "now"
+  if (delta < HOUR_MS) return { value: Math.max(1, Math.round(delta / MINUTE_MS)), unit: "minute" }
+  if (delta < DAY_MS) return { value: Math.round(delta / HOUR_MS), unit: "hour" }
+  return { value: Math.round(delta / DAY_MS), unit: "day" }
+}
+
+/** "in 2 hours" / "2小时后". */
+function untilText(isoTimestamp: string, t: TFunction): string | null {
+  const parts = untilParts(isoTimestamp)
+  if (parts === null) return null
+  if (parts === "now") return t("any moment")
+  return t("in {value} {unit}", { value: parts.value, unit: t(parts.unit === "minute" ? "minutes" : parts.unit === "hour" ? "hours" : "days") })
+}
+
+/** The compact form: "2h" / "1d" English, "2小时" / "1天" Chinese. */
+function untilShort(isoTimestamp: string, t: TFunction): string | null {
+  const parts = untilParts(isoTimestamp)
+  if (parts === null) return null
+  if (parts === "now") return `${0}${t("minutes")}`
+  return `${parts.value}${t(parts.unit === "minute" ? "minutes" : parts.unit === "hour" ? "hours" : "days")}`
+}
+
+
 
 export function formatPercent(value: number | null): string {
   if (value === null || !Number.isFinite(value)) return "—"
@@ -65,18 +98,23 @@ function formatMoney(amount: number, currency: string | null): string {
   return compact.startsWith("-") ? `-${symbol}${compact.slice(1)}` : `${symbol}${compact}`
 }
 
-function creditsSummary(credits: NonNullable<ProviderUsageSnapshot["credits"]>): string | null {
+function creditsSummary(
+  t: ReturnType<typeof useT>,
+  credits: NonNullable<ProviderUsageSnapshot["credits"]>
+): string | null {
   const parts: string[] = []
   if (credits.usedAmount != null) {
     const used = formatMoney(credits.usedAmount, credits.currency)
-    parts.push(credits.limitAmount != null ? `${used} of ${formatMoney(credits.limitAmount, credits.currency)} used` : `${used} used`)
+    parts.push(credits.limitAmount != null
+      ? t("{used} of {limit} used", { used, limit: formatMoney(credits.limitAmount, credits.currency) })
+      : t("{used} used", { used }))
   }
-  if (credits.usedPercent != null) parts.push(`${formatPercent(credits.usedPercent)} used`)
+  if (credits.usedPercent != null) parts.push(t("{percent} used", { percent: formatPercent(credits.usedPercent) }))
   if (credits.detail) {
     // Codex reports its prepaid balance as a bare numeric string ("1000");
     // render it as a remaining count. Non-numeric details ("Unlimited") pass through.
     const numeric = /^\d+(\.\d+)?$/.test(credits.detail.trim()) ? Number(credits.detail) : null
-    parts.push(numeric !== null ? `${formatCompact(numeric)} credits remaining` : credits.detail)
+    parts.push(numeric !== null ? t("{count} credits remaining", { count: formatCompact(numeric) }) : credits.detail)
   }
   return parts.length > 0 ? parts.join(" · ") : null
 }
@@ -132,14 +170,18 @@ const COMPACT_WINDOW_ROW_GRID = "grid grid-cols-[minmax(0,1fr)_1.75rem_minmax(2.
  * When a window resets. Full ("Resets in 2h") normally; compact shows just
  * the time and keeps the full sentence for its tooltip.
  */
-function ResetTime({ resets, compact, className }: { resets: string | null; compact: boolean; className?: string }) {
-  if (!resets) return <div className={className} />
-  const full = `Resets ${resets}`
+function ResetTime({ resetsAt, compact, className }: { resetsAt: string | null; compact: boolean; className?: string }) {
+  const t = useT()
+  if (!resetsAt) return <div className={className} />
+  const full = (() => {
+    const time = untilText(resetsAt, t)
+    return time === null ? null : t("Resets {time}", { time })
+  })()
   if (!compact) return <div className={cn("truncate text-xs text-muted-foreground", className)}>{full}</div>
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild>
-        <div className={cn("truncate text-xs text-muted-foreground", className)}>{resets.replace(/^in /, "")}</div>
+        <div className={cn("truncate text-xs text-muted-foreground", className)}>{untilShort(resetsAt, t)}</div>
       </TooltipTrigger>
       <TooltipContent side="top" align="center">{full}</TooltipContent>
     </Tooltip>
@@ -159,11 +201,10 @@ const COLLAPSED_HEADER_GRID = cn(
 )
 
 function WindowRow({ window, compact = false }: { window: UsageLimitWindow; compact?: boolean }) {
-  const resets = window.resetsAt ? formatUntil(window.resetsAt) : null
   return (
     <div className={compact ? COMPACT_WINDOW_ROW_GRID : WINDOW_ROW_GRID}>
       <div className="min-w-0 truncate text-sm text-foreground">{window.label}</div>
-      <ResetTime resets={resets} compact={compact} />
+      <ResetTime resetsAt={window.resetsAt ?? null} compact={compact} />
       <UsageBar usedPercent={window.usedPercent} />
       <div className={cn("tabular-nums", compact ? "text-right text-xs text-muted-foreground" : "text-right text-sm font-medium text-foreground")}>
         {formatPercent(window.usedPercent)}
@@ -177,6 +218,12 @@ export function planLabel(snapshot: ProviderUsageSnapshot): string {
   return [accountScopeLabel(snapshot.plan), snapshot.plan].filter(Boolean).join(" ")
 }
 
+/** planLabel() with the personal/enterprise scope in the reader's language. */
+function localizedPlanLabel(t: ReturnType<typeof useT>, snapshot: ProviderUsageSnapshot): string {
+  const scope = accountScopeLabel(snapshot.plan)
+  return [scope ? t(scope) : null, snapshot.plan].filter(Boolean).join(" ")
+}
+
 /**
  * A provider's limit windows, credits and detail line. Compact is the widget
  * column's density: a bare reset time and a narrower bar.
@@ -186,6 +233,7 @@ export function UsageWindowRows({ snapshot, compact = false, className }: {
   compact?: boolean
   className?: string
 }) {
+  const t = useT()
   return (
     <div className={cn("space-y-2.5", className)}>
       {snapshot.windows.map((window) => (
@@ -194,11 +242,14 @@ export function UsageWindowRows({ snapshot, compact = false, className }: {
       {snapshot.credits ? (
         <div className="flex items-baseline justify-between gap-3 border-t border-border pt-3 text-sm">
           <span className="text-foreground">{snapshot.credits.label}</span>
-          <span className="text-muted-foreground">{creditsSummary(snapshot.credits)}</span>
+          <span className="text-muted-foreground">{creditsSummary(t, snapshot.credits)}</span>
         </div>
       ) : null}
       {snapshot.detail ? (
-        <div className="text-xs text-muted-foreground">{snapshot.detail}</div>
+        // The server writes these as English sentences; the catalog happens to
+        // use English as its keys, so the same string translates here without
+        // a protocol change. One the catalog doesn't know renders as written.
+        <div className="text-xs text-muted-foreground">{t(snapshot.detail)}</div>
       ) : null}
     </div>
   )
@@ -222,17 +273,21 @@ export function ProviderCard({
    */
   onRefresh?: () => void
 }) {
+  const t = useT()
   const Icon = PROVIDER_ICONS[snapshot.provider]
   const hasContent = snapshot.windows.length > 0 || snapshot.credits
   const [expanded, setExpanded] = useState(false)
   const showBody = !collapsible || expanded
 
   const timestampText = refreshing
-    ? "Refreshing…"
+    ? t("Refreshing…")
     : snapshot.updatedAt
-      ? `Updated ${formatRelativeTime(snapshot.updatedAt)}`
+      ? (() => {
+        const time = formatRelativeTime(snapshot.updatedAt, t)
+        return time ? t("Updated {time}", { time }) : null
+      })()
       : onRefresh
-        ? "Refresh"
+        ? t("Refresh")
         : null
 
   // The timestamp doubles as the refresh control on non-collapsible cards
@@ -252,7 +307,7 @@ export function ProviderCard({
             {timestampText}
           </button>
         </TooltipTrigger>
-        <TooltipContent side="top" align="center">Refresh usage</TooltipContent>
+        <TooltipContent side="top" align="center">{t("Refresh usage")}</TooltipContent>
       </Tooltip>
     ) : (
       <span className="shrink-0 text-xs text-muted-foreground">{timestampText}</span>
@@ -260,7 +315,7 @@ export function ProviderCard({
 
   // Scope and plan share one pill ("Personal Pro"); `capitalize` title-cases the
   // raw plan string ("max" → "Max").
-  const planBadgeText = planLabel(snapshot)
+  const planBadgeText = localizedPlanLabel(t, snapshot)
 
   const identity = (
     <div className="flex min-w-0 items-center gap-2.5">
@@ -297,7 +352,6 @@ export function ProviderCard({
   // row title and the freshness stamp (which the header no longer prints) live
   // in the bar's tooltip instead.
   const summaryWindow = snapshot.windows[0] ?? null
-  const summaryResets = summaryWindow?.resetsAt ? formatUntil(summaryWindow.resetsAt) : null
 
   const header = showBody ? (
     <div className="flex items-center justify-between gap-3">
@@ -307,7 +361,7 @@ export function ProviderCard({
   ) : (
     <div className={COLLAPSED_HEADER_GRID}>
       {identity}
-      <ResetTime resets={summaryResets} compact={false} className="hidden md:block" />
+      <ResetTime resetsAt={summaryWindow?.resetsAt ?? null} compact={false} className="hidden md:block" />
       {summaryWindow ? (
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
@@ -337,7 +391,8 @@ export function ProviderCard({
     ) : (
       <div className="mt-3 text-sm text-muted-foreground">
         {snapshot.detail
-          ?? (snapshot.status === "unknown" ? "No usage recorded yet." : "Usage limits are not available.")}
+          ? t(snapshot.detail)
+          : (snapshot.status === "unknown" ? t("No usage recorded yet.") : t("Usage limits are not available."))}
       </div>
     )
   ) : null
@@ -418,6 +473,7 @@ export function useUsageLimits(socket: KannaState["socket"], active = true) {
 }
 
 export function UsageSection({ state }: { state: Pick<KannaState, "socket"> }) {
+  const t = useT()
   const { snapshot, refreshing, refresh: runRefresh } = useUsageLimits(state.socket)
 
   return (
@@ -437,7 +493,7 @@ export function UsageSection({ state }: { state: Pick<KannaState, "socket"> }) {
         ))
       ) : (
         <div className="rounded-2xl border border-border bg-card/40 px-5 py-6 text-sm text-muted-foreground">
-          Loading usage…
+          {t("Loading usage…")}
         </div>
       )}
     </div>

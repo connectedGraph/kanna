@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react"
+import { useT } from "../../i18n/useT"
 
 /**
  * Auto-scrolling live volume bars shown in place of the textarea while
@@ -11,6 +12,7 @@ const WAVE_BAR_SPACING = 2
 const WAVE_MIN_BAR_HEIGHT = 3
 
 export function RecordingWaveform({ levels }: { levels: number[] }) {
+  const t = useT()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -43,5 +45,5 @@ export function RecordingWaveform({ levels }: { levels: number[] }) {
     }
   }, [levels])
 
-  return <canvas ref={canvasRef} className="h-9 w-full text-muted-foreground" role="img" aria-label="Recording" />
+  return <canvas ref={canvasRef} className="h-9 w-full text-muted-foreground" role="img" aria-label={t("Recording")} />
 }

@@ -8,6 +8,7 @@ import { AttachmentFileCard, AttachmentImageCard } from "./AttachmentCard"
 import { openViewer, viewerAttachmentFromChat } from "../../stores/viewerStore"
 import { useTranscriptRenderOptions } from "./render-context"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 
 interface Props {
   content: string
@@ -109,6 +110,7 @@ export function UserMessageAttachments({ attachments, align = "end" }: { attachm
 export const USER_BUBBLE_CLASS = "min-w-0 rounded-2xl border border-border bg-muted text-primary prose prose-sm prose-invert"
 
 export function UserMessage({ content, attachments = [], steered = false, flash = false }: Props) {
+  const t = useT()
   const parsedContent = useMemo(() => parseSystemMessage(content), [content])
   const bubbleRef = useRef<HTMLDivElement | null>(null)
 
@@ -120,9 +122,9 @@ export function UserMessage({ content, attachments = [], steered = false, flash 
           <div className="flex max-w-[85%] items-center gap-2 sm:max-w-[80%]">
             {steered ? (
               <span
-                aria-label="Sent mid-turn"
+                aria-label={t("Sent mid-turn")}
                 role="img"
-                title="Sent mid-turn"
+                title={t("Sent mid-turn")}
                 className="shrink-0 text-muted-foreground"
               >
                 <CornerUpLeft className="h-4 w-4" />

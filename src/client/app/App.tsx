@@ -31,6 +31,7 @@ import { useKannaState } from "./useKannaState"
 import { useMigrateChannelPins } from "./useMigrateChannelPins"
 import { useSidebarStore } from "../stores/sidebarStore"
 import type { AppSettingsSnapshot } from "../../shared/types"
+import { useT } from "../i18n/useT"
 
 const AUTH_STATUS_RETRY_DELAY_MS = 500
 
@@ -63,6 +64,7 @@ function PasswordScreen({
   error: string | null
   onSubmit: (password: string) => Promise<void>
 }) {
+  const t = useT()
   const [password, setPassword] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -89,7 +91,7 @@ function PasswordScreen({
             </div>
           </div>
           <CardDescription className="leading-6">
-            Enter your password to continue.
+            {t("Enter your password to continue.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="px-6 pb-6">
@@ -105,7 +107,7 @@ function PasswordScreen({
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
+              placeholder={t("Password")}
               disabled={submitting}
               className="h-11 rounded-2xl bg-background"
             />
@@ -493,12 +495,13 @@ function KannaLayout() {
 }
 
 export function App() {
+  const t = useT()
   const auth = useAppAuthState()
 
   if (auth.state.status === "checking") {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-background text-sm text-muted-foreground">
-        Checking session…
+        {t("Checking session…")}
       </div>
     )
   }

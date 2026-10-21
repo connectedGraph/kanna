@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useT } from "../../i18n/useT"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
 import { ArrowLeft, Search } from "lucide-react"
@@ -29,7 +30,7 @@ function CommandDialog({
   open,
   onOpenChange,
   onEscapeKeyDown,
-  title = "Command Palette",
+  title,
   children,
 }: {
   open: boolean
@@ -39,6 +40,7 @@ function CommandDialog({
   title?: string
   children: React.ReactNode
 }) {
+  const t = useT()
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -56,9 +58,9 @@ function CommandDialog({
             "duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           )}
         >
-          <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
+          <DialogPrimitive.Title className="sr-only">{title ?? t("Command Palette")}</DialogPrimitive.Title>
           <DialogPrimitive.Description className="sr-only">
-            Type a command or search…
+            {t("Type a command or search…")}
           </DialogPrimitive.Description>
           {children}
         </DialogPrimitive.Content>
@@ -73,12 +75,14 @@ const CommandInput = React.forwardRef<
     /** When set, the leading icon becomes a clickable back arrow (used on sub-pages). */
     onBack?: () => void
   }
->(({ className, onBack, ...props }, ref) => (
-  <div className="flex items-center gap-2 border-b border-border px-3.5" cmdk-input-wrapper="">
+>(({ className, onBack, ...props }, ref) => {
+  const t = useT()
+  return (
+    <div className="flex items-center gap-2 border-b border-border px-3.5" cmdk-input-wrapper="">
     {onBack ? (
       <button
         type="button"
-        aria-label="Back"
+        aria-label={t("Back")}
         onClick={onBack}
         // -mx-1 cancels the p-1 hit-area padding on both sides so the button
         // occupies exactly the search icon's 16px — the input never shifts
@@ -99,7 +103,8 @@ const CommandInput = React.forwardRef<
       {...props}
     />
   </div>
-))
+  )
+})
 CommandInput.displayName = CommandPrimitive.Input.displayName
 
 const CommandList = React.forwardRef<

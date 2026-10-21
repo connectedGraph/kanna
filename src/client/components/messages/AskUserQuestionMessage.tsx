@@ -5,6 +5,7 @@ import type { AskUserQuestionAnswerMap } from "../../../shared/types"
 import { Button } from "../ui/button"
 import { cn } from "../../lib/utils"
 import { useTranscriptRenderOptions } from "./render-context"
+import { useT } from "../../i18n/useT"
 
 interface Props {
   message: Extract<ProcessedToolCall, { toolKind: "ask_user_question" }>
@@ -27,6 +28,7 @@ function QuestionCard({
   onBack?: () => void
   children: React.ReactNode
 }) {
+  const t = useT()
   const showBackButton = onBack && currentIndex > 0
 
   return (
@@ -41,7 +43,7 @@ function QuestionCard({
               <ChevronLeft className="h-4 w-4 -ml-0.5" strokeWidth={3} />
             </button>
           ) : totalQuestions > 1 ? (
-            <span className="font-bold text-muted-foreground whitespace-nowrap">{currentIndex + 1} of {totalQuestions}</span>
+            <span className="font-bold text-muted-foreground whitespace-nowrap">{t("{current} of {total}", { current: currentIndex + 1, total: totalQuestions })}</span>
           ) : null}
           {question}
         </h3>
@@ -148,6 +150,7 @@ function getQuestionKey(question: AskUserQuestionItem): string {
 }
 
 export function AskUserQuestionMessage({ message, onSubmit, isLatest }: Props) {
+  const t = useT()
   const renderOptions = useTranscriptRenderOptions()
   const questions = message.input.questions
   const isComplete = !!message.result
@@ -270,8 +273,8 @@ export function AskUserQuestionMessage({ message, onSubmit, isLatest }: Props) {
       <div className="w-full">
         <div className="rounded-2xl border border-border overflow-hidden">
           <div className="font-medium text-sm p-3 px-4 pr-5 bg-muted  border-b border-border flex flex-row items-center justify-between">
-            <p>Question{questions.length !== 1 ? "s" : ""}</p>
-            <p className="">{isDiscarded ? "Discarded" : "Answers"}</p>
+            <p>{questions.length !== 1 ? t("Questions") : t("Question")}</p>
+            <p className="">{isDiscarded ? t("Discarded") : t("Answers")}</p>
           </div>
           {questions.map((question, index) => {
             const answerValue = displayAnswers[getQuestionKey(question)] || displayAnswers[question.question] || []
@@ -289,7 +292,7 @@ export function AskUserQuestionMessage({ message, onSubmit, isLatest }: Props) {
                 {answerValue.length > 0 && <div className="text-sm font-medium text-right max-w-[50%] text-pretty">{answerValue.join(", ")}</div>}
                 {answerValue.length === 0 && (
                   <div className="text-sm font-medium text-right italic">
-                    {isDiscarded ? "Discarded" : "No Response"}
+                    {isDiscarded ? t("Discarded") : t("No Response")}
                   </div>
                 )}
               </div>
@@ -305,8 +308,8 @@ export function AskUserQuestionMessage({ message, onSubmit, isLatest }: Props) {
       <div className="w-full">
         <div className="rounded-2xl border border-border overflow-hidden">
           <div className="font-medium text-sm p-3 px-4 pr-5 bg-muted border-b border-border flex flex-row items-center justify-between gap-3">
-            <p>Question{questions.length !== 1 ? "s" : ""}</p>
-            <p className="text-muted-foreground">Awaiting response</p>
+            <p>{questions.length !== 1 ? t("Questions") : t("Question")}</p>
+            <p className="text-muted-foreground">{t("Awaiting response")}</p>
           </div>
           {questions.map((question, index) => (
             <div
@@ -318,7 +321,7 @@ export function AskUserQuestionMessage({ message, onSubmit, isLatest }: Props) {
             >
               <div className="text-sm text-pretty">{question.question}</div>
               <div className="max-w-[50%] text-right text-xs text-muted-foreground text-pretty">
-                {question.options?.map((option) => option.label).join(", ") || "Freeform response"}
+                {question.options?.map((option) => option.label).join(", ") || t("Freeform response")}
               </div>
             </div>
           ))}
@@ -333,7 +336,7 @@ export function AskUserQuestionMessage({ message, onSubmit, isLatest }: Props) {
       <div className="w-full py-2">
         <div className="flex items-center gap-2">
           <MessageCircleQuestion className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Questions pending (newer question active)</span>
+          <span className="text-sm text-muted-foreground">{t("Questions pending (newer question active)")}</span>
         </div>
       </div>
     )
@@ -372,7 +375,7 @@ export function AskUserQuestionMessage({ message, onSubmit, isLatest }: Props) {
               value={customInput}
               onChange={(e) => handleCustomInputChange(currentQuestion, e.target.value)}
               onKeyDown={handleCustomInputEnter}
-              placeholder={currentQuestion.options?.length ? "Other..." : "Enter a value"}
+              placeholder={currentQuestion.options?.length ? t("Other...") : t("Enter a value")}
               className="flex-1 px-3 !py-1 pl-4 min-h-[55px] min-w-0 text-sm bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
             />
             {!!currentQuestion.options?.length && <Checkbox
@@ -387,7 +390,7 @@ export function AskUserQuestionMessage({ message, onSubmit, isLatest }: Props) {
       <div className="flex justify-end gap-2 mx-2">
         {!isLastQuestion && currentHasAnswer && (currentQuestion.multiSelect || !!customInput) && (
           <Button size="sm" onClick={handleNext}>
-            Next
+            {t("Next")}
           </Button>
         )}
         {isLastQuestion && (
@@ -397,7 +400,7 @@ export function AskUserQuestionMessage({ message, onSubmit, isLatest }: Props) {
             disabled={!allQuestionsAnswered}
             className={cn(!allQuestionsAnswered && "opacity-50 cursor-not-allowed", "rounded-full")}
           >
-            Submit
+            {t("Submit")}
           </Button>
         )}
       </div>

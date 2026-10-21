@@ -2,6 +2,7 @@ import { useEffect, useRef, type Ref } from "react"
 import { Loader2, Square, Workflow as WorkflowIcon } from "lucide-react"
 import type { SubagentActivity, WorkflowAgent, WorkflowAgentState } from "../../../../shared/types"
 import { cn } from "../../../lib/utils"
+import { useT, type TFunction } from "../../../i18n/useT"
 import { formatPromptTimestamp } from "../../messages/ResultMessage"
 import { Button } from "../../ui/button"
 import { TURN_CARD_ROW_INSET, TurnCardMetaRow, TurnCardMetaSeparator } from "../../ui/turn-card"
@@ -72,16 +73,25 @@ const OUTCOME_WORD: Record<Exclude<SubagentActivity["status"], "running">, strin
  * Where the run is, for the status line: its phase while it runs ("Phase 2
  * of 3 Score"), how it ended once it has ("Failed · 5 of 7 done, 1 failed").
  */
-function workflowStatus(workflow: SubagentActivity, summary: WorkflowSummary, phases: readonly { index: number }[], stopping: boolean) {
-  const tally = `${summary.done} of ${summary.total} done${summary.failed ? `, ${summary.failed} failed` : ""}`
+function workflowStatus(
+  workflow: SubagentActivity,
+  summary: WorkflowSummary,
+  phases: readonly { index: number }[],
+  stopping: boolean,
+  t: TFunction,
+) {
+  const tally = summary.failed
+    ? t("{done} of {total} done, {failed} failed", { done: summary.done, total: summary.total, failed: summary.failed })
+    : t("{done} of {total} done", { done: summary.done, total: summary.total })
   if (workflow.status !== "running") {
-    return summary.total > 0 ? `${OUTCOME_WORD[workflow.status]} · ${tally}` : OUTCOME_WORD[workflow.status]
+    const outcome = t(OUTCOME_WORD[workflow.status])
+    return summary.total > 0 ? `${outcome} · ${tally}` : outcome
   }
-  if (stopping) return "Stopping…"
-  if (summary.total === 0) return "Starting…"
+  if (stopping) return t("Stopping…")
+  if (summary.total === 0) return t("Starting…")
   if (!summary.currentPhase) return tally
   const number = phases.findIndex((phase) => phase.index === summary.currentPhase!.index) + 1
-  return <><span className="text-muted-foreground/70">Phase {number} of {phases.length}</span> {summary.currentPhase.title}</>
+  return <><span className="text-muted-foreground/70">{t("Phase {number} of {total}", { number, total: phases.length })}</span> {summary.currentPhase.title}</>
 }
 
 export function WorkflowWidget({
@@ -111,6 +121,7 @@ function WorkflowSection({
   now: number
   stopControl: StopTaskControl
 }) {
+  const t = useT()
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const tileGridRef = useRef<HTMLDivElement | null>(null)
   const progress = workflow.workflow ?? { phases: [], agents: [] }
@@ -141,8 +152,8 @@ function WorkflowSection({
             variant="ghost"
             size="none"
             disabled={stopping}
-            aria-label="Stop workflow"
-            title="Stop workflow"
+            aria-label={t("Stop workflow")}
+            title={t("Stop workflow")}
             onClick={() => stopControl.stop(workflow.id)}
             className="size-6 justify-center rounded-md p-0 text-muted-foreground transition-[color,scale] duration-150 ease-snappy hover:text-destructive active:scale-[0.97]"
           >
@@ -154,7 +165,7 @@ function WorkflowSection({
       ) : (
         <span className="flex size-6 items-center justify-center">
           <SwapIn swapKey={workflow.status}>
-            <outcome.Icon role="img" aria-label={outcome.label} className={cn("size-4", outcome.className)} />
+            <outcome.Icon role="img" aria-label={t(outcome.label)} className={cn("size-4", outcome.className)} />
           </SwapIn>
         </span>
       )}
@@ -168,10 +179,10 @@ function WorkflowSection({
             <WorkflowTiles agents={progress.agents} summary={summary} ended={!running} isNew={(index) => !seen.has(index)} gridRef={tileGridRef} />
           ) : null}
           <div className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-            <span className="min-w-0 truncate">{workflowStatus(workflow, summary, progress.phases, stopping)}</span>
+            <span className="min-w-0 truncate">{workflowStatus(workflow, summary, progress.phases, stopping, t)}</span>
             <span className="ml-auto shrink-0 pl-2 tabular-nums">
               {elapsed}
-              {summary.tokens > 0 ? ` · ${formatTokens(summary.tokens)} tokens` : ""}
+              {summary.tokens > 0 ? ` · ${t("{count} tokens", { count: formatTokens(summary.tokens) })}` : ""}
             </span>
           </div>
         </WidgetStatic>
@@ -214,7 +225,10 @@ export function WorkflowTiles({
   isNew: (index: number) => boolean
   gridRef?: Ref<HTMLDivElement>
 }) {
-  const label = `${summary.done} of ${summary.total} agents done${summary.failed ? `, ${summary.failed} failed` : ""}`
+  const t = useT()
+  const label = summary.failed
+    ? t("{done} of {total} agents done, {failed} failed", { done: summary.done, total: summary.total, failed: summary.failed })
+    : t("{done} of {total} agents done", { done: summary.done, total: summary.total })
   const shown = agents.slice(0, MAX_TILES)
   return (
     <div
@@ -251,15 +265,16 @@ export function WorkflowTiles({
  * full, the start of what it was told, what it has used, and how it ended.
  */
 export function WorkflowAgentCardContent({ agent, phaseTitle, now }: { agent: WorkflowAgent; phaseTitle?: string; now: number }) {
+  const t = useT()
   const elapsed = workflowAgentElapsed(agent, now)
   const state = AGENT_STATE_LABEL[agent.state]
   const hasUsage = agent.toolCalls !== undefined || agent.tokens !== undefined
   return (
     <>
       <TurnCardMetaRow>
-        <span className="truncate">{phaseTitle ?? `Agent ${agent.index}`}</span>
+        <span className="truncate">{phaseTitle ?? t("Agent {number}", { number: agent.index })}</span>
         <TurnCardMetaSeparator />
-        <span className="shrink-0">{agent.cached ? "Cached" : state}</span>
+        <span className="shrink-0">{agent.cached ? t("Cached") : t(state)}</span>
         {agent.model ? (
           <>
             <TurnCardMetaSeparator />
@@ -280,11 +295,11 @@ export function WorkflowAgentCardContent({ agent, phaseTitle, now }: { agent: Wo
       {hasUsage || agent.error || agent.resultPreview ? <div className="-mx-1.5 mt-2 border-t border-border/60" aria-hidden /> : null}
       {hasUsage ? (
         <TurnCardMetaRow className="mt-1.5">
-          <span>{(agent.toolCalls ?? 0).toLocaleString()} tool call{agent.toolCalls === 1 ? "" : "s"}</span>
+          <span>{t(agent.toolCalls === 1 ? "{count} tool call" : "{count} tool calls", { count: (agent.toolCalls ?? 0).toLocaleString() })}</span>
           {agent.tokens ? (
             <>
               <TurnCardMetaSeparator />
-              <span>{formatTokens(agent.tokens)} tokens</span>
+              <span>{t("{count} tokens", { count: formatTokens(agent.tokens) })}</span>
             </>
           ) : null}
         </TurnCardMetaRow>
@@ -293,7 +308,7 @@ export function WorkflowAgentCardContent({ agent, phaseTitle, now }: { agent: Wo
         <div className={cn("mt-0.5 line-clamp-4 whitespace-pre-wrap text-[12px] text-destructive", TURN_CARD_ROW_INSET)}>{agent.error}</div>
       ) : agent.resultPreview ? (
         <div className={cn("mt-0.5 line-clamp-4 whitespace-pre-wrap text-[12px] text-muted-foreground", TURN_CARD_ROW_INSET)}>
-          <span className="text-muted-foreground/70">Result</span> {agent.resultPreview}
+          <span className="text-muted-foreground/70">{t("Result")}</span> {agent.resultPreview}
         </div>
       ) : null}
     </>

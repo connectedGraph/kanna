@@ -25,6 +25,7 @@ import type { SidebarChatRow, SidebarProjectGroup } from "../../../../shared/typ
 import { APP_NAME } from "../../../../shared/branding"
 import { getPathBasename } from "../../../lib/formatters"
 import { getProjectSidebarLabel, type ProjectSidebarLabel } from "../../../lib/project-label"
+import { useT } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { ProjectLabel } from "../ProjectLabel"
 import { ProjectSectionMenu } from "./Menus"
@@ -134,13 +135,14 @@ function EmptyProjectChatButton({
   isConnected?: boolean
   startingLocalPath?: string | null
 }) {
+  const t = useT()
   const disabled = !isConnected || startingLocalPath === localPath
 
   return (
     <button
       type="button"
       disabled={disabled}
-      title={!isConnected ? `Start ${APP_NAME} to connect` : "New Chat"}
+      title={!isConnected ? t("Start {app} to connect", { app: APP_NAME }) : t("New Chat")}
       // Geometry tracks ThreadRow's (gap-2.5 px-2 py-1.5) so this sits flush
       // with the chat rows above it. The leading spacer stands in for their
       // status glyph / harness icon, the trailing one for their min-w-12
@@ -155,7 +157,7 @@ function EmptyProjectChatButton({
     >
       <div className="h-4 w-4 shrink-0" aria-hidden />
       <span className="min-w-0 shrink truncate text-slate-500 dark:text-slate-400">
-        New Chat
+        {t("New Chat")}
       </span>
       <div className="ml-auto h-6 min-w-12 shrink-0 pl-3" aria-hidden />
     </button>
@@ -227,6 +229,7 @@ const SortableProjectGroup = memo(function SortableProjectGroup({
   startingLocalPath,
   newSidebar = false,
 }: SortableProjectGroupProps) {
+  const t = useT()
   const { groupKey, localPath, title } = group
   // The New Sidebar names a project by its repo, flagging an off-main branch
   // with a glyph; the old sidebar keeps the plain project title.
@@ -311,7 +314,7 @@ const SortableProjectGroup = memo(function SortableProjectGroup({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={4}>
-                More
+                {t("More")}
               </TooltipContent>
             </Tooltip>
           ) : null}
@@ -339,7 +342,7 @@ const SortableProjectGroup = memo(function SortableProjectGroup({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={4}>
-                {!isConnected ? `Start ${APP_NAME} to connect` : "New Chat"}
+                {!isConnected ? t("Start {app} to connect", { app: APP_NAME }) : t("New Chat")}
               </TooltipContent>
             </Tooltip>
           ) : null}
@@ -392,7 +395,7 @@ const SortableProjectGroup = memo(function SortableProjectGroup({
                   onClick={() => onToggleExpandedGroup(groupKey)}
                   className="pl-2.5 py-1 text-xs text-muted-foreground/60 hover:text-foreground/60 transition-colors flex flex-row items-center gap-2 justify-center"
                 >
-                 Show less
+                 {t("Show less")}
                 </button>
               ) : null}
               {isExpanded ? group.olderChats.map(renderChatRow) : null}
@@ -401,7 +404,7 @@ const SortableProjectGroup = memo(function SortableProjectGroup({
                   onClick={() => onToggleExpandedGroup(groupKey)}
                   className="pl-2.5 py-1 text-xs text-muted-foreground/60 hover:text-foreground/60 transition-colors flex flex-row items-center gap-1 justify-center"
                 >
-                 Show more
+                 {t("Show more")}
                 </button>
               ) : null}
             </>

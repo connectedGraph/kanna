@@ -6,6 +6,7 @@ import type { SidebarChatRow } from "../../../shared/types"
 import type { SidebarThread } from "../../lib/thread-sections"
 import { cn } from "../../lib/utils"
 import { waitingOnLabel } from "../../lib/waiting-on"
+import type { TFunction } from "../../i18n/catalogs"
 import { AnimatedShinyText } from "../ui/animated-shiny-text"
 import { ProjectIcon } from "../ui/project-icon"
 import { PROVIDER_ICONS } from "./ChatPreferenceControls"
@@ -30,12 +31,12 @@ function statusDotClass(archived: boolean) {
  * carried by title contrast, not by this slot, so it only ever holds things
  * that want your attention.
  */
-export function renderChatStatusDot(chat: SidebarChatRow): ReactNode | null {
+export function renderChatStatusDot(chat: SidebarChatRow, t?: TFunction): ReactNode | null {
   if (chat.status === "starting" || chat.status === "running") return <StatusMark kind="working" />
   // Still going, but not in this chat: the grey a running task gets in the
   // Tasks widget, which is where the work is. Ahead of the unread ping,
   // because the reply it would flag is not the chat's last word.
-  if (chat.status === "waiting_on_subagent") return <StatusMark kind="waiting_on_subagent" label={waitingOnLabel(chat.waitingOn)} />
+  if (chat.status === "waiting_on_subagent") return <StatusMark kind="waiting_on_subagent" label={waitingOnLabel(chat.waitingOn, t)} />
   if (chat.status === "waiting_for_user") return <StatusMark kind="waiting" />
   return chat.unread ? <StatusMark kind="unread" /> : null
 }

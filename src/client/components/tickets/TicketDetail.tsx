@@ -23,6 +23,7 @@ import { UserMessage } from "../messages/UserMessage"
 import { Visualization } from "../messages/Visualization"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
 import { TicketChatMark, TicketMark } from "./TicketMark"
+import { useT } from "../../i18n/useT"
 
 /** What a reply carries besides its words: its files, and the composer's settings for the turn it starts. */
 export interface TicketReplyOptions {
@@ -338,6 +339,7 @@ export function TicketMenu({ done, onSetStatus, onMarkUnread, onCopyLink }: {
   onMarkUnread: () => void
   onCopyLink: () => void
 }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const run = (action: () => void) => () => {
     setOpen(false)
@@ -350,7 +352,7 @@ export function TicketMenu({ done, onSetStatus, onMarkUnread, onCopyLink }: {
           <PopoverPrimitive.Trigger asChild>
             <button
               type="button"
-              aria-label="Ticket menu"
+              aria-label={t("Ticket menu")}
               className={cn(
                 "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring [&_svg]:size-4",
                 "transition-[scale,background-color,color] duration-150 ease-snappy active:scale-[0.94] motion-reduce:transition-none motion-reduce:active:scale-100",
@@ -362,7 +364,7 @@ export function TicketMenu({ done, onSetStatus, onMarkUnread, onCopyLink }: {
             </button>
           </PopoverPrimitive.Trigger>
         </TooltipTrigger>
-        <TooltipContent>Ticket menu</TooltipContent>
+        <TooltipContent>{t("Ticket menu")}</TooltipContent>
       </Tooltip>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
@@ -372,12 +374,12 @@ export function TicketMenu({ done, onSetStatus, onMarkUnread, onCopyLink }: {
           className="kanna-ticket-menu z-50 w-[190px] rounded-[10px] border border-border p-1 text-popover-foreground shadow-[0_10px_30px_rgb(0_0_0/0.16)] outline-none"
         >
           {done ? (
-            <button type="button" className={MENU_ITEM_CLASS} onClick={run(() => onSetStatus("open"))}><RotateCcw />Reopen</button>
+            <button type="button" className={MENU_ITEM_CLASS} onClick={run(() => onSetStatus("open"))}><RotateCcw />{t("Reopen")}</button>
           ) : (
-            <button type="button" className={MENU_ITEM_CLASS} onClick={run(() => onSetStatus("done"))}><CircleCheck />Close</button>
+            <button type="button" className={MENU_ITEM_CLASS} onClick={run(() => onSetStatus("done"))}><CircleCheck />{t("Close")}</button>
           )}
-          <button type="button" className={MENU_ITEM_CLASS} onClick={run(onMarkUnread)}><Mail />Mark as unread</button>
-          <button type="button" className={MENU_ITEM_CLASS} onClick={run(onCopyLink)}><Link />Copy link</button>
+          <button type="button" className={MENU_ITEM_CLASS} onClick={run(onMarkUnread)}><Mail />{t("Mark as unread")}</button>
+          <button type="button" className={MENU_ITEM_CLASS} onClick={run(onCopyLink)}><Link />{t("Copy link")}</button>
         </PopoverPrimitive.Content>
       </PopoverPrimitive.Portal>
     </PopoverPrimitive.Root>

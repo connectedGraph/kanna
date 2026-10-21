@@ -6,6 +6,7 @@ import type { ChatInputHandle } from "../../components/chat-ui/ChatInput"
 import { useSidebarThread } from "../../components/chat-ui/chat-reference"
 import { TICKET_HEAD_TOP_CLASS, TICKET_REPLY_ATTRIBUTE, TicketActivity, TicketColumn, TicketComposer, type TicketReplyOptions, TicketDetailBody, TicketMenu, TicketTitle } from "../../components/tickets/TicketDetail"
 import { ViewerIconButton, ViewerSurface } from "../../components/viewer/ViewerSurface"
+import { useT } from "../../i18n/useT"
 import { copyTextToClipboard } from "../../lib/clipboard"
 import { delegatorDisplayTitle } from "../../lib/delegators"
 import { snapshotDroppedFiles } from "../../lib/snapshotDroppedFiles"
@@ -37,6 +38,7 @@ export const TicketView = memo(function TicketView({ item, context, onClose }: {
   context: ChatPreviewContext
   onClose: () => void
 }) {
+  const t = useT()
   const { socket } = context
   const { chatId, ticketId } = item
   const summary = useTicketSummary(chatId, ticketId)
@@ -103,12 +105,12 @@ export const TicketView = memo(function TicketView({ item, context, onClose }: {
       count: order.length,
       onPrevious: go(previous),
       onNext: go(next),
-      previousLabel: "Previous ticket · K",
-      nextLabel: "Next ticket · J",
+      previousLabel: t("Previous ticket · K"),
+      nextLabel: t("Next ticket · J"),
       hasPrevious: previous !== null,
       hasNext: next !== null,
     }
-  }, [board, chatId, ticketId])
+  }, [board, chatId, t, ticketId])
   const shown = detail ?? null
   const head = shown ?? summary
 
@@ -165,17 +167,17 @@ export const TicketView = memo(function TicketView({ item, context, onClose }: {
     const row = scrollRef.current?.querySelector(`[${TICKET_REPLY_ATTRIBUTE}="${CSS.escape(open.replyId)}"]`)
     row?.scrollIntoView({ block: "start", behavior: prefersReducedMotion() ? "auto" : "smooth" })
   }
-  const number = head ? `#${head.number}` : "Ticket"
+  const number = head ? `#${head.number}` : t("Ticket")
   return (
     <ViewerSurface
-      label={head ? `Ticket ${number}, ${head.title}` : "Ticket"}
+      label={head ? t("Ticket {number}, {title}", { number, title: head.title }) : t("Ticket")}
       navigation={navigation}
-      leading={boardBelow ? <ViewerIconButton label="Back to tickets (Esc)" onClick={stepBack}><ChevronLeft /></ViewerIconButton> : undefined}
+      leading={boardBelow ? <ViewerIconButton label={t("Back to tickets (Esc)")} onClick={stepBack}><ChevronLeft /></ViewerIconButton> : undefined}
       title={(
         <span className="flex min-w-0 items-center gap-1.5">
           {boardBelow
-            ? <button type="button" onClick={stepBack} className="shrink-0 font-normal text-muted-foreground outline-none focus-visible:underline pointer-hover:text-foreground">Tickets</button>
-            : <span className="shrink-0 font-normal text-muted-foreground">Tickets</span>}
+            ? <button type="button" onClick={stepBack} className="shrink-0 font-normal text-muted-foreground outline-none focus-visible:underline pointer-hover:text-foreground">{t("Tickets")}</button>
+            : <span className="shrink-0 font-normal text-muted-foreground">{t("Tickets")}</span>}
           <span aria-hidden className="text-muted-foreground">/</span>
           <span className="font-semibold tabular-nums">{number}</span>
         </span>
@@ -212,7 +214,7 @@ export const TicketView = memo(function TicketView({ item, context, onClose }: {
           // The board's row, until the ticket itself arrives.
           <TicketColumn className={`${TICKET_HEAD_TOP_CLASS} pb-1`}><TicketTitle ticket={summary} /></TicketColumn>
         ) : detail === null ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">This ticket is not in the list any more.</p>
+          <p className="px-4 py-6 text-sm text-muted-foreground">{t("This ticket is not in the list any more.")}</p>
         ) : null}
       </div>
       {detail !== null ? (

@@ -13,7 +13,9 @@ import type {
   GitHubPublishInfo,
   GitHubRepoAvailabilityResult,
 } from "../../../../shared/types"
+import { translate } from "../../../../shared/i18n"
 import { formatRelativeTime } from "../../../lib/formatters"
+import { useT, type TFunction } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { isDiffPathChecked, useDiffCommitStore } from "../../../stores/diffCommitStore"
 import { openViewer, useReviewedPath } from "../../../stores/viewerStore"
@@ -79,15 +81,23 @@ export const INITIAL_VISIBLE_HISTORY_COUNT = 5
  * because the commit row stays in view while the list is collapsed and the
  * header is then the only place the selection shows.
  */
+/** English, for callers and tests with no translator: a key is its own translation. */
+const englishT: TFunction = (key, vars) => translate(undefined, key, vars)
+
 export function summarizeChanges(
   files: ReadonlyArray<{ path: string; additions?: number; deletions?: number }>,
   selectedPaths: ReadonlySet<string>,
+  t: TFunction = englishT,
 ) {
   const partial = files.some((file) => !selectedPaths.has(file.path))
   const counted = partial ? files.filter((file) => selectedPaths.has(file.path)) : files
-  const noun = files.length === 1 ? "file" : "files"
+  // "1 file changed" and "3 files changed" are two keys: Chinese has no plural,
+  // but each English sentence is its own source string and its own translation.
+  const totals = files.length === 1
+    ? { partial: t("{selected} of {total} file changed", { selected: counted.length, total: files.length }), whole: t("{count} file changed", { count: files.length }) }
+    : { partial: t("{selected} of {total} files changed", { selected: counted.length, total: files.length }), whole: t("{count} files changed", { count: files.length }) }
   return {
-    title: partial ? `${counted.length} of ${files.length} ${noun} changed` : `${files.length} ${noun} changed`,
+    title: partial ? totals.partial : totals.whole,
     additions: counted.reduce((sum, file) => sum + (file.additions ?? 0), 0),
     deletions: counted.reduce((sum, file) => sum + (file.deletions ?? 0), 0),
   }
@@ -130,29 +140,29 @@ export function getPrimaryCommitActionPrefix(args: {
   isGeneratedCommitInFlight: boolean
   commitModeInFlight: DiffCommitMode | null
   primaryCommitMode: DiffCommitMode
-}) {
+}, t: TFunction = englishT) {
   if (args.hasSummary) {
     if (args.isCommitting) {
       if (args.isGeneratedCommitInFlight) {
-        return args.commitModeInFlight === "commit_only" ? "Committing…" : "Pushing…"
+        return args.commitModeInFlight === "commit_only" ? t("Committing…") : t("Pushing…")
       }
-      return args.commitModeInFlight === "commit_only" ? "Committing…" : "Committing & Pushing…"
+      return args.commitModeInFlight === "commit_only" ? t("Committing…") : t("Committing & Pushing…")
     }
-    return args.primaryCommitMode === "commit_only" ? "Commit to" : "Commit & push to"
+    return args.primaryCommitMode === "commit_only" ? t("Commit to") : t("Commit & push to")
   }
 
   if (args.isGenerating) {
-    return "Generating…"
+    return t("Generating…")
   }
-  return args.primaryCommitMode === "commit_only" ? "Generate & commit to" : "Generate & push to"
+  return args.primaryCommitMode === "commit_only" ? t("Generate & commit to") : t("Generate & push to")
 }
 
 /** The icon-only Fetch button's tooltip: when it last ran. */
-function formatFetchTooltip(isoTimestamp?: string) {
+function formatFetchTooltip(t: TFunction, isoTimestamp?: string) {
   if (!isoTimestamp) {
-    return "No local fetch recorded"
+    return t("No local fetch recorded")
   }
-  return `Fetched ${formatRelativeTime(isoTimestamp)}`
+  return t("Fetched {time}", { time: formatRelativeTime(isoTimestamp, t) })
 }
 
 /**
@@ -199,6 +209,7 @@ function GitWidgetsImpl({
   onReadBranch,
   onLoadPatch,
 }: GitWidgetsProps) {
+  const t = useT()
   const fileActions: DiffFileActions = useMemo(() => ({
     onOpenFile,
     onOpenInFinder,
@@ -283,7 +294,9 @@ function GitWidgetsImpl({
   const selectedCount = selectedPaths.length
   const allSelected = diffs.files.length > 0 && selectedCount === diffs.files.length
   const someSelected = selectedCount > 0 && selectedCount < diffs.files.length
-  const reviewLabel = allSelected ? "Review all" : someSelected ? `Review ${selectedCount}` : "Review"
+  const reviewLabel = allSelected
+    ? t("Review all")
+    : someSelected ? t("Review {count}", { count: selectedCount }) : t("Review")
   const trimmedSummary = summary.trim()
   const hasSummary = trimmedSummary.length > 0
   const isCommitting = commitModeInFlight !== null
@@ -291,8 +304,8 @@ function GitWidgetsImpl({
   const branchHistory = diffs.branchHistory?.entries ?? []
   const visibleHistory = visibleHistoryEntries(branchHistory, showAllHistory)
   const changesSummary = useMemo(
-    () => summarizeChanges(diffs.files, new Set(selectedPaths)),
-    [diffs.files, selectedPaths],
+    () => summarizeChanges(diffs.files, new Set(selectedPaths), t),
+    [diffs.files, selectedPaths, t],
   )
   const behindCount = diffs.behindCount ?? 0
   const aheadCount = diffs.aheadCount ?? 0
@@ -324,7 +337,7 @@ function GitWidgetsImpl({
     && hasSummary
     && !isBusy
   const primaryCommitMode: DiffCommitMode = hasRemoteOrigin ? "commit_and_push" : "commit_only"
-  const resolvedBranchName = diffs.branchName ?? "current branch"
+  const resolvedBranchName = diffs.branchName ?? t("current branch")
   const commitButtonState = hasSummary
     ? (isCommitting ? `committing:${commitModeInFlight}:${isGeneratedCommitInFlight}` : "commit")
     : (isGenerating ? "generating" : "generate")
@@ -335,7 +348,7 @@ function GitWidgetsImpl({
     isGeneratedCommitInFlight,
     commitModeInFlight,
     primaryCommitMode,
-  })
+  }, t)
 
   async function handleCommit(mode: DiffCommitMode) {
     if (!canCommit) return
@@ -454,12 +467,12 @@ function GitWidgetsImpl({
       className={syncButtonClass}
     >
       <Github className="size-3.5" />
-      <span>Push to GitHub</span>
+      <span>{t("Push to GitHub")}</span>
     </Button>
   ) : syncAction === "publish" ? (
     <Button variant="ghost" size="sm" onClick={() => void handleSync()} disabled={isSyncing} className={syncButtonClass}>
       {isSyncing ? <LoaderCircle className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
-      <span>Publish</span>
+      <span>{t("Publish")}</span>
     </Button>
   ) : (
     <>
@@ -467,34 +480,34 @@ function GitWidgetsImpl({
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
             {/* Icon only: the refresh glyph says fetch; the tooltip says when it last ran. */}
-            <Button variant="ghost" size="sm" aria-label="Fetch" onClick={() => void handleSync()} disabled={isSyncing} className={syncButtonClass}>
+            <Button variant="ghost" size="sm" aria-label={t("Fetch")} onClick={() => void handleSync()} disabled={isSyncing} className={syncButtonClass}>
               {isSyncing ? <LoaderCircle className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>{formatFetchTooltip(diffs.lastFetchedAt)}</TooltipContent>
+          <TooltipContent>{formatFetchTooltip(t, diffs.lastFetchedAt)}</TooltipContent>
         </Tooltip>
       ) : (
         // Counts, not words: at the column's width "Pull 3 · Push 2 · PR"
         // truncated the branch name, the one thing this header is for.
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="sm" aria-label={`Pull ${behindCount}`} onClick={() => void handleSync()} disabled={isSyncing} className={syncButtonClass}>
+            <Button variant="ghost" size="sm" aria-label={t("Pull {count}", { count: behindCount })} onClick={() => void handleSync()} disabled={isSyncing} className={syncButtonClass}>
               {isSyncing ? <LoaderCircle className="size-3.5 animate-spin" /> : <ArrowDown className="size-3.5" />}
               <span className="tabular-nums">{behindCount}</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Pull {behindCount} {behindCount === 1 ? "commit" : "commits"}</TooltipContent>
+          <TooltipContent>{t("Pull {count} {unit}", { count: behindCount, unit: t(behindCount === 1 ? "commit" : "commits") })}</TooltipContent>
         </Tooltip>
       )}
       {isPublishedBranch && aheadCount > 0 ? (
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
-            <Button variant="default" size="sm" aria-label={`Push ${aheadCount}`} onClick={() => void handleSync("push")} disabled={isSyncing} className="h-6 gap-1 px-1.5 text-xs">
+            <Button variant="default" size="sm" aria-label={t("Push {count}", { count: aheadCount })} onClick={() => void handleSync("push")} disabled={isSyncing} className="h-6 gap-1 px-1.5 text-xs">
               {isSyncing ? <LoaderCircle className="size-3.5 animate-spin" /> : <ArrowUp className="size-3.5" />}
               <span className="tabular-nums">{aheadCount}</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Push {aheadCount} {aheadCount === 1 ? "commit" : "commits"}</TooltipContent>
+          <TooltipContent>{t("Push {count} {unit}", { count: aheadCount, unit: t(aheadCount === 1 ? "commit" : "commits") })}</TooltipContent>
         </Tooltip>
       ) : null}
     </>
@@ -512,7 +525,7 @@ function GitWidgetsImpl({
             <GitMerge strokeWidth={2.5} className="size-3 shrink-0" />
             <span className="min-w-0 truncate text-left">
               {/* The ellipsis says it opens a dialog (pick the branch to merge), not a merge. */}
-              Merge into <GitBranch strokeWidth={2.5} className="mr-[4.5px] ml-0.5 inline size-3" />{diffs.branchName}…
+              {t("Merge into")} <GitBranch strokeWidth={2.5} className="mr-[4.5px] ml-0.5 inline size-3" />{diffs.branchName}…
             </span>
           </span>
         </Button>
@@ -523,14 +536,14 @@ function GitWidgetsImpl({
             <Button
               type="button"
               variant="outline"
-              aria-label="Open pull request"
+              aria-label={t("Open pull request")}
               onClick={() => window.open(compareUrl, "_blank", "noopener,noreferrer")}
               className={WIDGET_FOOTER_ICON_BUTTON_CLASS}
             >
               <GitPullRequest strokeWidth={2.5} className="size-3.5" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Open pull request</TooltipContent>
+          <TooltipContent>{t("Open pull request")}</TooltipContent>
         </Tooltip>
       ) : null}
     </WidgetFooter>
@@ -551,7 +564,7 @@ function GitWidgetsImpl({
             setCommitDraft(projectId, { summary: event.target.value, description })
           }}
           onKeyDown={handleCommitKeyDown}
-          placeholder="Commit message"
+          placeholder={t("Commit message")}
           className="h-full min-w-0 flex-1 rounded-none border-0 bg-transparent px-3 py-0"
           disabled={isBusy}
         />
@@ -559,7 +572,7 @@ function GitWidgetsImpl({
           <TooltipTrigger asChild>
             <button
               type="button"
-              aria-label="Generate commit message"
+              aria-label={t("Generate commit message")}
               className="flex h-full w-10 shrink-0 items-center justify-center border-l border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
               disabled={!canGenerate}
               onClick={() => void handleGenerate()}
@@ -569,7 +582,7 @@ function GitWidgetsImpl({
                 : <Sparkles strokeWidth={2.5} className="size-3.5" />}
             </button>
           </TooltipTrigger>
-          <TooltipContent>Generate commit message</TooltipContent>
+          <TooltipContent>{t("Generate commit message")}</TooltipContent>
         </Tooltip>
       </div>
       <Textarea
@@ -579,7 +592,7 @@ function GitWidgetsImpl({
           setCommitDraft(projectId, { summary, description: event.target.value })
         }}
         onKeyDown={handleCommitKeyDown}
-        placeholder="Description"
+        placeholder={t("Description")}
         rows={3}
         className="resize-none rounded-none border-0 bg-transparent px-3 py-2.5 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
         disabled={isBusy}
@@ -644,7 +657,7 @@ function GitWidgetsImpl({
                   void handleCommit("commit_only")
                 }}
               >
-                Commit Only
+                {t("Commit Only")}
               </ContextMenuItem>
             </ContextMenuContent>
           ) : null}
@@ -653,7 +666,7 @@ function GitWidgetsImpl({
           <TooltipTrigger asChild>
             <button
               type="button"
-              aria-label={commitEditorOpen ? "Hide commit message" : "Write commit message"}
+              aria-label={commitEditorOpen ? t("Hide commit message") : t("Write commit message")}
               aria-pressed={commitEditorOpen}
               onClick={() => {
                 const opening = !commitEditorOpen
@@ -670,7 +683,7 @@ function GitWidgetsImpl({
               <Pencil strokeWidth={2.5} className="size-3.5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>{commitEditorOpen ? "Hide commit message" : "Write commit message"}</TooltipContent>
+          <TooltipContent>{commitEditorOpen ? t("Hide commit message") : t("Write commit message")}</TooltipContent>
         </Tooltip>
       </div>
     </WidgetFooter>
@@ -705,11 +718,11 @@ function GitWidgetsImpl({
         {hasIncoming ? (
           <WidgetRow
             icon={isSyncing ? <LoaderCircle className="animate-spin" /> : <ArrowDown className="text-foreground" />}
-            title={`${behindCount} incoming ${behindCount === 1 ? "commit" : "commits"}`}
-            subtitle="On the remote, not here yet"
+            title={t("{count} incoming {unit}", { count: behindCount, unit: t(behindCount === 1 ? "commit" : "commits") })}
+            subtitle={t("On the remote, not here yet")}
             disabled={isSyncing}
             onActivate={() => void handleSync("pull")}
-            aria-label={`Pull ${behindCount} ${behindCount === 1 ? "commit" : "commits"}`}
+            aria-label={t("Pull {count} {unit}", { count: behindCount, unit: t(behindCount === 1 ? "commit" : "commits") })}
           />
         ) : null}
         {visibleHistory.shown.map((entry, index) => (
@@ -749,7 +762,7 @@ function GitWidgetsImpl({
   const filesMore = hiddenFileCount > 0 ? (
     <WidgetMoreRow
       count={Math.min(VISIBLE_DIFF_FILE_INCREMENT, hiddenFileCount)}
-      detail={hiddenFileCount > VISIBLE_DIFF_FILE_INCREMENT ? `${hiddenFileCount.toLocaleString()} left` : undefined}
+      detail={hiddenFileCount > VISIBLE_DIFF_FILE_INCREMENT ? t("{count} left", { count: hiddenFileCount.toLocaleString() }) : undefined}
       onShow={() => setVisibleFileCount((count) => count + VISIBLE_DIFF_FILE_INCREMENT)}
     />
   ) : !searching && diffs.files.length > INITIAL_VISIBLE_DIFF_FILE_COUNT ? (
@@ -785,7 +798,7 @@ function GitWidgetsImpl({
               <StageCheckbox
                 checked={allSelected}
                 mixed={someSelected}
-                label={allSelected ? "Unselect all files from commit" : "Select all files for commit"}
+                label={allSelected ? t("Unselect all files from commit") : t("Select all files for commit")}
                 className="size-4"
                 onClick={() => {
                   if (!projectId) return
@@ -847,8 +860,8 @@ function GitWidgetsImpl({
               setFileQuery("")
             }
           }}
-          placeholder={`Search ${diffs.files.length.toLocaleString()} ${diffs.files.length === 1 ? "change" : "changes"}`}
-          aria-label="Search changes"
+          placeholder={t("Search {count} changes", { count: diffs.files.length.toLocaleString() })}
+          aria-label={t("Search changes")}
           type="search"
           autoComplete="off"
           spellCheck={false}
@@ -877,7 +890,7 @@ function GitWidgetsImpl({
           )
         })}
         {searching && matchingFiles.length === 0 ? (
-          <div className="truncate px-2 py-1.5 text-xs text-muted-foreground">No files match “{fileQuery.trim()}”</div>
+          <div className="truncate px-2 py-1.5 text-xs text-muted-foreground">{t("No files match “{query}”", { query: fileQuery.trim() })}</div>
         ) : null}
         {filesMore}
       </WidgetList>
@@ -895,17 +908,17 @@ function GitWidgetsImpl({
       <WidgetPresence show={diffs.status === "no_repo"}>
         <WidgetCard
           icon={<GitBranch />}
-          title="Git"
+          title={t("Git")}
           footer={(
             <WidgetFooter>
               <Button type="button" variant="outline" className={WIDGET_FOOTER_BUTTON_CLASS} onClick={() => void onInitializeGit()}>
-                Init Git
+                {t("Init Git")}
               </Button>
             </WidgetFooter>
           )}
         >
           <WidgetStatic>
-            <p className="text-sm text-muted-foreground">Not a git repository.</p>
+            <p className="text-sm text-muted-foreground">{t("Not a git repository.")}</p>
           </WidgetStatic>
         </WidgetCard>
       </WidgetPresence>
@@ -918,8 +931,8 @@ function GitWidgetsImpl({
           icon={<GitBranch />}
           title={(
             <span className="flex min-w-0 items-baseline gap-1.5">
-              <span className="shrink-0">Branch</span>
-              <span className="min-w-0 truncate text-muted-foreground">{diffs.branchName ?? "Detached HEAD"}</span>
+              <span className="shrink-0">{t("Branch")}</span>
+              <span className="min-w-0 truncate text-muted-foreground">{diffs.branchName ?? t("Detached HEAD")}</span>
             </span>
           )}
           expanded={branchesExpanded}
@@ -961,10 +974,10 @@ function GitWidgetsImpl({
       <WidgetPresence show={diffs.status === "ready" && (branchHistory.length > 0 || hasIncoming)}>
         <WidgetCard
           icon={<History />}
-          title="Commits"
+          title={t("Commits")}
           // Not the length: that is the server's cap (25) on any real repo.
           // What is worth a glance is what hasn't reached the remote yet.
-          count={isPublishedBranch && aheadCount > 0 ? `${aheadCount} unpushed` : undefined}
+          count={isPublishedBranch && aheadCount > 0 ? t("{count} unpushed", { count: aheadCount }) : undefined}
           expanded={historyExpanded}
           onToggle={() => setHistoryExpanded(!historyExpanded)}
         >

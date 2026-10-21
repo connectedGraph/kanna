@@ -13,6 +13,7 @@ import { toMessagePreview } from "../../../../shared/message-preview"
 import type { ChatJumpRole } from "../../../lib/chat-navigation"
 import { cn, normalizeChatId } from "../../../lib/utils"
 import type { SidebarThread } from "../../../lib/thread-sections"
+import { useT } from "../../../i18n/useT"
 import { useChatDraft } from "../../../stores/chatInputStore"
 
 /**
@@ -125,6 +126,7 @@ function ChatTouchedFileList({
   result: ChatTouchedFilesResult
   onOpenFile?: (path: string) => void
 }) {
+  const t = useT()
   if (result.files.length === 0) return null
   const hidden = result.totalCount - result.files.length
 
@@ -141,7 +143,7 @@ function ChatTouchedFileList({
             type="button"
             // Named by path rather than "open file": down a list of eight, the
             // path is the only thing distinguishing one control from the next.
-            aria-label={`Open ${file.path}`}
+            aria-label={t("Open {path}", { path: file.path })}
             onClick={onOpenFile ? () => onOpenFile(file.path) : undefined}
             disabled={!onOpenFile}
             className={cn(
@@ -164,7 +166,7 @@ function ChatTouchedFileList({
           // Says what it left out rather than trailing off: a card that shows
           // eight of 291 files without saying so reads as the whole answer.
           <div className={cn("text-[12px] text-muted-foreground/70", TURN_CARD_ROW_INSET)}>
-            {hidden} more file{hidden === 1 ? "" : "s"}
+            {hidden === 1 ? t("{count} more file", { count: hidden }) : t("{count} more files", { count: hidden })}
           </div>
         ) : null}
       </div>
@@ -319,6 +321,7 @@ export function ChatHoverCardContent({
   /** Offers to `git init` the project. Ignored unless it's known not to be a repo. */
   onSetupGit?: () => void
 }) {
+  const t = useT()
   const row = thread.row
   const label = thread.projectLabel
   const HarnessIcon = row.provider ? PROVIDER_ICONS[row.provider] : null
@@ -376,7 +379,7 @@ export function ChatHoverCardContent({
             className="flex min-w-0 cursor-pointer items-center gap-1 rounded-sm transition-colors hover:text-foreground hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
             <GitBranch className="size-2.5 shrink-0" strokeWidth={2.5} />
-            <span className="truncate">Setup Git</span>
+            <span className="truncate">{t("Setup Git")}</span>
           </button>
         ) : null}
         {/* `owner/repo` when the origin owner is known, the bare repo otherwise;
@@ -391,7 +394,7 @@ export function ChatHoverCardContent({
           {onOpenRepo && label.repoUrl ? (
             <button
               type="button"
-              aria-label={`Open on ${getRepoUrlLabel(label.repoUrl)}`}
+              aria-label={t("Open on {host}", { host: getRepoUrlLabel(label.repoUrl) })}
               onClick={onOpenRepo}
               // No padding of its own: it sits inline in a row that already
               // carries the inset, and a fill here would push the repo name out
@@ -416,7 +419,7 @@ export function ChatHoverCardContent({
         {draft ? null : (
           <TurnCardMessage
             className="line-clamp-2 text-sm font-medium text-popover-foreground"
-            label="Jump to this prompt"
+            label={t("Jump to this prompt")}
             onSelect={canJump ? () => onSelectMessage?.("prompt") : undefined}
           >
             {toMessagePreview(effectivePreview.lastUserMessagePreview || thread.title)}
@@ -428,7 +431,7 @@ export function ChatHoverCardContent({
         {reply ? (
           <TurnCardMessage
             className={cn("text-sm text-muted-foreground", draft ? "line-clamp-1" : "line-clamp-3")}
-            label="Jump to this reply"
+            label={t("Jump to this reply")}
             onSelect={canJump ? () => onSelectMessage?.("reply") : undefined}
           >
             {toMessagePreview(reply)}
@@ -447,7 +450,7 @@ export function ChatHoverCardContent({
           // already holding it.
           <TurnCardMessage
             className="line-clamp-2 text-sm font-medium italic text-popover-foreground"
-            label="Open this chat"
+            label={t("Open this chat")}
             onSelect={onSelectChat}
           >
             <PencilLine className="mr-1 inline size-3 shrink-0 -translate-y-px" strokeWidth={2.5} />

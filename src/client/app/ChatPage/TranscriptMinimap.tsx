@@ -3,6 +3,7 @@ import { formatDuration, formatPromptTimestamp } from "../../components/messages
 import { toMessagePreview } from "../../../shared/message-preview"
 import type { ChatJumpRole } from "../../lib/chat-navigation"
 import { TurnCardMessage, TurnCardTimingRow } from "../../components/ui/turn-card"
+import { useT } from "../../i18n/useT"
 import {
   getMagnifyFalloff,
   getMinimapCapacity,
@@ -132,6 +133,7 @@ export const TranscriptMinimap = memo(function TranscriptMinimap({
   containerWidthPx,
   onSelectTurn,
 }: TranscriptMinimapProps) {
+  const t = useT()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const cardRef = useRef<HTMLDivElement | null>(null)
   const [wrapperHeight, setWrapperHeight] = useState(0)
@@ -396,10 +398,10 @@ export const TranscriptMinimap = memo(function TranscriptMinimap({
           <div className="space-y-1">
             <TurnCardMessage
               className="line-clamp-5 text-sm font-medium text-popover-foreground"
-              label="Jump to this prompt"
+              label={t("Jump to this prompt")}
               onSelect={() => handleSelect(activeTurn, "prompt")}
             >
-              {toMessagePreview(activeTurn.prompt) || "Empty message"}
+              {toMessagePreview(activeTurn.prompt) || t("Empty message")}
             </TurnCardMessage>
             {activeTurn.error ? (
               // Not put through the preview pass: a failure is a diagnostic the
@@ -411,7 +413,7 @@ export const TranscriptMinimap = memo(function TranscriptMinimap({
               // ended — which is exactly where you'd go to read the failure.
               <TurnCardMessage
                 className="line-clamp-5 text-sm text-destructive"
-                label="Jump to this failure"
+                label={t("Jump to this failure")}
                 onSelect={() => handleSelect(activeTurn, "reply")}
               >
                 {activeTurn.error}
@@ -419,7 +421,7 @@ export const TranscriptMinimap = memo(function TranscriptMinimap({
             ) : activeTurn.response ? (
               <TurnCardMessage
                 className="line-clamp-5 text-sm text-muted-foreground"
-                label="Jump to this reply"
+                label={t("Jump to this reply")}
                 onSelect={() => handleSelect(activeTurn, "reply")}
               >
                 {toMessagePreview(activeTurn.response)}

@@ -1,5 +1,6 @@
 import type { AgentProvider } from "../../../shared/types"
 import { authServiceForProvider } from "../../../shared/types"
+import { useT } from "../../i18n/useT"
 import { useProviderAuthStore, selectAuthService } from "../../stores/providerAuthStore"
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
 import { AuthCard } from "./AuthCard"
@@ -18,6 +19,7 @@ export function SignInDialog({
   provider: AgentProvider | null
   onOpenChange: (open: boolean) => void
 }) {
+  const t = useT()
   const snapshot = useProviderAuthStore((store) => store.snapshot)
   const socket = useProviderAuthStore((store) => store.socket)
   const serviceId = provider ? authServiceForProvider(provider) : null
@@ -27,11 +29,13 @@ export function SignInDialog({
     <Dialog open={Boolean(provider && service && socket)} onOpenChange={onOpenChange}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>Sign in to {service?.label ?? ""}</DialogTitle>
+          <DialogTitle>{t("Sign in to {provider}", { provider: service?.label ?? "" })}</DialogTitle>
           <DialogDescription>
             {service && !service.installed
-              ? `Install and sign in to ${service.label} to use it for this chat.`
-              : `Sign in to ${service?.label ?? "this provider"} to use it for this chat. The switch applies automatically once you're signed in.`}
+              ? t("Install and sign in to {provider} to use it for this chat.", { provider: service.label })
+              : t("Sign in to {provider} to use it for this chat. The switch applies automatically once you're signed in.", {
+                  provider: service?.label ?? t("this provider"),
+                })}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>

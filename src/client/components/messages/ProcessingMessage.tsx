@@ -3,6 +3,7 @@ import type { WaitingOn } from "../../../shared/types"
 import { waitingOnLabel } from "../../lib/waiting-on"
 import { MetaRow, MetaContent } from "./shared"
 import { AnimatedShinyText } from "../ui/animated-shiny-text"
+import { useT } from "../../i18n/useT"
 
 const STATUS_LABELS: Record<string, string> = {
   connecting: "Connecting...",
@@ -21,6 +22,7 @@ interface ProcessingMessageProps {
 }
 
 export function ProcessingMessage({ status, waitingOn }: ProcessingMessageProps) {
+  const t = useT()
   // Waiting on a subagent is a line of words and no more. Nothing is
   // happening in this chat for a spinner to stand for, and the shimmer on the
   // words already says the wait is live. With no mark before it the line
@@ -30,7 +32,7 @@ export function ProcessingMessage({ status, waitingOn }: ProcessingMessageProps)
       <MetaRow className="mt-3">
         <MetaContent>
           <AnimatedShinyText className="!mx-0 text-sm" shimmerWidth={44}>
-            {waitingOnLabel(waitingOn)}
+            {waitingOnLabel(waitingOn, t)}
           </AnimatedShinyText>
         </MetaContent>
       </MetaRow>
@@ -38,6 +40,7 @@ export function ProcessingMessage({ status, waitingOn }: ProcessingMessageProps)
   }
 
   const label = (status ? STATUS_LABELS[status] : undefined) || "Processing..."
+  const shown = t(label)
   const isFailed = status === "failed"
 
   return (
@@ -49,7 +52,7 @@ export function ProcessingMessage({ status, waitingOn }: ProcessingMessageProps)
           <Loader2 className="size-4.5 animate-spin text-muted-icon" />
         )}
         <AnimatedShinyText className="ml-[1px] text-sm" shimmerWidth={44}>
-          {label}
+          {shown}
         </AnimatedShinyText>
       </MetaContent>
     </MetaRow>

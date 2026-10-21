@@ -10,6 +10,7 @@ import {
   ContextMenuTrigger,
 } from "../../ui/context-menu"
 import { useOpenedOnce } from "../../../hooks/useOpenedOnce"
+import { useT } from "../../../i18n/useT"
 
 /**
  * "Open on GitHub" (or GitLab, or whatever host the remote names), sitting with
@@ -24,6 +25,7 @@ import { useOpenedOnce } from "../../../hooks/useOpenedOnce"
  * screen the moment that machine isn't the one you're sitting at.
  */
 export function OpenRepoMenuItem({ repoUrl }: { repoUrl?: string }) {
+  const t = useT()
   if (!repoUrl) return null
 
   return (
@@ -34,7 +36,7 @@ export function OpenRepoMenuItem({ repoUrl }: { repoUrl?: string }) {
       }}
     >
       <Github className="h-3.5 w-3.5" />
-      <span className="text-xs font-medium">Open on {getRepoUrlLabel(repoUrl)}</span>
+      <span className="text-xs font-medium">{t("Open on {host}", { host: getRepoUrlLabel(repoUrl) })}</span>
     </ContextMenuItem>
   )
 }
@@ -70,6 +72,7 @@ export function ProjectSectionMenu({
   onHide: () => void
   children: ReactNode
 }) {
+  const t = useT()
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -78,19 +81,19 @@ export function ProjectSectionMenu({
       <ContextMenuContent className="[&_svg]:size-3.5">
         <ContextMenuItem onSelect={onNewChat} disabled={newChatDisabled}>
           <SquarePen />
-          <span>New Chat</span>
+          <span>{t("New Chat")}</span>
         </ContextMenuItem>
         {onTogglePin ? (
           <ContextMenuItem onSelect={onTogglePin}>
             {pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-            <span className="text-xs font-medium">{pinned ? "Unpin" : "Pin"}</span>
+            <span className="text-xs font-medium">{pinned ? t("Unpin") : t("Pin")}</span>
           </ContextMenuItem>
         ) : null}
         <ContextMenuItem
           onSelect={onRename}
         >
           <Pencil className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium">Rename</span>
+          <span className="text-xs font-medium">{t("Rename")}</span>
         </ContextMenuItem>
         <ContextMenuItem
           onSelect={(event) => {
@@ -99,7 +102,7 @@ export function ProjectSectionMenu({
           }}
         >
           <Copy className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium">Copy Path</span>
+          <span className="text-xs font-medium">{t("Copy Path")}</span>
         </ContextMenuItem>
         <ContextMenuItem
           onSelect={(event) => {
@@ -108,7 +111,7 @@ export function ProjectSectionMenu({
           }}
         >
           <Archive className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium">Show Archived</span>
+          <span className="text-xs font-medium">{t("Show Archived")}</span>
         </ContextMenuItem>
         <ContextMenuItem
           onSelect={(event) => {
@@ -117,7 +120,7 @@ export function ProjectSectionMenu({
           }}
         >
           <FolderOpen className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium">Show in Finder</span>
+          <span className="text-xs font-medium">{t("Show in Finder")}</span>
         </ContextMenuItem>
         <ContextMenuItem
           onSelect={(event) => {
@@ -126,7 +129,7 @@ export function ProjectSectionMenu({
           }}
         >
           <Code className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium">Open in {editorLabel}</span>
+          <span className="text-xs font-medium">{t("Open in {editor}", { editor: editorLabel })}</span>
         </ContextMenuItem>
         <OpenRepoMenuItem repoUrl={repoUrl} />
         <ContextMenuItem
@@ -136,7 +139,7 @@ export function ProjectSectionMenu({
           }}
         >
           <EyeOff className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium">Hide</span>
+          <span className="text-xs font-medium">{t("Hide")}</span>
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -209,6 +212,7 @@ export function ChatRowMenu({
   // There is one of these per sidebar row and the menu below is a dozen items
   // with icons, rebuilt on every render of the row that owns it. Nothing is
   // built until the menu has actually been opened once — see `useOpenedOnce`.
+  const t = useT()
   const [menuOpened, handleMenuOpenChange] = useOpenedOnce()
 
   return (
@@ -227,15 +231,15 @@ export function ChatRowMenu({
           {onTogglePin ? (
             <ContextMenuItem onSelect={onTogglePin}>
               {pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-              <span className="text-xs font-medium">{pinned ? "Unpin" : "Pin"}</span>
+              <span className="text-xs font-medium">{pinned ? t("Unpin") : t("Pin")}</span>
             </ContextMenuItem>
           ) : null}
           {onToggleDelegator ? (
             // The chat's agent is told at the start of a turn, so one that is
             // running goes on as it was until its next.
-            <ContextMenuItem onSelect={onToggleDelegator} title="Takes effect on this chat's next turn">
+            <ContextMenuItem onSelect={onToggleDelegator} title={t("Takes effect on this chat's next turn")}>
               <DelegatorIcon className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">{delegator ? "Stop Delegating" : "Make Delegator"}</span>
+              <span className="text-xs font-medium">{delegator ? t("Stop Delegating") : t("Make Delegator")}</span>
             </ContextMenuItem>
           ) : null}
           {/* Draft leads: its own section, for something only this chat has and
@@ -250,7 +254,7 @@ export function ChatRowMenu({
                 }}
               >
                 <PencilOff className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">Clear Draft</span>
+                <span className="text-xs font-medium">{t("Clear Draft")}</span>
               </ContextMenuItem>
               <ContextMenuSeparator />
             </>
@@ -265,7 +269,7 @@ export function ChatRowMenu({
                 }}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">Restore</span>
+                <span className="text-xs font-medium">{t("Restore")}</span>
               </ContextMenuItem>
               <ContextMenuSeparator />
             </>
@@ -279,7 +283,7 @@ export function ChatRowMenu({
             }}
           >
             <Pencil className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Rename</span>
+            <span className="text-xs font-medium">{t("Rename")}</span>
           </ContextMenuItem>
           <ContextMenuItem
             onSelect={(event) => {
@@ -288,7 +292,7 @@ export function ChatRowMenu({
             }}
           >
             <UserRoundPlus className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Share</span>
+            <span className="text-xs font-medium">{t("Share")}</span>
           </ContextMenuItem>
           <ContextMenuItem
             disabled={!canFork}
@@ -299,7 +303,7 @@ export function ChatRowMenu({
             }}
           >
             <Split className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Fork</span>
+            <span className="text-xs font-medium">{t("Fork")}</span>
           </ContextMenuItem>
 
           <ContextMenuSeparator />
@@ -312,7 +316,7 @@ export function ChatRowMenu({
             }}
           >
             <SquarePen className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">New Chat</span>
+            <span className="text-xs font-medium">{t("New Chat")}</span>
           </ContextMenuItem>
           <ContextMenuItem
             onSelect={(event) => {
@@ -321,7 +325,7 @@ export function ChatRowMenu({
             }}
           >
             <Copy className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Copy Path</span>
+            <span className="text-xs font-medium">{t("Copy Path")}</span>
           </ContextMenuItem>
           <ContextMenuItem
             onSelect={(event) => {
@@ -330,7 +334,7 @@ export function ChatRowMenu({
             }}
           >
             <FolderOpen className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Open in Finder</span>
+            <span className="text-xs font-medium">{t("Open in Finder")}</span>
           </ContextMenuItem>
           <ContextMenuItem
             onSelect={(event) => {
@@ -339,7 +343,7 @@ export function ChatRowMenu({
             }}
           >
             <Code className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Open in {editorLabel}</span>
+            <span className="text-xs font-medium">{t("Open in {editor}", { editor: editorLabel })}</span>
           </ContextMenuItem>
           <OpenRepoMenuItem repoUrl={repoUrl} />
 
@@ -354,7 +358,7 @@ export function ChatRowMenu({
               }}
             >
               <Archive className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">Archive Chat</span>
+              <span className="text-xs font-medium">{t("Archive Chat")}</span>
             </ContextMenuItem>
           ) : null}
           <ContextMenuItem
@@ -365,7 +369,7 @@ export function ChatRowMenu({
             className="text-destructive dark:text-red-400 hover:bg-destructive/10 focus:bg-destructive/10 dark:hover:bg-red-500/20 dark:focus:bg-red-500/20"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Delete Chat</span>
+            <span className="text-xs font-medium">{t("Delete Chat")}</span>
           </ContextMenuItem>
         </ContextMenuContent>
       )}

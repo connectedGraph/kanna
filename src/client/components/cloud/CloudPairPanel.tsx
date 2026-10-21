@@ -4,6 +4,7 @@ import { copyTextToClipboard } from "../../lib/clipboard"
 import { displayClaimUrl, type PairSessionState } from "../../lib/pairSession"
 import { cn } from "../../lib/utils"
 import { AnimatedShinyText } from "../ui/animated-shiny-text"
+import { useT } from "../../i18n/useT"
 
 const FLEET_URL = "https://kanna.sh/fleet"
 
@@ -120,10 +121,11 @@ function ViewSwap({ viewKey, children }: { viewKey: string; children: ReactNode 
 
 /** The old two-step flow, kept for runs that can't pair in place. */
 function ManualPairInstructions() {
+  const t = useT()
   return (
     <ol className="cloud-pair-rows list-decimal space-y-2 pl-5 text-sm">
       <li>
-        Sign in at{" "}
+        {t("Sign in at")}{" "}
         <a
           href={FLEET_URL}
           target="_blank"
@@ -132,17 +134,18 @@ function ManualPairInstructions() {
         >
           kanna.sh/fleet
         </a>{" "}
-        and add a machine to your Fleet.
+        {t("and add a machine to your Fleet.")}
       </li>
       <li>
-        Run <code className="rounded bg-muted px-1.5 py-0.5 text-xs">bunx kanna pair &lt;code&gt;</code>{" "}
-        in a terminal on this machine.
+        {t("Run")} <code className="rounded bg-muted px-1.5 py-0.5 text-xs">bunx kanna pair &lt;code&gt;</code>{" "}
+        {t("in a terminal on this machine.")}
       </li>
     </ol>
   )
 }
 
 export function PairedSuccess({ appOrigin }: { appOrigin: string }) {
+  const t = useT()
   const host = displayClaimUrl(appOrigin)
   return (
     <div className="cloud-pair-rows flex flex-col items-center gap-4 py-2 text-center">
@@ -164,11 +167,11 @@ export function PairedSuccess({ appOrigin }: { appOrigin: string }) {
         </svg>
       </div>
       <p className="text-sm text-muted-foreground">
-        This machine is live at <span className="font-medium text-foreground">{host}</span> — it stays
-        reachable while kanna is running.
+        {t("This machine is live at")} <span className="font-medium text-foreground">{host}</span>{" "}
+        {t("— it stays reachable while kanna is running.")}
       </p>
       <a href={appOrigin} target="_blank" rel="noreferrer" className={cn(PRIMARY_ACTION_CLASS, "group")}>
-        Open {host}
+        {t("Open {host}", { host })}
         <ArrowUpRight className={OUTBOUND_ARROW_CLASS} />
       </a>
     </div>
@@ -213,6 +216,7 @@ function CopyLinkButton({ text, disabled = false }: { text: string; disabled?: b
  * the link arriving changes one line of text and nothing moves.
  */
 function ClaimLink({ claimUrl, showOpenButton }: { claimUrl: string | undefined; showOpenButton: boolean }) {
+  const t = useT()
   const ready = Boolean(claimUrl)
   const swapClass = "col-start-1 row-start-1 min-w-0 justify-self-start transition-[opacity,filter] duration-200 ease-snappy"
   const hiddenClass = "pointer-events-none opacity-0 blur-[2px]"
@@ -226,7 +230,7 @@ function ClaimLink({ claimUrl, showOpenButton }: { claimUrl: string | undefined;
             aria-hidden={ready}
             className={cn(swapClass, "mx-0 max-w-full text-xs", ready && hiddenClass)}
           >
-            Getting your link…
+            {t("Getting your link…")}
           </AnimatedShinyText>
           <a
             href={claimUrl}
@@ -253,7 +257,7 @@ function ClaimLink({ claimUrl, showOpenButton }: { claimUrl: string | undefined;
           aria-disabled={!ready}
           className={cn(PRIMARY_ACTION_CLASS, "group mt-1 w-full", !ready && "pointer-events-none opacity-50")}
         >
-          Open link & sign in
+          {t("Open link & sign in")}
           <ArrowUpRight className={OUTBOUND_ARROW_CLASS} />
         </a>
       ) : null}
@@ -262,12 +266,13 @@ function ClaimLink({ claimUrl, showOpenButton }: { claimUrl: string | undefined;
 }
 
 function RetryLink({ session, starting, onRetry }: { session: PairSessionState; starting: boolean; onRetry: () => void }) {
+  const t = useT()
   return (
     <div className="cloud-pair-rows flex flex-col items-center gap-3 py-2 text-center">
       <p className="text-sm text-muted-foreground">
         {session.status === "expired"
-          ? "That link expired."
-          : `Couldn't reach kanna.sh${session.error ? ` (${session.error})` : ""}.`}
+          ? t("That link expired.")
+          : t("Couldn't reach kanna.sh{detail}.", { detail: session.error ? ` (${session.error})` : "" })}
       </p>
       <button
         type="button"
@@ -277,7 +282,7 @@ function RetryLink({ session, starting, onRetry }: { session: PairSessionState; 
       >
         {/* Turns while the request is out, so the press is seen to be working. */}
         <RefreshCw className={cn("h-4 w-4", starting && "animate-spin")} />
-        Get a new link
+        {t("Get a new link")}
       </button>
     </div>
   )

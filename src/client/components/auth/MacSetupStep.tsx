@@ -6,6 +6,7 @@ import {
   useMacSetupStore,
   type MacSetupState,
 } from "../../lib/macApp"
+import { useT, type TFunction } from "../../i18n/useT"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
 import { Switch } from "../ui/switch"
@@ -94,19 +95,30 @@ export function PillButton({ onClick, children }: { onClick: () => void; childre
 
 /** The check a row lands on; it settles in rather than blinking on. */
 export function Done() {
+  const t = useT()
   return (
-    <span className="flex size-7 items-center justify-center" title="Done">
+    <span className="flex size-7 items-center justify-center" title={t("Done")}>
       <Check className="size-4 text-emerald-500 animate-in fade-in zoom-in-90 duration-200 ease-out" />
     </span>
   )
 }
 
 /** What to do in System Settings once Open Settings takes you there. */
+export function fullDiskAccessSteps(t: TFunction): string {
+  return t("Click +, then choose Kanna.")
+}
+
+/**
+ * @deprecated English-only copy kept so `app/settings/MacSection.tsx` (the
+ * settings area) still compiles. That page should switch to
+ * `fullDiskAccessSteps(t)`; the translation already lives in `catalog/auth.ts`.
+ */
 export const FULL_DISK_ACCESS_STEPS = "Click +, then choose Kanna."
 
 export function MacSetupCards({ state }: { state: MacSetupState | null }) {
+  const t = useT()
   if (!state) {
-    return <p className="text-center text-sm text-muted-foreground">Checking this Mac…</p>
+    return <p className="text-center text-sm text-muted-foreground">{t("Checking this Mac…")}</p>
   }
   const iconClass = "size-4"
 
@@ -114,14 +126,14 @@ export function MacSetupCards({ state }: { state: MacSetupState | null }) {
     <SetupList>
       <SetupRow
         icon={<Power className={iconClass} />}
-        title="Open at login"
-        detail={state.loginItem === "requiresApproval" ? "Approve Kanna in Login Items." : "Back after a restart."}
+        title={t("Open at login")}
+        detail={state.loginItem === "requiresApproval" ? t("Approve Kanna in Login Items.") : t("Back after a restart.")}
         tone={state.loginItem === "requiresApproval" ? "warn" : "muted"}
         action={state.loginItem === "requiresApproval" ? (
-          <PillButton onClick={macSetup.openLoginItems}>Open</PillButton>
+          <PillButton onClick={macSetup.openLoginItems}>{t("Open")}</PillButton>
         ) : (
           <Switch
-            aria-label="Open at login"
+            aria-label={t("Open at login")}
             checked={state.loginItem === "enabled"}
             onCheckedChange={macSetup.setLoginItem}
           />
@@ -129,12 +141,12 @@ export function MacSetupCards({ state }: { state: MacSetupState | null }) {
       />
       <SetupRow
         icon={<Coffee className={iconClass} />}
-        title="Stay awake"
-        detail={state.lidClosingSleeps ? "Closing the lid still sleeps it." : "While plugged in."}
+        title={t("Stay awake")}
+        detail={state.lidClosingSleeps ? t("Closing the lid still sleeps it.") : t("While plugged in.")}
         tone={state.lidClosingSleeps ? "warn" : "muted"}
         action={
           <Switch
-            aria-label="Stay awake while plugged in"
+            aria-label={t("Stay awake while plugged in")}
             checked={state.keepAwakeOnPower}
             onCheckedChange={(onPower) => macSetup.setKeepAwake({ onPower })}
           />
@@ -145,10 +157,10 @@ export function MacSetupCards({ state }: { state: MacSetupState | null }) {
           nested
           // Opens out of the row above it, the switch that made it appear.
           className="animate-in fade-in slide-in-from-top-1 duration-200 ease-out"
-          title="Also on battery"
+          title={t("Also on battery")}
           action={
             <Switch
-              aria-label="Also on battery"
+              aria-label={t("Also on battery")}
               checked={state.keepAwakeOnBattery}
               onCheckedChange={(onBattery) => macSetup.setKeepAwake({ onBattery })}
             />
@@ -157,10 +169,10 @@ export function MacSetupCards({ state }: { state: MacSetupState | null }) {
       ) : null}
       <SetupRow
         icon={<HardDrive className={iconClass} />}
-        title="Full Disk Access"
-        detail={state.fullDiskAccess ? "Agents reach every folder." : FULL_DISK_ACCESS_STEPS}
+        title={t("Full Disk Access")}
+        detail={state.fullDiskAccess ? t("Agents reach every folder.") : fullDiskAccessSteps(t)}
         action={state.fullDiskAccess ? <Done /> : (
-          <PillButton onClick={macSetup.openFullDiskAccess}>Open Settings</PillButton>
+          <PillButton onClick={macSetup.openFullDiskAccess}>{t("Open Settings")}</PillButton>
         )}
       />
     </SetupList>

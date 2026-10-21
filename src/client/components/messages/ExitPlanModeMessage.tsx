@@ -6,6 +6,7 @@ import { CopyButton } from "../ui/copy-button"
 import { TranscriptMarkdown } from "./shared"
 import { cn } from "../../lib/utils"
 import { useTranscriptRenderOptions } from "./render-context"
+import { useT } from "../../i18n/useT"
 
 interface Props {
   message: Extract<ProcessedToolCall, { toolKind: "exit_plan_mode" }>
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
+  const t = useT()
   const renderOptions = useTranscriptRenderOptions()
   const isComplete = !!message.result
   const [expanded, setExpanded] = useState(false)
@@ -51,7 +53,7 @@ export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
               className={`absolute z-10 bottom-2 pr-2.5 !pl-3.5 h-[34px] inline-flex gap-1 text-sm left-[50%] -translate-x-[50%] text-muted-foreground backdrop-blur-sm hover:text-foreground opacity-0 group-hover/plan:opacity-100 transition-all rounded-full border border-border`}
               onClick={() => setExpanded(!expanded)}
             >
-              {expanded ? "Show Less" : "Show More"}
+              {expanded ? t("Show Less") : t("Show More")}
               <ChevronDown className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
             </Button>
           )}
@@ -61,7 +63,7 @@ export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
               <div className="mt-5" />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No plan provided</p>
+            <p className="text-sm text-muted-foreground">{t("No plan provided")}</p>
           )}
         </div>
       </div>
@@ -72,22 +74,22 @@ export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
             className="pl-4 inline text-sm font-medium bg-surface text-foreground/60 border border-border py-1.5 px-3 rounded-[20px] leading-relaxed max-w-[85%] sm:max-w-[80%]"
           >
             <em>{
-              isDiscarded ? "Discarded"
-              : result?.clearContext ? "Approved & Cleared Context"
-              : result?.confirmed ? "Approved"
-              : result?.message ? `Adjusted: "${result.message}"`
-              : "Adjusted Plan"
+              isDiscarded ? t("Discarded")
+              : result?.clearContext ? t("Approved & Cleared Context")
+              : result?.confirmed ? t("Approved")
+              : result?.message ? t("Adjusted: \"{message}\"", { message: result.message })
+              : t("Adjusted Plan")
             }</em>
             <CornerDownLeft className="inline h-4 w-4 ml-1.5 -mt-0.5" />
           </span>
         </div>
       ) : !isLatest ? (
         <div className="flex justify-end mx-2">
-          <span className="inline text-sm text-muted-foreground italic">Plan pending (newer prompt active)</span>
+          <span className="inline text-sm text-muted-foreground italic">{t("Plan pending (newer prompt active)")}</span>
         </div>
       ) : renderOptions.readonly ? (
         <div className="flex justify-end mx-2">
-          <span className="inline text-sm text-muted-foreground italic">Plan pending in original session</span>
+          <span className="inline text-sm text-muted-foreground italic">{t("Plan pending in original session")}</span>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -99,7 +101,7 @@ export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
                 className="rounded-full bg-primary text-background pr-4 md:order-last"
               >
                 <CheckCheck className="h-4 w-4 mr-1.5" />
-                Approve & Clear
+                {t("Approve & Clear")}
               </Button>
               <div className="flex items-stretch md:items-center gap-2 md:contents">
                 <Button
@@ -109,7 +111,7 @@ export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
                   className="rounded-full border-border flex-1 md:flex-initial md:order-first"
                 >
                   <Pencil className="h-4 w-4 mr-1.5" />
-                  Suggest Edits
+                  {t("Suggest Edits")}
                 </Button>
                 <Button
                   size="sm"
@@ -118,7 +120,7 @@ export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
                   className="rounded-full border-border flex-1 md:flex-initial"
                 >
                   <Check className="h-4 w-4 mr-1.5" />
-                  Approve
+                  {t("Approve")}
                 </Button>
               </div>
             </div>
@@ -140,7 +142,7 @@ export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
                     setEditMessage("")
                   }
                 }}
-                placeholder="Describe what you'd like to change..."
+                placeholder={t("Describe what you'd like to change...")}
                 rows={3}
                 className="w-full rounded-2xl border border-border bg-muted dark:bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-none outline-none"
               />
@@ -154,7 +156,7 @@ export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
                   }}
                   className="rounded-full text-muted-foreground"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button
                   size="sm"
@@ -163,7 +165,7 @@ export function ExitPlanModeMessage({ message, onConfirm, isLatest }: Props) {
                   className="rounded-full bg-primary text-background disabled:opacity-50 disabled:pointer-events-none"
                 >
                   <Send className="h-4 w-4 mr-1.5" />
-                  Adjust Plan
+                  {t("Adjust Plan")}
                 </Button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { ChevronDown, Columns2, FileDiff, FoldVertical, Rows3, UnfoldVertical, WrapText } from "lucide-react"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import type { EditorOpenSettings, OpenExternalAction } from "../../../../shared/protocol"
+import { useT } from "../../../i18n/useT"
 import { DIFF_REVIEW_STORAGE_KEY_PREFIX } from "../../../lib/storageKeys"
 import { cn } from "../../../lib/utils"
 import { OpenFileSelect } from "../../open-external-menu"
@@ -10,6 +11,7 @@ import { useViewerStore, type ViewerAttachment } from "../../../stores/viewerSto
 import { hasRenderedView, RenderedFilePreview } from "../../viewer/AttachmentViewer"
 import { VIEWER_END_PAD_CLASS, ViewerDivider, ViewerIconButton, ViewerSurface, ViewerToggle } from "../../viewer/ViewerSurface"
 import { DiffPatchSkeleton, DiffPatchView } from "./DiffPatchView"
+import { diffStatusLabel } from "./DiffFileRow"
 import { diffHold, DiffFileStat, diffStatus, getDiffPreviewAttachment, sortByPath, splitDiffPath, type DiffFile, type DiffRenderMode } from "./shared"
 
 interface PatchEntry {
@@ -185,6 +187,7 @@ export function DiffViewer({
   context: DiffViewerContext
   onClose: () => void
 }) {
+  const t = useT()
   const selection = useDiffCommitStore((store) => store.selectionsByProjectId[projectId])
   const files = useMemo(
     () => reviewFiles(sortByPath(context.files), (candidate) => isDiffPathChecked(selection, candidate), path),
@@ -444,7 +447,7 @@ export function DiffViewer({
   if (files.length === 0) {
     // A reload, before the working tree's files arrive: the frame, loading.
     return filesReady ? null : (
-      <ViewerSurface label="Review changes" icon={<FileDiff />} title="Changes" onClose={onClose}>
+      <ViewerSurface label={t("Review changes")} icon={<FileDiff />} title={t("Changes")} onClose={onClose}>
         <DiffPatchSkeleton />
       </ViewerSurface>
     )
@@ -453,10 +456,12 @@ export function DiffViewer({
 
   return (
     <ViewerSurface
-      label="Review changes"
+      label={t("Review changes")}
       icon={<FileDiff />}
-      title="Changes"
-      subtitle={`${files.length.toLocaleString()} ${files.length === 1 ? "file" : "files"}`}
+      title={t("Changes")}
+      subtitle={files.length === 1
+        ? t("{count} file", { count: files.length.toLocaleString() })
+        : t("{count} files", { count: files.length.toLocaleString() })}
       navigation={{
         index: Math.min(activeIndex, files.length - 1),
         count: files.length,
@@ -468,9 +473,9 @@ export function DiffViewer({
         <>
           <DiffFileStat additions={totals.additions} deletions={totals.deletions} className="px-1" />
           <ViewerDivider />
-          <ViewerIconButton label="Unified diff" active={context.diffRenderMode === "unified"} onClick={() => context.onDiffRenderModeChange("unified")}><Rows3 /></ViewerIconButton>
-          <ViewerIconButton label="Side-by-side diff" active={context.diffRenderMode === "split"} onClick={() => context.onDiffRenderModeChange("split")}><Columns2 /></ViewerIconButton>
-          <ViewerIconButton label={context.wrapLines ? "Disable word wrap" : "Enable word wrap"} active={context.wrapLines} onClick={() => context.onWrapLinesChange(!context.wrapLines)}><WrapText /></ViewerIconButton>
+          <ViewerIconButton label={t("Unified diff")} active={context.diffRenderMode === "unified"} onClick={() => context.onDiffRenderModeChange("unified")}><Rows3 /></ViewerIconButton>
+          <ViewerIconButton label={t("Side-by-side diff")} active={context.diffRenderMode === "split"} onClick={() => context.onDiffRenderModeChange("split")}><Columns2 /></ViewerIconButton>
+          <ViewerIconButton label={context.wrapLines ? t("Disable word wrap") : t("Enable word wrap")} active={context.wrapLines} onClick={() => context.onWrapLinesChange(!context.wrapLines)}><WrapText /></ViewerIconButton>
         </>
       )}
     >
@@ -513,8 +518,8 @@ export function DiffViewer({
               onClick={() => setLimit(shownCount + DIFF_VIEWER_PAGE_SIZE)}
               className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm transition-[background-color,scale] duration-150 ease-snappy hover:bg-muted active:scale-[0.97]"
             >
-              Load {Math.min(DIFF_VIEWER_PAGE_SIZE, remaining).toLocaleString()} more
-              {remaining > DIFF_VIEWER_PAGE_SIZE ? <span className="text-muted-foreground">· {remaining.toLocaleString()} left</span> : null}
+              {t("Load {count} more", { count: Math.min(DIFF_VIEWER_PAGE_SIZE, remaining).toLocaleString() })}
+              {remaining > DIFF_VIEWER_PAGE_SIZE ? <span className="text-muted-foreground">· {t("{count} left", { count: remaining.toLocaleString() })}</span> : null}
             </button>
           </div>
         ) : null}
@@ -561,6 +566,7 @@ function DiffFileSection({
   onToggleFull: () => void
   onRetry: () => void
 }) {
+  const t = useT()
   const status = diffStatus(file)
   const { name, folder } = splitDiffPath(file.path)
   const attachment = useMemo(() => workingTreeAttachment(projectId, file), [file, projectId])
@@ -592,7 +598,7 @@ function DiffFileSection({
             onClick={onLoadHeld}
             className="rounded-lg border border-border px-3 py-1.5 text-foreground transition-[background-color,scale] duration-150 ease-snappy hover:bg-muted active:scale-[0.97]"
           >
-            Load diff
+            {t("Load diff")}
           </button>
         ) : null}
       </div>
@@ -632,12 +638,12 @@ function DiffFileSection({
             type="button"
             onClick={onToggleCollapsed}
             aria-expanded={!collapsed}
-            aria-label={collapsed ? `Expand ${file.path}` : `Collapse ${file.path}`}
+            aria-label={collapsed ? t("Expand {path}", { path: file.path }) : t("Collapse {path}", { path: file.path })}
             className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronDown className={cn("size-4 transition-transform duration-150 ease-snappy", collapsed && "-rotate-90")} />
           </button>
-          <span className={cn("w-3 shrink-0 text-center font-mono text-xs font-semibold", status.className)} title={status.label}>{status.letter}</span>
+          <span className={cn("w-3 shrink-0 text-center font-mono text-xs font-semibold", status.className)} title={diffStatusLabel(status, t)}>{status.letter}</span>
           <div className="flex min-w-0 flex-1 items-baseline gap-2">
             <span className="min-w-0 max-w-[60%] shrink-0 truncate text-sm font-medium text-foreground">{name}</span>
             {/* RTL so a long folder loses its start, not its end; <bdi> keeps
@@ -652,7 +658,7 @@ function DiffFileSection({
               onChange={(value) => {
                 if ((value === "preview") !== previewing) onTogglePreview()
               }}
-              options={[{ value: "diff", label: "Diff" }, { value: "preview", label: "Preview" }]}
+              options={[{ value: "diff", label: t("Diff") }, { value: "preview", label: t("Preview") }]}
             />
           </div>
         ) : null}
@@ -662,7 +668,7 @@ function DiffFileSection({
             ? <span className="px-1 font-mono text-xs text-muted-foreground">BIN</span>
             : <DiffFileStat additions={file.additions} deletions={file.deletions} className="px-1" />}
           {fullToggle ? (
-            <ViewerIconButton label={full ? "Hide full file" : "Show full file"} active={full} onClick={onToggleFull}>
+            <ViewerIconButton label={full ? t("Hide full file") : t("Show full file")} active={full} onClick={onToggleFull}>
               {full ? <FoldVertical /> : <UnfoldVertical />}
             </ViewerIconButton>
           ) : null}

@@ -1,5 +1,6 @@
 import { PatchDiff } from "@pierre/diffs/react"
 import { useMemo } from "react"
+import { useT } from "../../../i18n/useT"
 import { useTheme } from "../../../hooks/useTheme"
 import { Skeleton } from "../../ui/skeleton"
 import { getDiffPreviewAttachment, type DiffFile, type DiffRenderMode } from "./shared"
@@ -18,8 +19,9 @@ const SKELETON_DIFF_LINES = [
 
 /** The patch while it loads, in the diff's own line rhythm so it lands in place. */
 export function DiffPatchSkeleton() {
+  const t = useT()
   return (
-    <div className="space-y-2 px-4 py-4" aria-busy aria-label="Loading diff">
+    <div className="space-y-2 px-4 py-4" aria-busy aria-label={t("Loading diff")}>
       <Skeleton className="h-3 w-24 bg-foreground/[0.05]" />
       {SKELETON_DIFF_LINES.map((line, index) => (
         <div key={index} className="flex items-center gap-3">
@@ -51,6 +53,7 @@ export function DiffPatchView({
   wrapLines: boolean
   onRetry: () => void
 }) {
+  const t = useT()
   const previewAttachment = useMemo(() => getDiffPreviewAttachment(projectId, file), [file, projectId])
   // The app's theme, not the system's (the renderer's default): a light app
   // on a dark Mac drew light text on its light background.
@@ -72,12 +75,12 @@ export function DiffPatchView({
     return (
       <div className="flex items-center gap-3 px-4 py-4 text-sm text-destructive">
         <span className="min-w-0 flex-1">{patchError}</span>
-        <button type="button" onClick={onRetry} className="shrink-0 text-muted-foreground transition-colors hover:text-foreground">Retry</button>
+        <button type="button" onClick={onRetry} className="shrink-0 text-muted-foreground transition-colors hover:text-foreground">{t("Retry")}</button>
       </div>
     )
   }
   if (patch === undefined) return <DiffPatchSkeleton />
-  if (!patch.trim()) return <div className="px-4 py-4 text-sm text-muted-foreground">No textual changes.</div>
+  if (!patch.trim()) return <div className="px-4 py-4 text-sm text-muted-foreground">{t("No textual changes.")}</div>
   return (
     <div className="kanna-diff-patch overflow-hidden">
       <PatchDiff

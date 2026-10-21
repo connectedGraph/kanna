@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm"
 import type { UpdateSnapshot } from "../../../shared/types"
 import { markdownComponents } from "../../components/messages/shared"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import { SettingsActionButton, SettingsBadge, SettingsNotice, SettingsPlaceholder } from "./shared"
 
 const GITHUB_RELEASES_URL = "https://api.github.com/repos/jakemor/kanna/releases"
@@ -171,6 +172,15 @@ export function ChangelogSection({
   onInstallUpdate: () => void
   onCheckForUpdates: () => void
 }) {
+  const t = useT()
+  // formatPublishedDate() answers with English words for a missing or bad
+  // date; those two are the only values that need translating.
+  const publishedLabel = (value: string | null) => {
+    const text = formatPublishedDate(value)
+    if (text === "Unpublished") return t("Unpublished")
+    if (text === "Unknown date") return t("Unknown date")
+    return text
+  }
   const latestVersion = updateSnapshot?.latestVersion ?? releases[0]?.tag_name ?? "Unknown"
   const currentVersionLabel = updateSnapshot?.currentVersion ?? currentVersion
   const isChecking = updateSnapshot?.status === "checking"
@@ -182,26 +192,26 @@ export function ChangelogSection({
   return (
     <div className="space-y-4">
       {status === "loading" || status === "idle" ? (
-        <SettingsPlaceholder loading>Loading release notes…</SettingsPlaceholder>
+        <SettingsPlaceholder loading>{t("Loading release notes…")}</SettingsPlaceholder>
       ) : null}
 
       {status === "error" ? (
         <SettingsNotice>
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <div className="font-medium">Could not load changelog</div>
+              <div className="font-medium">{t("Could not load changelog")}</div>
               <div className="mt-0.5 text-muted-foreground">
-                {error ?? "Unable to load changelog."}
+                {error ?? t("Unable to load changelog.")}
               </div>
             </div>
-            <SettingsActionButton onClick={onRetry}>Retry</SettingsActionButton>
+            <SettingsActionButton onClick={onRetry}>{t("Retry")}</SettingsActionButton>
           </div>
         </SettingsNotice>
       ) : null}
 
       {status === "success" && releases.length === 0 ? (
         <SettingsPlaceholder>
-          GitHub did not return any published releases for this repository.
+          {t("GitHub did not return any published releases for this repository.")}
         </SettingsPlaceholder>
       ) : null}
 
@@ -211,7 +221,7 @@ export function ChangelogSection({
             onClick={onCheckForUpdates}
             disabled={isChecking || isUpdating}
           >
-            {isChecking ? "Checking…" : "Check for updates"}
+            {isChecking ? t("Checking…") : t("Check for updates")}
           </SettingsActionButton>
         </div>
       ) : null}
@@ -235,9 +245,9 @@ export function ChangelogSection({
                   <h3 className="text-base font-semibold tracking-[-0.2px] text-foreground">
                     {release.name?.trim() || release.tag_name}
                   </h3>
-                  <span className="text-sm text-muted-foreground">{formatPublishedDate(release.published_at)}</span>
-                  {isCurrentRelease ? <SettingsBadge>Current</SettingsBadge> : null}
-                  {release.prerelease ? <SettingsBadge>Prerelease</SettingsBadge> : null}
+                  <span className="text-sm text-muted-foreground">{publishedLabel(release.published_at)}</span>
+                  {isCurrentRelease ? <SettingsBadge>{t("Current")}</SettingsBadge> : null}
+                  {release.prerelease ? <SettingsBadge>{t("Prerelease")}</SettingsBadge> : null}
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
@@ -245,7 +255,7 @@ export function ChangelogSection({
                     href={release.html_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="View release on GitHub"
+                    aria-label={t("View release on GitHub")}
                     className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <GitHubIcon className="h-4 w-4" />
@@ -258,7 +268,7 @@ export function ChangelogSection({
                       disabled={isUpdating}
                       icon={<DownloadCloud />}
                     >
-                      {isUpdating ? "Updating…" : "Update"}
+                      {isUpdating ? t("Updating…") : t("Update")}
                     </SettingsActionButton>
                   ) : null}
                 </div>
@@ -271,7 +281,7 @@ export function ChangelogSection({
                   </Markdown>
                 </div>
               ) : (
-                <div className="mt-4 text-sm text-muted-foreground">No release notes were provided.</div>
+                <div className="mt-4 text-sm text-muted-foreground">{t("No release notes were provided.")}</div>
               )}
             </article>
           )

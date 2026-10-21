@@ -3,6 +3,7 @@ import { useSidebarReady } from "../../stores/sidebarStore"
 import { useSidebarThread } from "../chat-ui/chat-reference"
 import { ChatCard, ChatReplyQuote } from "./ChatToolMessage"
 import { REPLY_QUOTE_WIDTH_CLASS } from "./SourcedMessage"
+import { useT } from "../../i18n/useT"
 
 /**
  * The way back from a sub-chat to the chat it reports to, for when no message
@@ -44,6 +45,7 @@ export function messageNamingParent(
 }
 
 export function ParentChatLink({ parentChatId }: { parentChatId: string }) {
+  const t = useT()
   const ready = useSidebarReady()
   const parent = useSidebarThread(parentChatId)
   // A parent the sidebar has not listed yet is not a deleted one. Wait to be
@@ -52,11 +54,11 @@ export function ParentChatLink({ parentChatId }: { parentChatId: string }) {
   return (
     <div className={REPLY_QUOTE_WIDTH_CLASS}>
       {parent
-        ? <ChatReplyQuote chatId={parentChatId} title="Parent chat" said="Parent chat:" />
+        ? <ChatReplyQuote chatId={parentChatId} title={t("Parent chat")} said={t("Parent chat:")} />
         // An archived parent is still a row and still opens. One the sidebar
         // no longer has was deleted, and a row with nothing behind it would
         // promise a way back that is not there. So this one says what it is.
-        : <ChatCard chatId={null} title="Parent chat" caption="No longer available" quote />}
+        : <ChatCard chatId={null} title={t("Parent chat")} caption={t("No longer available")} quote />}
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { formatTicketFullTime, groupTicketBoard, olderTicketsNote, ticketBoardCo
 import { useScrollMemory } from "../viewer/scroll-memory"
 import { cn } from "../../lib/utils"
 import { TicketMark } from "./TicketMark"
+import { useT } from "../../i18n/useT"
 
 /**
  * A delegator's ticket board, in the two shapes the pane gives it: a list
@@ -21,7 +22,8 @@ import { TicketMark } from "./TicketMark"
  * board's minute clock. The tooltip has the date and time.
  */
 function TicketAge({ at, nowMs, className }: { at: number; nowMs: number; className: string }) {
-  return <span title={formatTicketFullTime(at)} className={className}>{formatSidebarAgeLabel(at, nowMs)}</span>
+  const t = useT()
+  return <span title={formatTicketFullTime(at)} className={className}>{formatSidebarAgeLabel(at, nowMs, t)}</span>
 }
 
 /** A press gives a row or card 1.5%, in and out on the app's curve. */

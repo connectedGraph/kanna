@@ -5,6 +5,7 @@ import type {
   ChatBranchListEntry,
   ChatBranchListResult,
 } from "../../../../shared/types"
+import { useT } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { ROW_HIGHLIGHT_CLASS, ROW_HOVER_CLASS, WidgetError, WidgetList, WidgetMoreRow, WidgetRow } from "../widgets/parts"
 import { BranchHoverCard, useBranchDetails } from "./BranchHoverCard"
@@ -130,6 +131,7 @@ export function BranchPicker({
   /** A branch's tip and standing, or a PR as GitHub has it, for the rows' hover card. */
   onReadBranch?: (entry: ChatBranchListEntry) => Promise<ChatBranchDetails>
 }) {
+  const t = useT()
   const [isLoading, setIsLoading] = useState(true)
   const [isMutating, setIsMutating] = useState(false)
   const [query, setQuery] = useState("")
@@ -335,7 +337,7 @@ export function BranchPicker({
         inputRef={inputRef}
         value={query}
         onChange={setQuery}
-        placeholder="Find or create a branch…"
+        placeholder={t("Find or create a branch…")}
         listId={listId}
         activeOptionId={resolvedActiveId ?? undefined}
         onKeyDown={handleKeyDown}
@@ -344,7 +346,7 @@ export function BranchPicker({
         listRef={listRef}
         id={listId}
         role="listbox"
-        aria-label="Branches"
+        aria-label={t("Branches")}
         aria-busy={isLoading}
         data-mode={mode}
         onPointerMove={(event) => {
@@ -362,12 +364,12 @@ export function BranchPicker({
           <>
             {!hasBranchRows && createOptions.length === 0 ? (
               <div className="px-1.5 py-1 text-xs text-muted-foreground">
-                {query.trim() ? "No matching branches." : "No other branches."}
+                {query.trim() ? t("No matching branches.") : t("No other branches.")}
               </div>
             ) : null}
-            <BranchListSection title="Recent" count={countOf(sections.recent.length)} entries={sections.recent} {...sectionFold("recent")} {...sectionProps} />
+            <BranchListSection title={t("Recent")} count={countOf(sections.recent.length)} entries={sections.recent} {...sectionFold("recent")} {...sectionProps} />
             <BranchListSection
-              title="Pull requests"
+              title={t("Pull requests")}
               {...sectionFold("pullRequests")}
               count={countOf(sections.allPullRequestCount)}
               entries={sections.pullRequests}
@@ -376,14 +378,14 @@ export function BranchPicker({
               // Said only when PRs could not be read. "None open" is the
               // section being absent, like every other empty section.
               emptyLabel={branchList?.pullRequestsStatus === "error" && !searching
-                ? branchList.pullRequestsError ?? "Could not load pull requests."
+                ? branchList.pullRequestsError ?? t("Could not load pull requests.")
                 : undefined}
               revealFrom={revealFrom(showAllPullRequests)}
               footer={sectionMore(sections.allPullRequestCount, showAllPullRequests, setShowAllPullRequests, repoSlug ? `https://github.com/${repoSlug}/pulls` : undefined)}
               {...sectionProps}
             />
             <BranchListSection
-              title="Local"
+              title={t("Local")}
               {...sectionFold("local")}
               count={countOf(sections.allLocalCount)}
               entries={sections.local}
@@ -393,7 +395,7 @@ export function BranchPicker({
               {...sectionProps}
             />
             <BranchListSection
-              title="Remote"
+              title={t("Remote")}
               {...sectionFold("remote")}
               count={countOf(sections.allRemoteCount)}
               entries={sections.remote}
@@ -403,7 +405,7 @@ export function BranchPicker({
             />
             {createOptions.length > 0 ? (
               // Directly under the last section's rows, touching them.
-              <div role="group" aria-label="Create branch" className="flex flex-col gap-px">
+              <div role="group" aria-label={t("Create branch")} className="flex flex-col gap-px">
                 {createOptions.map((option) => {
                   const id = `${listId}-create-${option.baseBranchName ?? ""}`
                   const isActive = id === resolvedActiveId
@@ -417,8 +419,8 @@ export function BranchPicker({
                       icon={<GitBranchPlus />}
                       title={(
                         <>
-                          Create <span className="font-mono text-[13px]">{option.name}</span>
-                          {option.baseBranchName ? <span className="text-muted-foreground"> from {option.baseBranchName}</span> : null}
+                          {t("Create")} <span className="font-mono text-[13px]">{option.name}</span>
+                          {option.baseBranchName ? <span className="text-muted-foreground"> {t("from {branch}", { branch: option.baseBranchName })}</span> : null}
                         </>
                       )}
                       disabled={isMutating}

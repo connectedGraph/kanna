@@ -1,6 +1,7 @@
 import { useEffect, useReducer, type RefObject } from "react"
 import { ArrowDown, ArrowUp, FileDiff, GitBranch, GitCommitHorizontal, Laptop, MessageSquare, Unlink } from "lucide-react"
 import type { ChatBranchDetails, ChatBranchListEntry, ChatPullRequestDetails } from "../../../../shared/types"
+import { useT } from "../../../i18n/useT"
 import { formatCompactAge } from "../../../lib/formatters"
 import { cn } from "../../../lib/utils"
 import { formatPromptTimestamp } from "../../messages/ResultMessage"
@@ -96,9 +97,10 @@ export function previewPullRequestBody(body: string) {
 
 /** "↑3 ↓1 main", "even with main": where a branch stands against another. */
 function Divergence({ ahead, behind, name }: { ahead: number; behind: number; name: string }) {
-  if (ahead === 0 && behind === 0) return <span className="truncate">Even with {name}</span>
+  const t = useT()
+  if (ahead === 0 && behind === 0) return <span className="truncate">{t("Even with {branch}", { branch: name })}</span>
   return (
-    <span className="flex min-w-0 items-center gap-1" title={`${ahead} ahead, ${behind} behind ${name}`}>
+    <span className="flex min-w-0 items-center gap-1" title={t("{ahead} ahead, {behind} behind {branch}", { ahead, behind, branch: name })}>
       {ahead ? <span className="flex items-center text-foreground"><ArrowUp className="size-2.5" strokeWidth={2.5} />{ahead}</span> : null}
       {behind ? <span className="flex items-center"><ArrowDown className="size-2.5" strokeWidth={2.5} />{behind}</span> : null}
       <span className="truncate">{name}</span>
@@ -111,6 +113,7 @@ function Divergence({ ahead, behind, name }: { ahead: number; behind: number; na
  * commit, and where it stands against its upstream and the default branch.
  */
 function BranchCardContent({ entry, details }: { entry: ChatBranchListEntry; details: ChatBranchDetails | null }) {
+  const t = useT()
   const commit = details?.lastCommit
   const upstream = details?.upstream
   return (
@@ -132,7 +135,7 @@ function BranchCardContent({ entry, details }: { entry: ChatBranchListEntry; det
         <TurnCardMetaRow className="mt-1">
           {upstream ? (
             upstream.gone ? (
-              <span className="flex items-center gap-1 text-destructive"><Unlink className="size-2.5" strokeWidth={2.5} />Upstream deleted</span>
+              <span className="flex items-center gap-1 text-destructive"><Unlink className="size-2.5" strokeWidth={2.5} />{t("Upstream deleted")}</span>
             ) : (
               <span className="flex min-w-0 items-center gap-1">
                 <GitBranch className="size-2.5 shrink-0" strokeWidth={2.5} />
@@ -140,9 +143,9 @@ function BranchCardContent({ entry, details }: { entry: ChatBranchListEntry; det
               </span>
             )
           ) : details?.localBranchName ? (
-            <span className="flex items-center gap-1"><Laptop className="size-2.5" strokeWidth={2.5} />Checked out locally</span>
+            <span className="flex items-center gap-1"><Laptop className="size-2.5" strokeWidth={2.5} />{t("Checked out locally")}</span>
           ) : entry.kind === "local" ? (
-            <span>Not pushed</span>
+            <span>{t("Not pushed")}</span>
           ) : null}
           {details?.base ? (
             <span className="ml-auto flex min-w-0 items-center pl-2">
@@ -172,6 +175,7 @@ export function PullRequestCardContent({
   /** Opens one check's page on GitHub. */
   onOpenCheck?: (url: string) => void
 }) {
+  const t = useT()
   const body = pr?.body ? previewPullRequestBody(pr.body) : ""
   const hasStats = pr && (pr.changedFiles !== undefined || pr.commits !== undefined || pr.comments || pr.additions !== undefined)
   return (
@@ -186,15 +190,15 @@ export function PullRequestCardContent({
           {pr?.baseRefName ?? ""}
         </span>
         {pr?.createdAt ? (
-          <span className="ml-auto shrink-0 pl-2" title={`Opened ${formatPromptTimestamp(pr.createdAt)}`}>
-            opened {formatCompactAge(pr.createdAt)}
+          <span className="ml-auto shrink-0 pl-2" title={t("Opened {time}", { time: formatPromptTimestamp(pr.createdAt) })}>
+            {t("opened {age}", { age: formatCompactAge(pr.createdAt, t) })}
           </span>
         ) : null}
       </TurnCardMetaRow>
       <div className="mt-1 space-y-1">
         <TurnCardMessage
           className="line-clamp-3 text-sm font-medium text-popover-foreground"
-          label="Open this pull request on GitHub"
+          label={t("Open this pull request on GitHub")}
           onSelect={onOpen}
         >
           {pr?.title ?? entry.prTitle ?? entry.displayName}
@@ -208,13 +212,13 @@ export function PullRequestCardContent({
       {hasStats ? (
         <TurnCardMetaRow className="mt-1">
           {pr.changedFiles !== undefined ? (
-            <span className="flex items-center gap-1" title={`${pr.changedFiles} files changed`}><FileDiff className="size-2.5" strokeWidth={2.5} />{pr.changedFiles}</span>
+            <span className="flex items-center gap-1" title={t("{count} files changed", { count: pr.changedFiles })}><FileDiff className="size-2.5" strokeWidth={2.5} />{pr.changedFiles}</span>
           ) : null}
           {pr.commits !== undefined ? (
-            <span className="ml-1.5 flex items-center gap-1" title={`${pr.commits} commits`}><GitCommitHorizontal className="size-2.5" strokeWidth={2.5} />{pr.commits}</span>
+            <span className="ml-1.5 flex items-center gap-1" title={t("{count} commits", { count: pr.commits })}><GitCommitHorizontal className="size-2.5" strokeWidth={2.5} />{pr.commits}</span>
           ) : null}
           {pr.comments ? (
-            <span className="ml-1.5 flex items-center gap-1" title={`${pr.comments} comments`}><MessageSquare className="size-2.5" strokeWidth={2.5} />{pr.comments}</span>
+            <span className="ml-1.5 flex items-center gap-1" title={t("{count} comments", { count: pr.comments })}><MessageSquare className="size-2.5" strokeWidth={2.5} />{pr.comments}</span>
           ) : null}
           <DiffFileStat additions={pr.additions} deletions={pr.deletions} className="ml-auto pl-2" />
         </TurnCardMetaRow>

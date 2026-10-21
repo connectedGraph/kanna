@@ -1,3 +1,4 @@
+import { useT } from "../../i18n/useT"
 import { cn } from "../../lib/utils"
 import { type ContextWindowSnapshot, formatContextWindowTokens } from "../../lib/contextWindow"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
@@ -13,6 +14,7 @@ function formatPercentage(value: number | null): string | null {
 }
 
 export function ContextWindowMeter({ usage }: { usage: ContextWindowSnapshot }) {
+  const t = useT()
   const usedPercentage = formatPercentage(usage.usedPercentage)
   const normalizedPercentage = Math.max(0, Math.min(100, usage.usedPercentage ?? 0))
   const radius = 9.75
@@ -27,8 +29,8 @@ export function ContextWindowMeter({ usage }: { usage: ContextWindowSnapshot }) 
           className="group inline-flex items-center justify-center rounded-full transition-opacity hover:opacity-85"
           aria-label={
             usage.maxTokens !== undefined && usedPercentage
-              ? `Context window ${usedPercentage} used`
-              : `Context window ${formatContextWindowTokens(usage.usedTokens)} tokens used`
+              ? t("Context window {percentage} used", { percentage: usedPercentage })
+              : t("Context window {tokens} tokens used", { tokens: formatContextWindowTokens(usage.usedTokens) })
           }
         >
           <span className="relative flex h-6 w-6 items-center justify-center">
@@ -80,11 +82,11 @@ export function ContextWindowMeter({ usage }: { usage: ContextWindowSnapshot }) 
               <span className="mx-1">·</span>
               <span>{formatContextWindowTokens(usage.usedTokens)}</span>
               <span>/</span>
-              <span>{formatContextWindowTokens(usage.maxTokens)} context used</span>
+              <span>{t("{tokens} context used", { tokens: formatContextWindowTokens(usage.maxTokens) })}</span>
             </div>
           ) : (
             <div className="text-sm text-foreground">
-              {formatContextWindowTokens(usage.usedTokens)} tokens used so far
+              {t("{tokens} tokens used so far", { tokens: formatContextWindowTokens(usage.usedTokens) })}
             </div>
           )}
         </div>

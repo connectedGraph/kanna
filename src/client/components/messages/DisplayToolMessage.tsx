@@ -7,25 +7,27 @@ import { openViewer, viewerAttachmentFromDisplay } from "../../stores/viewerStor
 import { displayAttachments, type ChartToolPayload, type DisplayAttachment } from "../../../shared/display-tools"
 import type { ProcessedToolCall } from "./types"
 import { useToolPayload } from "./tool-payload-context"
+import { useT } from "../../i18n/useT"
 
 export function DisplayToolMessage({ message }: { message: ProcessedToolCall }) {
+  const t = useT()
   // Older cached updates can lack the result body even though the server has it.
   const fetchedResult = useToolPayload(message.resultTrimmed ? message.resultEntryId : undefined)
   const rawResult = fetchedResult?.kind === "tool_result" ? fetchedResult.content : message.rawResult
-  if (!message.resultEntryId || (message.resultTrimmed && !fetchedResult)) return <p className="text-sm text-muted-foreground">{message.toolName === VISUALIZATION_TOOL_NAME ? "Preparing visualization" : message.toolName === "show_chart" ? "Preparing chart" : message.toolName === "generate_images" ? "Generating images" : "Preparing attachments"}...</p>
-  if (message.isError) return <p role="alert" className="text-sm text-destructive">{errorText(rawResult)}</p>
+  if (!message.resultEntryId || (message.resultTrimmed && !fetchedResult)) return <p className="text-sm text-muted-foreground">{message.toolName === VISUALIZATION_TOOL_NAME ? t("Preparing visualization") : message.toolName === "show_chart" ? t("Preparing chart") : message.toolName === "generate_images" ? t("Generating images") : t("Preparing attachments")}...</p>
+  if (message.isError) return <p role="alert" className="text-sm text-destructive">{errorText(rawResult, t)}</p>
   if (message.toolKind !== "display") return null
   if (message.toolName === "show_chart") return <ChartTool payload={message.input.payload as unknown as ChartToolPayload} />
   if (message.toolName === VISUALIZATION_TOOL_NAME) {
     const artifact = readVisualizationArtifact(rawResult)
-    return artifact ? <Visualization key={artifact.url} artifact={artifact} /> : <p role="alert" className="text-sm text-muted-foreground">Visualization unavailable.</p>
+    return artifact ? <Visualization key={artifact.url} artifact={artifact} /> : <p role="alert" className="text-sm text-muted-foreground">{t("Visualization unavailable.")}</p>
   }
   return <AttachmentsCard attachments={displayAttachments(rawResult)} />
 }
 
-function errorText(result: unknown): string {
-  if (Array.isArray(result)) return result.map(block => block?.text ?? "").join("\n") || "Could not display this result."
-  return "Could not display this result."
+function errorText(result: unknown, t: (key: string) => string): string {
+  if (Array.isArray(result)) return result.map(block => block?.text ?? "").join("\n") || t("Could not display this result.")
+  return t("Could not display this result.")
 }
 
 /**
@@ -40,6 +42,7 @@ function openInViewer(event: React.MouseEvent<HTMLAnchorElement>, attachment: Di
 }
 
 export function AttachmentsCard({ attachments }: { attachments: DisplayAttachment[] }) {
+  const t = useT()
   const [broken, setBroken] = useState<Set<string>>(() => new Set())
   const multiple = attachments.length > 1
   const filesOnly = attachments.every(attachment => attachment.kind === "file")
@@ -66,7 +69,7 @@ export function AttachmentsCard({ attachments }: { attachments: DisplayAttachmen
     return () => observer.disconnect()
   }, [])
   return (
-      <div className="group relative -m-2 w-[calc(100%+1rem)] min-w-0 overflow-hidden" aria-label="Attachments">
+      <div className="group relative -m-2 w-[calc(100%+1rem)] min-w-0 overflow-hidden" aria-label={t("Attachments")}>
         {/* The scrollbar keeps its space and only its thumb goes transparent. Removing it would change the row height on hover. */}
         <div ref={scrollerRef} onScroll={measure} className="attachments-scroller w-full snap-x scroll-px-2 overflow-x-auto">
           {/* Images and videos scroll sideways. A row of only files wraps instead, since there is nothing to preview. */}
@@ -77,7 +80,7 @@ export function AttachmentsCard({ attachments }: { attachments: DisplayAttachmen
               const imagePreview = attachment.kind === "image" && !failed
               const onError = () => setBroken(current => new Set(current).add(attachment.url))
               const imageLink = (
-                <a href={attachment.url} target="_blank" rel="noreferrer noopener" className="block" aria-label={`Open ${attachment.name}`} onClick={(event) => openInViewer(event, attachment)}>
+                <a href={attachment.url} target="_blank" rel="noreferrer noopener" className="block" aria-label={t("Open {name}", { name: attachment.name })} onClick={(event) => openInViewer(event, attachment)}>
                   {/* Load on mount because the image's dimensions determine the preview width. Every image has the same height. Only a panorama wider than the cap is cropped. */}
                   <img src={attachment.url} alt={attachment.name} referrerPolicy="no-referrer" className="block h-56 w-auto max-w-[32rem] rounded-[10px] object-cover shadow-md" onError={onError} />
                 </a>
@@ -95,7 +98,7 @@ export function AttachmentsCard({ attachments }: { attachments: DisplayAttachmen
                       <ArrowUpRight className="size-4 shrink-0" />
                     </a>
                   )}
-                  {failed && <span className="text-xs text-muted-foreground">Preview unavailable. Open the file to view it.</span>}
+                  {failed && <span className="text-xs text-muted-foreground">{t("Preview unavailable. Open the file to view it.")}</span>}
                 </figure>
               )
             })}

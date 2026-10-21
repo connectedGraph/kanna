@@ -10,6 +10,7 @@ import { useDraftStartTimes } from "../../../stores/chatInputStore"
 import { usePendingSendTimes } from "../../../stores/pendingSendStore"
 import { useSectionOverrides } from "../../../stores/sidebarSectionStore"
 import type { ThreadDetailScope } from "../../../lib/thread-detail-label"
+import { useT } from "../../../i18n/useT"
 import { cn, normalizeChatId } from "../../../lib/utils"
 import { Button } from "../../ui/button"
 import {
@@ -40,6 +41,7 @@ export function SectionHeader({
   isExpanded?: boolean
   onArchiveAll?: () => void
 }) {
+  const t = useT()
   const collapsible = onToggle != null
   const header = (
     <div
@@ -96,7 +98,7 @@ export function SectionHeader({
           }}
         >
           <Archive className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium">Archive All</span>
+          <span className="text-xs font-medium">{t("Archive All")}</span>
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -167,6 +169,7 @@ function ThreadSectionsImpl({
   showProjectIcons = false,
   detailScope = "cross-project",
 }: Props) {
+  const t = useT()
   // Drafts are browser-local, so they reach the sections as an argument rather
   // than as a field on the rows the server sent.
   const draftStartTimes = useDraftStartTimes()
@@ -269,7 +272,7 @@ function ThreadSectionsImpl({
         return (
           <div>
             <SectionHeader
-              label="Relevant"
+              label={t("Relevant")}
               isExpanded={isExpanded}
               onToggle={() => toggleBucket("relevant", true)}
               onArchiveAll={() => {
@@ -309,7 +312,7 @@ function ThreadSectionsImpl({
         return (
           <div>
             <SectionHeader
-              label="Archived"
+              label={t("Archived")}
               isExpanded={isExpanded}
               onToggle={() => toggleBucket("archived", false)}
             />

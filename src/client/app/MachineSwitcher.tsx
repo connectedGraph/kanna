@@ -14,6 +14,7 @@ import { InputPopover, PopoverMenuItem } from "../components/chat-ui/ChatPrefere
 import { findCurrentMachine, useConnectionStore } from "../stores/connectionStore"
 import { displayClaimUrl } from "../lib/pairSession"
 import { postToMacApp } from "../lib/macApp"
+import { useT } from "../i18n/useT"
 import { cn } from "../lib/utils"
 import type { CloudMachineSummary } from "../../shared/cloud-api"
 
@@ -62,6 +63,7 @@ function OnlineDot({ online }: { online: boolean }) {
  * kanna.sh).
  */
 export function MachineSwitcher() {
+  const t = useT()
   const mode = useConnectionStore((state) => state.mode)
   const machines = useConnectionStore((state) => state.machines)
   const load = useConnectionStore((state) => state.load)
@@ -128,7 +130,7 @@ export function MachineSwitcher() {
           <button type="button" onClick={() => setPairDialogOpen(true)} className={SIDEBAR_BUTTON_CLASS}>
             <span className="flex min-w-0 items-center gap-2">
               <Cloud className="ml-[1px] size-4 shrink-0" />
-              <span className="truncate text-xs font-medium">Setup Kanna Cloud</span>
+              <span className="truncate text-xs font-medium">{t("Setup Kanna Cloud")}</span>
             </span>
             <ExternalLink className="size-3.5 shrink-0 opacity-60" />
           </button>
@@ -136,9 +138,9 @@ export function MachineSwitcher() {
         <Dialog open={pairDialogOpen} onOpenChange={setPairDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Use this machine from anywhere</DialogTitle>
+              <DialogTitle>{t("Use this machine from anywhere")}</DialogTitle>
               <DialogDescription>
-                Get a personal URL that works from any browser, 100% free.
+                {t("Get a personal URL that works from any browser, 100% free.")}
               </DialogDescription>
             </DialogHeader>
             <DialogBody>
@@ -156,7 +158,7 @@ export function MachineSwitcher() {
   // it isn't on Kanna Cloud, so there's a way back.
   const knowsSelf = fromMacApp || thisMachineSubdomain !== null
   // Kanna for Mac is always on a Mac; a localhost page could be any machine.
-  const thisMachineLabel = fromMacApp ? THIS_MAC_NAME : "This machine"
+  const thisMachineLabel = fromMacApp ? THIS_MAC_NAME : t("This machine")
   const thisMachine = knowsSelf ? machines.find((machine) => machine.subdomain === thisMachineSubdomain) : undefined
   const currentMachine = knowsSelf
     ? machines.find((machine) => machine.subdomain === (showingMachine ?? thisMachineSubdomain)) ?? null
@@ -189,7 +191,7 @@ export function MachineSwitcher() {
             {/* The list opens upward from the footer, so the chevron points
                 both ways, as a macOS pop-up button does. */}
             {switchingTo !== null ? (
-              <Loader2 aria-label={`Switching to ${switchingTo}`} className="size-3.5 shrink-0 animate-spin" />
+              <Loader2 aria-label={t("Switching to {machine}", { machine: switchingTo })} className="size-3.5 shrink-0 animate-spin" />
             ) : (
               <ChevronsUpDown className="size-3.5 shrink-0 opacity-60" />
             )}
@@ -238,7 +240,7 @@ export function MachineSwitcher() {
               }}
               selected={false}
               icon={<Settings2 className="size-4 shrink-0 text-muted-foreground" />}
-              label="Manage Fleet"
+              label={t("Manage Fleet")}
               // Says it leaves the app, on the side the other rows use.
               trailing={<ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />}
             />

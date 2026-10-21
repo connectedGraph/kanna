@@ -21,6 +21,7 @@ import { Input } from "../../components/ui/input"
 import { SelectItem } from "../../components/ui/select"
 import { applyModelToComposerState } from "../../lib/composer"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import { useChatPreferencesStore, type ComposerState } from "../../stores/chatPreferencesStore"
 import { useProviderAuthStore } from "../../stores/providerAuthStore"
 import type { KannaState } from "../useKannaState"
@@ -63,6 +64,7 @@ export function ProvidersSection({
     | "handleWriteAppSettings"
   >
 }) {
+  const t = useT()
   const llmProvider = state.llmProvider
   const handleReadLlmProvider = state.handleReadLlmProvider
   const handleWriteLlmProvider = state.handleWriteLlmProvider
@@ -114,7 +116,7 @@ export function ProvidersSection({
   function handleDefaultProviderChange(nextValue: "last_used" | AgentProvider) {
     setDefaultProvider(nextValue)
     void handleWriteAppSettings({ defaultProvider: nextValue }).catch((error) => {
-      setProvidersError(error instanceof Error ? error.message : "Unable to save provider settings.")
+      setProvidersError(error instanceof Error ? error.message : t("Unable to save provider settings."))
     })
   }
 
@@ -134,7 +136,7 @@ export function ProvidersSection({
     void handleWriteAppSettings({
       providerDefaults: { [provider]: { model: next.model, modelOptions: next.modelOptions } },
     }).catch((error) => {
-      setProvidersError(error instanceof Error ? error.message : "Unable to save provider settings.")
+      setProvidersError(error instanceof Error ? error.message : t("Unable to save provider settings."))
     })
   }
 
@@ -144,7 +146,7 @@ export function ProvidersSection({
   ) {
     setProviderDefaultModelOptions(provider, modelOptions)
     void handleWriteAppSettings({ providerDefaults: { [provider]: { modelOptions } } }).catch((error) => {
-      setProvidersError(error instanceof Error ? error.message : "Unable to save provider settings.")
+      setProvidersError(error instanceof Error ? error.message : t("Unable to save provider settings."))
     })
   }
 
@@ -152,7 +154,7 @@ export function ProvidersSection({
     setProviderDefaultMode(provider, mode)
     const flags = chatModeToFlags(mode, providerDefaults[provider].autoPlan)
     void handleWriteAppSettings({ providerDefaults: { [provider]: flags } }).catch((error) => {
-      setProvidersError(error instanceof Error ? error.message : "Unable to save provider settings.")
+      setProvidersError(error instanceof Error ? error.message : t("Unable to save provider settings."))
     })
   }
 
@@ -169,7 +171,7 @@ export function ProvidersSection({
         : error
       setLlmValidationStatus("invalid")
       setLlmValidationError(fallbackError)
-      setLlmProviderError(error instanceof Error ? error.message : "Unable to save Model Registry settings.")
+      setLlmProviderError(error instanceof Error ? error.message : t("Unable to save Model Registry settings."))
     }
   }
 
@@ -191,10 +193,10 @@ export function ProvidersSection({
   const llmValidationErrorText = llmValidationError ? JSON.stringify(llmValidationError, null, 2) : ""
   // No subtitle, only the result of checking the credentials once there is one.
   const llmValidationDescription = llmValidationStatus === "valid" ? (
-    <span className="font-medium text-emerald-600 dark:text-emerald-400">Credentials valid & saved</span>
+    <span className="font-medium text-emerald-600 dark:text-emerald-400">{t("Credentials valid & saved")}</span>
   ) : llmValidationStatus === "invalid" ? (
     <span className="font-medium text-destructive">
-      Credentials invalid.
+      {t("Credentials invalid.")}
       {llmValidationError ? (
         <>
           {" "}
@@ -203,7 +205,7 @@ export function ProvidersSection({
             onClick={() => setLlmValidationDialogOpen(true)}
             className="underline underline-offset-2 transition-colors hover:opacity-70"
           >
-            See error
+            {t("See error")}
           </button>
         </>
       ) : null}
@@ -214,7 +216,7 @@ export function ProvidersSection({
     <>
       {providersError ? <SettingsErrorBanner message={providersError} /> : null}
       <SettingsGroups>
-        <SettingsGroup title="Accounts">
+        <SettingsGroup title={t("Accounts")}>
           {providerAuthSnapshot ? (
             providerAuthSnapshot.services.map((service) => (
               // One surface for every account: each card drops its own
@@ -231,11 +233,11 @@ export function ProvidersSection({
           ) : (
             <div className="flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-              Checking provider sign-in status…
+              {t("Checking provider sign-in status…")}
             </div>
           )}
         </SettingsGroup>
-        <SettingsGroup title="Defaults">
+        <SettingsGroup title={t("Defaults")}>
           <SettingsRow def={SETTINGS_ROWS.defaultProvider} description={null}>
             <SettingsSelect
               value={defaultProvider}
@@ -244,7 +246,7 @@ export function ProvidersSection({
               <SelectItem value="last_used">
                 <span className="flex items-center gap-2">
                   <History className="h-4 w-4 shrink-0" />
-                  Last Used
+                  {t("Last Used")}
                 </span>
               </SelectItem>
               {PROVIDERS.map((provider) => (
@@ -381,7 +383,7 @@ export function ProvidersSection({
           </SettingsRow>
         </SettingsGroup>
 
-        <SettingsGroup title="Model Registry">
+        <SettingsGroup title={t("Model Registry")}>
           {llmProviderError || llmProvider?.warning ? (
             <div className="space-y-3 p-4">
               {llmProviderError ? <SettingsNotice>{llmProviderError}</SettingsNotice> : null}
@@ -398,13 +400,13 @@ export function ProvidersSection({
             >
               {QUICK_RESPONSE_PROVIDER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SettingsSelect>
           </SettingsRow>
           {llmProviderDraft.provider === "custom" ? (
-            <SettingsRow nested wideControl title="Base URL">
+            <SettingsRow nested wideControl title={t("Base URL")}>
               <Input
                 value={llmProviderDraft.baseUrl}
                 onChange={(event) => setLlmProviderDraft((current) => ({ ...current, baseUrl: event.target.value }))}
@@ -417,6 +419,7 @@ export function ProvidersSection({
               />
             </SettingsRow>
           ) : null}
+          {/* API Key is on the glossary's do-not-translate list, so it stays as written. */}
           <SettingsRow nested wideControl title="API Key">
             <Input
               type="password"
@@ -424,7 +427,7 @@ export function ProvidersSection({
               onChange={(event) => setLlmProviderDraft((current) => ({ ...current, apiKey: event.target.value }))}
               onBlur={() => void commitLlmProvider()}
               onKeyDown={(event) => handleSettingsInputKeyDown(event, () => void commitLlmProvider())}
-              placeholder="Required"
+              placeholder={t("Required")}
               autoComplete="off"
               className={cn(SETTINGS_CONTROL_CLASS, "font-mono")}
             />
@@ -432,14 +435,14 @@ export function ProvidersSection({
           <SettingsRow
             nested
             wideControl
-            title="Quick Response Model"
+            title={t("Quick Response Model")}
           >
             <Input
               value={llmProviderDraft.model}
               onChange={(event) => setLlmProviderDraft((current) => ({ ...current, model: event.target.value }))}
               onBlur={() => void commitLlmProvider()}
               onKeyDown={(event) => handleSettingsInputKeyDown(event, () => void commitLlmProvider())}
-              placeholder="Model id"
+              placeholder={t("Model id")}
               spellCheck={false}
               autoComplete="off"
               className={cn(SETTINGS_CONTROL_CLASS, "font-mono")}
@@ -451,7 +454,7 @@ export function ProvidersSection({
             description={null}
           >
             <SettingsActionButton onClick={() => setDefaultModelsDialogOpen(true)}>
-              Edit models
+              {t("Edit models")}
             </SettingsActionButton>
           </SettingsRow>
         </SettingsGroup>
@@ -459,14 +462,14 @@ export function ProvidersSection({
       <Dialog open={llmValidationDialogOpen} onOpenChange={setLlmValidationDialogOpen}>
         <DialogContent size="lg">
           <DialogBody className="space-y-4">
-            <DialogTitle>Validation Error</DialogTitle>
+            <DialogTitle>{t("Validation Error")}</DialogTitle>
             <pre className="max-h-[60vh] overflow-auto rounded-lg border border-border bg-muted p-3 text-xs font-mono whitespace-pre-wrap break-words">
               {llmValidationErrorText}
             </pre>
           </DialogBody>
           <DialogFooter>
             <Button variant="secondary" size="sm" onClick={() => setLlmValidationDialogOpen(false)}>
-              Close
+              {t("Close")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -477,7 +480,7 @@ export function ProvidersSection({
         faveModels={llmProvider?.faveModels ?? []}
         onSave={(faveModels) => {
           void state.handleWriteFaveModels(faveModels).catch((error) => {
-            setLlmProviderError(error instanceof Error ? error.message : "Unable to save Model Registry settings.")
+            setLlmProviderError(error instanceof Error ? error.message : t("Unable to save Model Registry settings."))
           })
         }}
       />

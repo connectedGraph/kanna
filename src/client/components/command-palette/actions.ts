@@ -1,5 +1,7 @@
 import commandScore from "command-score"
 import { isSubChat } from "../../../shared/sub-chat"
+import { DEFAULT_LOCALE, type Locale } from "../../../shared/i18n"
+import { translatorFor } from "../../i18n/catalogs"
 import type { LocalProjectSummary, SidebarProjectGroup } from "../../../shared/types"
 import type { SidebarThread } from "../../lib/thread-sections"
 import {
@@ -201,21 +203,25 @@ function sectionLabelFor(sectionId: SettingsSectionId): string {
  * Every settings navigation target: each section plus every registered row.
  * Derived entirely from the settings registry — new rows appear automatically.
  */
-export function getSettingsPaletteEntries(): SettingsPaletteEntry[] {
+export function getSettingsPaletteEntries(locale: Locale = DEFAULT_LOCALE): SettingsPaletteEntry[] {
+  // The registry keeps English source text, which is also the translation key,
+  // so the palette is built in the reader's language and its keywords keep the
+  // English too: someone who knows the app in English can still find a row.
+  const t = translatorFor(locale)
   const sections: SettingsPaletteEntry[] = visibleSettingsSections().map((section) => ({
     id: `settings-section-${section.id}`,
-    title: section.label,
-    sectionLabel: "Settings",
-    keywords: ["settings", section.subtitle],
+    title: t(section.label),
+    sectionLabel: t("Settings"),
+    keywords: ["settings", section.label, section.subtitle],
     path: `/settings/${section.id}`,
     sectionId: section.id,
   }))
 
   const rows: SettingsPaletteEntry[] = listAllSettingsRowDefs().map((row: SettingsRowDef) => ({
     id: `settings-row-${row.id}`,
-    title: row.title,
-    sectionLabel: `Settings › ${sectionLabelFor(row.sectionId)}`,
-    keywords: ["settings", row.description, ...(row.keywords ?? [])],
+    title: t(row.title),
+    sectionLabel: `${t("Settings")} › ${t(sectionLabelFor(row.sectionId))}`,
+    keywords: ["settings", row.title, row.description, ...(row.keywords ?? [])],
     path: `/settings/${row.sectionId}#${row.id}`,
     sectionId: row.sectionId,
   }))

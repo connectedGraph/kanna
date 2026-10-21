@@ -15,6 +15,7 @@ import { ProjectSectionMenu } from "../chat-ui/sidebar/Menus"
 import { SectionHeader } from "../chat-ui/sidebar/ThreadSections"
 import { LIST_HOVER_CARD_ROOM_BELOW, ListHoverCard } from "../ui/list-hover-card"
 import { ProjectIcon } from "../ui/project-icon"
+import { useT } from "../../i18n/useT"
 
 /** What a channel row carries its project id in, for the list's hover card. */
 const CHANNEL_ROW_ATTRIBUTE = "data-channel-id"
@@ -241,6 +242,7 @@ interface ChannelRowProps {
  * and finds the row under the pointer by `CHANNEL_ROW_ATTRIBUTE`.
  */
 const ChannelRow = memo(function ChannelRow({ group, active, menuPinned, pinned, actions, onSelect }: ChannelRowProps) {
+  const t = useT()
   // A sub-chat finishing is its parent's news, not the channel's, so its
   // unread mark is not counted. One that stops to ask you something still is.
   // Nor is the mark of a chat still working, which the window's title and
@@ -256,7 +258,7 @@ const ChannelRow = memo(function ChannelRow({ group, active, menuPinned, pinned,
     ?? group.chats.find((chat) => chat.status === "waiting_for_user")
     ?? group.chats.find((chat) => chat.status === "waiting_on_subagent" && !isSubChat(chat))
     ?? group.chats.find(isUnreadForUser)
-  const statusMark = leadChat ? renderChatStatusDot(leadChat) : null
+  const statusMark = leadChat ? renderChatStatusDot(leadChat, t) : null
 
   return (
     // The Projects view's own project menu (`ProjectSectionMenu`), plus Pin.

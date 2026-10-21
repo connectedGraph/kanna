@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react"
+import { useT } from "../../i18n/useT"
 import { CopyButton } from "../ui/copy-button"
 import {
   Dialog,
@@ -26,12 +27,13 @@ export function StandaloneShareDialog({
   onOpenLink,
   onCopyLink,
 }: Props) {
+  const t = useT()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>Shared Link</DialogTitle>
-          <DialogDescription>Shared links are snapshots in time and contain all attachments, tool calls and history. Be mindful of sensitive info.</DialogDescription>
+          <DialogTitle>{t("Shared Link")}</DialogTitle>
+          <DialogDescription>{t("Shared links are snapshots in time and contain all attachments, tool calls and history. Be mindful of sensitive info.")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-3">
           <div className="flex w-full items-center gap-2 rounded-2xl border border-border bg-muted/40 pl-4 px-3 py-2.5">
@@ -40,8 +42,8 @@ export function StandaloneShareDialog({
             <CopyButton
               plain
               onCopy={onCopyLink}
-              title="Copy link"
-              copiedTitle="Copied"
+              title={t("Copy link")}
+              copiedTitle={t("Copied")}
               checkClassName="h-4 w-4 text-emerald-400"
               className="flex flex-shrink-0 items-center justify-center rounded-lg text-logo hover:text-logo/60 transition-colors hover:bg-background hover:text-foreground"
             />
@@ -50,7 +52,7 @@ export function StandaloneShareDialog({
         <DialogFooter>
           <DialogPrimaryButton type="button" onClick={onOpenLink}>
             <ExternalLink className="mr-2 h-4 w-4" />
-            Open
+            {t("Open")}
           </DialogPrimaryButton>
         </DialogFooter>
       </DialogContent>

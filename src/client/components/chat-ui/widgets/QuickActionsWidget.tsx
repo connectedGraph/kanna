@@ -7,6 +7,7 @@ import {
   refreshCachedProjectQuickActions,
   writeCachedProjectQuickActions,
 } from "../../../lib/localServersCache"
+import { useT } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { Button } from "../../ui/button"
 import { ContextMenuItem } from "../../ui/context-menu"
@@ -30,6 +31,7 @@ export function QuickActionsWidget({
   socket: KannaSocket
   onRun: (command: string) => void
 }) {
+  const t = useT()
   const [quickActions, setQuickActions] = useState<ProjectQuickAction[]>(() => getCachedProjectQuickActions(projectId) ?? [])
   const [error, setError] = useState<string | null>(null)
   const [newCommand, setNewCommand] = useState("")
@@ -114,7 +116,7 @@ export function QuickActionsWidget({
     <div onPointerDownCapture={notePressInWidget}>
       <WidgetCard
         icon={<Zap />}
-        title="Quick Actions"
+        title={t("Quick Actions")}
         count={quickActions.length > 0 ? quickActions.length : undefined}
         // Always a disclosure. With nothing saved, opening it goes straight to
         // the add form, since that is all there is to show.
@@ -133,8 +135,8 @@ export function QuickActionsWidget({
             type="button"
             variant="ghost"
             size="none"
-            aria-label="Add quick action"
-            title="Add quick action"
+            aria-label={t("Add quick action")}
+            title={t("Add quick action")}
             onClick={() => {
               // Opening the composer opens the section with it.
               if (!isAdding) setExpanded(true)
@@ -157,7 +159,7 @@ export function QuickActionsWidget({
                 type="submit"
                 variant="ghost"
                 size="none"
-                aria-label="Save quick action"
+                aria-label={t("Save quick action")}
                 disabled={!newCommand.trim()}
                 className="h-6 rounded-md px-2 text-muted-foreground hover:!bg-transparent hover:text-foreground"
               >
@@ -168,8 +170,8 @@ export function QuickActionsWidget({
             <input
               value={newCommand}
               onChange={(event) => setNewCommand(event.target.value)}
-              placeholder="bun run dev"
-              aria-label="Command"
+              placeholder={t("Enter a command")}
+              aria-label={t("Command")}
               autoComplete="off"
               spellCheck={false}
               className={cn(WIDGET_STRIP_INPUT_CLASS, "font-mono text-[13px]")}
@@ -186,21 +188,21 @@ export function QuickActionsWidget({
                 icon={(
                   <SwapIn swapKey={ranActionId === action.id ? "ran" : "idle"}>
                     {ranActionId === action.id
-                      ? <Check className="text-success" aria-label="Started" />
+                      ? <Check className="text-success" aria-label={t("Started")} />
                       : <Play className="group-hover/row:text-foreground" />}
                   </SwapIn>
                 )}
                 title={<span className="font-mono text-[13px]">{action.label}</span>}
                 tooltip={action.command}
                 onActivate={() => runAction(action)}
-                menuLabel="Quick action options"
+                menuLabel={t("Quick action options")}
                 menu={(
                   <ContextMenuItem
                     onSelect={() => writeQuickActions(quickActions.filter((candidate) => candidate.id !== action.id))}
                     className="text-destructive focus:text-destructive"
                   >
                     <Trash2 className="size-3.5" />
-                    <span>Delete</span>
+                    <span>{t("Delete")}</span>
                   </ContextMenuItem>
                 )}
               />

@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState, type ReactNode, type Ref } from "react"
 import { ArrowLeft, Check, Flower, Loader2, MoreHorizontal, PanelLeft, PanelRight, Search, Terminal, UserRoundPlus } from "lucide-react"
 import type { EditorOpenSettings, EditorPreset, OpenExternalAction, TerminalPreset } from "../../../shared/protocol"
+import { useT } from "../../i18n/useT"
 import { Button } from "../ui/button"
 import { CardHeader } from "../ui/card"
 import { HotkeyTooltip, HotkeyTooltipContent, HotkeyTooltipTrigger } from "../ui/tooltip"
@@ -35,6 +36,7 @@ function NavbarOverflowMenu({
   repoUrl?: string
   onOpenExternal?: (action: OpenExternalAction, editor?: EditorOpenSettings, terminal?: TerminalPreset) => void
 }) {
+  const t = useT()
   if (!onToggleEmbeddedTerminal && !onExportTranscript && !onOpenExternal) return null
 
   return (
@@ -44,7 +46,7 @@ function NavbarOverflowMenu({
           variant="ghost"
           size="none"
           onClick={openContextMenuFromButton}
-          title="More actions"
+          title={t("More actions")}
           className={cn(
             "border border-border/0 hover:!border-border/0 px-1.5 h-9 max-md:h-[45px] max-md:w-[42px] max-md:px-0 hover:!bg-transparent",
             showOnDesktop ? "flex" : "flex md:hidden"
@@ -81,7 +83,7 @@ function NavbarOverflowMenu({
             }}
           >
             <Terminal strokeWidth={2} className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Toggle Terminal</span>
+            <span className="text-xs font-medium">{t("Toggle Terminal")}</span>
           </ContextMenuItem>
         ) : null}
         {onExportTranscript ? (
@@ -100,7 +102,7 @@ function NavbarOverflowMenu({
             ) : (
               <UserRoundPlus strokeWidth={2} className="h-3.5 w-3.5" />
             )}
-            <span className="text-xs font-medium">Share Chat</span>
+            <span className="text-xs font-medium">{t("Share Chat")}</span>
           </ContextMenuItem>
         ) : null}
       </ContextMenuContent>
@@ -298,14 +300,15 @@ function ChatNavbarImpl({
   headerRef,
   inert,
 }: Props) {
+  const t = useT()
   // New Sidebar mode surfaces search in the sidebar, so the chat navbar only
   // keeps its search button on mobile (where the sidebar is hidden).
   const newSidebar = useAppSettingsStore((store) => store.settings?.newSidebarEnabled !== false)
   const branchLabel = !hasGitRepo
-    ? "Setup Git"
+    ? t("Setup Git")
     : gitStatus === "unknown"
       ? null
-      : (branchName ?? "Detached HEAD")
+      : (branchName ?? t("Detached HEAD"))
   const showBranchLabel = Boolean(branchLabel) && !hideBranchLabel
   const isMac = platform === "darwin"
   const rightPanelVisible = widgetsOpen
@@ -343,7 +346,7 @@ function ChatNavbarImpl({
             size="icon"
             className="md:hidden h-[45px] w-[42px] hover:!border-border/0 hover:!bg-transparent"
             onClick={onOpenSidebar}
-            title="Back"
+            title={t("Back")}
           >
             <ArrowLeft className="size-5" />
           </Button>
@@ -358,7 +361,7 @@ function ChatNavbarImpl({
                 size="icon"
                 className="hidden md:flex  hover:!border-border/0 hover:!bg-transparent mac-app:md:hidden transition-opacity duration-200 ease-out starting:opacity-0"
                 onClick={onExpandSidebar}
-                title="Expand sidebar"
+                title={t("Expand sidebar")}
               >
                 <PanelLeft className="size-4" />
               </Button>
@@ -372,7 +375,7 @@ function ChatNavbarImpl({
               newSidebar && "md:hidden"
             )}
             onClick={() => window.dispatchEvent(new CustomEvent(OPEN_COMMAND_PALETTE_EVENT))}
-            title="Search"
+            title={t("Search")}
           >
             <Search className="size-4 max-md:size-5" />
           </Button>
@@ -442,8 +445,8 @@ function ChatNavbarImpl({
                     size="none"
                     onClick={onExportTranscript}
                     disabled={!canExportTranscript || isExportingTranscript}
-                    title="Share chat"
-                    aria-label="Share chat"
+                    title={t("Share chat")}
+                    aria-label={t("Share chat")}
                     className={cn(
                       rightPanelVisible ? "hidden" : "hidden md:flex",
                       "border border-border/0 hover:!border-border/0 px-1.5 h-9 hover:!bg-transparent disabled:opacity-50"
@@ -466,7 +469,7 @@ function ChatNavbarImpl({
                         variant="ghost"
                         size="none"
                         onClick={onToggleWidgets}
-                        aria-label={widgetsOpen ? "Hide widgets" : "Show widgets"}
+                        aria-label={widgetsOpen ? t("Hide widgets") : t("Show widgets")}
                         aria-pressed={widgetsOpen}
                         className={cn(
                           // Open, the padding centers the icon (24px wide: only

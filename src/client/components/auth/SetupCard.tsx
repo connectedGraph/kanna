@@ -1,5 +1,6 @@
 import { ChevronRight, Flower } from "lucide-react"
 import { AUTH_SERVICE_ORDER } from "../../../shared/types"
+import { useT } from "../../i18n/useT"
 import { cn } from "../../lib/utils"
 import { useProviderAuthStore, useSetupStatus, useShowSetupCard, selectAuthService } from "../../stores/providerAuthStore"
 import { AUTH_SERVICE_ICONS } from "../provider-icons"
@@ -10,6 +11,7 @@ import { AUTH_SERVICE_ICONS } from "../provider-icons"
  * bright, missing ones muted. Clicking opens the full-screen wizard.
  */
 export function SetupCard({ className }: { className?: string }) {
+  const t = useT()
   const show = useShowSetupCard()
   const status = useSetupStatus()
   const snapshot = useProviderAuthStore((store) => store.snapshot)
@@ -17,8 +19,8 @@ export function SetupCard({ className }: { className?: string }) {
   if (!show) return null
 
   const subtitle = !status.anyAgentConnected
-    ? "Connect your coding agents to start building."
-    : "Connect the rest of your accounts."
+    ? t("Connect your coding agents to start building.")
+    : t("Connect the rest of your accounts.")
 
   return (
     <button
@@ -32,10 +34,10 @@ export function SetupCard({ className }: { className?: string }) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <Flower className="h-4 w-4 shrink-0 text-logo" />
-          <span className="truncate text-sm font-semibold text-foreground">Set up Kanna</span>
+          <span className="truncate text-sm font-semibold text-foreground">{t("Set up Kanna")}</span>
         </div>
         <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-foreground transition-colors group-hover:bg-muted">
-          Setup
+          {t("Setup")}
           <ChevronRight className="h-3.5 w-3.5 -mr-0.5" />
         </span>
       </div>

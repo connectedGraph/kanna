@@ -1,6 +1,8 @@
+import { translatorFor, type TFunction } from "../../i18n/catalogs"
 import { useChatHasDraft } from "../../stores/chatInputStore"
 import { computeSidebarThreadSections, type SidebarThread } from "../../lib/thread-sections"
 import { getThreadDetailLabel, type ThreadDetailScope } from "../../lib/thread-detail-label"
+import { useT } from "../../i18n/useT"
 import { ThreadRowContent } from "../chat-ui/ThreadRowContent"
 import { CommandGroup, CommandItem } from "../ui/command"
 
@@ -61,28 +63,33 @@ export interface ProjectChatGroup {
 /**
  * One project's chats under the sidebar Chats tab's headings — Pinned,
  * Delegators, In Progress, Review, Relevant, date buckets, Archived — empty
- * groups dropped.
+ * groups dropped. Headings render through `t` when a caller passes one (the
+ * palette does); without it they stay the English source text.
  * The palette's "Chats in <project>" page and the new chat page's project card
  * both group by this, so the two read the same.
  */
 export function getProjectChatGroups(threads: SidebarThread[], nowMs: number, {
   includeArchived = true,
   limit,
+  t,
 }: {
   includeArchived?: boolean
   /** Rows to show at most, taken in heading order. */
   limit?: number
+  /** Translator for the headings and the date buckets; English when omitted. */
+  t?: TFunction
 } = {}): ProjectChatGroup[] {
   const sections = computeSidebarThreadSections(threads, nowMs)
+  const translate = t ?? translatorFor("en")
   let remaining = limit ?? Number.POSITIVE_INFINITY
   return [
-    { key: "pinned", label: "Pinned", threads: sections.pinned },
-    { key: DELEGATORS_GROUP_KEY, label: "Delegators", threads: sections.delegators },
-    { key: "in-progress", label: "In Progress", threads: sections.inProgress },
-    { key: "review", label: "Review", threads: sections.review },
-    { key: "relevant", label: "Relevant", threads: sections.relevant },
-    ...sections.buckets.map((bucket) => ({ key: bucket.key, label: bucket.label, threads: bucket.threads })),
-    ...(includeArchived ? [{ key: "archived", label: "Archived", threads: sections.archived }] : []),
+    { key: "pinned", label: translate("Pinned"), threads: sections.pinned },
+    { key: DELEGATORS_GROUP_KEY, label: translate("Delegators"), threads: sections.delegators },
+    { key: "in-progress", label: translate("In Progress"), threads: sections.inProgress },
+    { key: "review", label: translate("Review"), threads: sections.review },
+    { key: "relevant", label: translate("Relevant"), threads: sections.relevant },
+    ...sections.buckets.map((bucket) => ({ key: bucket.key, label: translate(bucket.label), threads: bucket.threads })),
+    ...(includeArchived ? [{ key: "archived", label: translate("Archived"), threads: sections.archived }] : []),
   ].map((group) => {
     const shown = group.threads.slice(0, Math.max(0, remaining))
     remaining -= shown.length
@@ -101,7 +108,8 @@ export function ProjectChatSections({
   nowMs: number
   onSelect: (thread: SidebarThread) => void
 }) {
-  return getProjectChatGroups(threads, nowMs).map((group) => (
+  const t = useT()
+  return getProjectChatGroups(threads, nowMs, { t }).map((group) => (
     <CommandGroup key={group.key} heading={group.label}>
       {group.threads.map((thread) => (
         <ThreadItem

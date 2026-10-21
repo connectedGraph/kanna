@@ -112,10 +112,11 @@ import {
   searchThreadsByTitle,
   type SidebarThread,
 } from "./actions"
-import { CloneProgressBlock, PaletteErrorRow, RepoResultContent } from "./add-project-rows"
+import { CloneProgressBlock, EMPHASIS_SLOT, PaletteErrorRow, RepoResultContent, SentenceWithValue } from "./add-project-rows"
 import { buildSettingsCommands, type SettingsCommandEffect } from "./settings-commands"
 import { ProjectChatSections, ThreadItem } from "./ProjectChatSections"
 import { useDirectoryBrowser } from "./useDirectoryBrowser"
+import { useLocale, useT } from "../../i18n/useT"
 import { useRepoMetadata } from "./useRepoMetadata"
 
 /** Window event that opens the command palette from anywhere (e.g. mobile nav). */
@@ -200,7 +201,12 @@ const MODE_COMMAND_KEYWORDS: Record<ChatMode, string[]> = {
   "auto-plan": ["automatic", "decide", "enter plan mode"],
 }
 
-/** The Add Project page's static rows (each pushes its own sub-page). */
+/**
+ * The Add Project page's static rows (each pushes its own sub-page).
+ * `title` stays English source text: it is the translation key as well as
+ * the search text, so the row renders `t(action.title)` in the reader's
+ * language while its keywords keep matching what people type in English.
+ */
 const ADD_PROJECT_STATIC_ACTIONS = [
   { id: "clone-github", title: "Clone from GitHub…", keywords: ["repo", "git", "clone", "checkout"] },
   { id: "create-new", title: "Create New…", keywords: ["blank", "empty", "init", "new project", "start"] },
@@ -232,6 +238,7 @@ function useIsPhoneLayout() {
   )
 }
 
+/** Titles stay English source text (the translation key); the row renders `t(title)`. */
 const SIDEBAR_VIEW_COMMANDS: { view: SidebarView; title: string; icon: typeof Folder; keywords: string[] }[] = [
   { view: "recents", title: "Show Chats", icon: MessageCircle, keywords: ["recents", "chats view", "review", "in progress"] },
   { view: "projects", title: "Show Projects", icon: Folder, keywords: ["projects view", "folders"] },
@@ -356,7 +363,9 @@ export function CommandPalette({ state }: { state: KannaState }) {
     () => flattenVisibleProjectGroups(sidebarData.projectGroups),
     [sidebarData]
   )
-  const settingsEntries = useMemo(() => getSettingsPaletteEntries(), [])
+  const locale = useLocale()
+  const t = useT()
+  const settingsEntries = useMemo(() => getSettingsPaletteEntries(locale), [locale])
   // The current project's delegators and which one the new chat page's
   // delegate control sends to (useNewChatDelegate), for "Delegate to …".
   const projectDelegatorThreads = useMemo(
@@ -583,8 +592,8 @@ export function CommandPalette({ state }: { state: KannaState }) {
   }, [setTheme, writeAppSettings])
 
   const settingsCommands = useMemo(
-    () => buildSettingsCommands({ appSettings: state.appSettings, theme, mac: macState }),
-    [macState, state.appSettings, theme]
+    () => buildSettingsCommands({ appSettings: state.appSettings, theme, mac: macState, locale }),
+    [locale, macState, state.appSettings, theme]
   )
 
   const actions = useMemo<PaletteAction[]>(() => {
@@ -595,7 +604,9 @@ export function CommandPalette({ state }: { state: KannaState }) {
     if (projectId) {
       list.push({
         id: "new-thread-current",
-        title: currentProjectTitle ? `New Chat in ${currentProjectTitle}` : "New Chat in Current...",
+        title: currentProjectTitle
+          ? t("New Chat in {project}", { project: currentProjectTitle })
+          : t("New Chat in Current..."),
         keywords: ["create chat", "compose", "start"],
         icon: <SquarePen className={ICON_CLASS} />,
         shortcut: chatShortcuts("createChatInCurrentProject"),
@@ -606,7 +617,9 @@ export function CommandPalette({ state }: { state: KannaState }) {
       })
       list.push({
         id: "project-chats",
-        title: currentProjectTitle ? `Chats in ${currentProjectTitle}` : "Chats in Current Project…",
+        title: currentProjectTitle
+          ? t("Chats in {project}", { project: currentProjectTitle })
+          : t("Chats in Current Project…"),
         keywords: ["threads", "history", "browse", "recent", "project chats"],
         icon: <History className={ICON_CLASS} />,
         // No explicit target: the sub-page falls back to the current project
@@ -620,7 +633,9 @@ export function CommandPalette({ state }: { state: KannaState }) {
       // to every project.
       list.push({
         id: "new-delegator-current",
-        title: currentProjectTitle ? `New Delegator in ${currentProjectTitle}…` : "New Delegator…",
+        title: currentProjectTitle
+          ? t("New Delegator in {project}…", { project: currentProjectTitle })
+          : t("New Delegator…"),
         keywords: ["delegator", "delegate", "delegation", "delegated", "create delegator", "hand off", "orchestrate", "manager", "sub-chats", "subchats"],
         icon: <DelegatorIcon className={ICON_CLASS} />,
         searchOnly: true,
@@ -637,10 +652,10 @@ export function CommandPalette({ state }: { state: KannaState }) {
           const title = delegatorDisplayTitle(delegator.title)
           list.push({
             id: `delegate-to-${delegator.chatId}`,
-            title: `Delegate to ${title}`,
+            title: t("Delegate to {name}", { name: title }),
             keywords: ["delegate", "delegator", "delegation", "hand off", "send to", title],
             icon: <DelegatorIcon className={ICON_CLASS} />,
-            hint: delegator.chatId === delegateTargetId ? "Current delegator" : "New chats",
+            hint: delegator.chatId === delegateTargetId ? t("Current delegator") : t("New chats"),
             searchOnly: true,
             run: () => {
               close()
@@ -650,10 +665,10 @@ export function CommandPalette({ state }: { state: KannaState }) {
         }
         list.push({
           id: "dont-delegate",
-          title: "Don't Delegate",
+          title: t("Don't Delegate"),
           keywords: ["delegate", "delegator", "stop delegating", "no delegator", "new chat", "off"],
           icon: <SquarePen className={ICON_CLASS} />,
-          hint: delegateTargetId ? "New chats" : "Current",
+          hint: delegateTargetId ? t("New chats") : t("Current"),
           searchOnly: true,
           run: () => {
             close()
@@ -672,8 +687,10 @@ export function CommandPalette({ state }: { state: KannaState }) {
       list.push({
         id: "toggle-focus-mode",
         title: focusModeEnabled
-          ? "Exit Focus Mode"
-          : currentProjectTitle ? `Focus ${currentProjectTitle}` : "Focus Current Project",
+          ? t("Exit Focus Mode")
+          : currentProjectTitle
+            ? t("Focus {project}", { project: currentProjectTitle })
+            : t("Focus Current Project"),
         keywords: ["focus", "filter sidebar", "narrow", "only this project", "hide other projects", "single project"],
         icon: <ListFilter className={ICON_CLASS} />,
         shortcut: chatShortcuts("toggleFocusMode"),
@@ -687,14 +704,14 @@ export function CommandPalette({ state }: { state: KannaState }) {
     if ((state.localProjects?.projects.length ?? 0) > 0) {
       list.push({
         id: "new-thread-choose",
-        title: "New Chat in…",
+        title: t("New Chat in…"),
         keywords: ["create chat", "compose", "start", "project"],
         icon: <SquarePen className={ICON_CLASS} />,
         run: () => pushPage({ page: "new-thread" }),
       })
       list.push({
         id: "hide-project-choose",
-        title: "Hide",
+        title: t("Hide"),
         keywords: ["hide project", "remove project", "choose project"],
         icon: <EyeOff className={ICON_CLASS} />,
         run: () => pushPage({ page: "hide-project" }),
@@ -703,7 +720,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
 
     list.push({
       id: "new-project",
-      title: "Add Project…",
+      title: t("Add Project…"),
       keywords: ["create", "add", "new", "open folder", "clone", "repo", "github"],
       icon: <Plus className={ICON_CLASS} />,
       shortcut: chatShortcuts("openAddProject"),
@@ -716,7 +733,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
     // Existing. Titles are spelled out ("… Project") for standalone clarity.
     list.push({
       id: "add-project-clone-github",
-      title: "Clone from GitHub…",
+      title: t("Clone from GitHub…"),
       keywords: ["repo", "git", "clone", "checkout", "add project", "github"],
       icon: <GitBranch className={ICON_CLASS} />,
       searchOnly: true,
@@ -724,7 +741,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
     })
     list.push({
       id: "add-project-create-new",
-      title: "Create New Project…",
+      title: t("Create New Project…"),
       keywords: ["blank", "empty", "init", "new project", "start", "add project"],
       icon: <Plus className={ICON_CLASS} />,
       searchOnly: true,
@@ -732,7 +749,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
     })
     list.push({
       id: "add-project-choose-existing",
-      title: "Add Existing Project…",
+      title: t("Add Existing Project…"),
       keywords: ["browse", "folder", "open", "filesystem", "directory", "path", "existing", "add project"],
       icon: <Folder className={ICON_CLASS} />,
       searchOnly: true,
@@ -741,7 +758,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
 
     list.push({
       id: "go-home",
-      title: "All Projects",
+      title: t("All Projects"),
       keywords: ["home", "navigate", "local projects", "go to projects"],
       icon: <House className={ICON_CLASS} />,
       run: () => {
@@ -752,7 +769,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
 
     list.push({
       id: "settings",
-      title: "Settings…",
+      title: t("Settings…"),
       keywords: ["preferences", "config", "options", "theme", "keybindings", "providers", "general"],
       icon: <Settings2 className={ICON_CLASS} />,
       run: () => pushPage({ page: "settings" }),
@@ -760,7 +777,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
 
     list.push({
       id: "usage",
-      title: "Usage…",
+      title: t("Usage…"),
       keywords: ["limits", "rate limit", "quota", "credits", "plan", "utilization", "claude", "codex", "grok"],
       icon: <Gauge className={ICON_CLASS} />,
       run: () => pushPage({ page: "usage" }),
@@ -790,7 +807,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
         const Icon = command.icon
         list.push({
           id: `sidebar-view-${command.view}`,
-          title: command.title,
+          title: t(command.title),
           keywords: ["sidebar", "view", "switch view", "filter", ...command.keywords],
           icon: <Icon className={ICON_CLASS} />,
           searchOnly: true,
@@ -806,7 +823,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
     if (!isPhoneLayout) {
       list.push({
         id: "toggle-sidebar",
-        title: state.sidebarCollapsed ? "Show Sidebar" : "Hide Sidebar",
+        title: state.sidebarCollapsed ? t("Show Sidebar") : t("Hide Sidebar"),
         keywords: ["sidebar", "left sidebar", "collapse", "expand", "panel", "toggle sidebar", "show", "hide"],
         icon: <PanelLeft className={ICON_CLASS} />,
         searchOnly: true,
@@ -821,7 +838,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
     if (onChatPage && projectId) {
       list.push({
         id: "toggle-widgets",
-        title: widgetsOpen ? "Hide Widgets" : "Show Widgets",
+        title: widgetsOpen ? t("Hide Widgets") : t("Show Widgets"),
         // The widgets took over the git and browser panels, so their old
         // words still find the toggle.
         keywords: [
@@ -837,7 +854,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
       })
       list.push({
         id: "toggle-terminal",
-        title: "Toggle Terminal",
+        title: t("Toggle Terminal"),
         keywords: ["shell", "console", "embedded"],
         icon: <Terminal className={ICON_CLASS} />,
         shortcut: chatShortcuts("toggleEmbeddedTerminal"),
@@ -855,7 +872,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
       })
       list.push({
         id: "split-terminal",
-        title: "Split Terminal",
+        title: t("Split Terminal"),
         keywords: ["add terminal", "new terminal", "split", "pane", "shell", "console"],
         icon: <Columns2 className={ICON_CLASS} />,
         shortcut: chatShortcuts("addSplitTerminal"),
@@ -868,7 +885,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
       })
       list.push({
         id: "open-in",
-        title: "Open in…",
+        title: t("Open in…"),
         keywords: ["editor", "finder", "terminal", "external", "cursor", "xcode", "reveal"],
         icon: <ExternalLink className={ICON_CLASS} />,
         shortcut: chatShortcuts("openInEditor"),
@@ -892,7 +909,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
               : <OpenAppIcon value={item.value} isMac={isMac} className={ICON_CLASS} />
         list.push({
           id: `open-${item.value}`,
-          title: `Open in ${item.label}`,
+          title: t("Open in {app}", { app: item.label }),
           keywords: ["open in", "editor", "external", "reveal", item.label],
           icon,
           searchOnly: true,
@@ -912,7 +929,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
         const projectPath = state.navbarLocalPath
         list.push({
           id: "copy-project-path",
-          title: "Copy Path",
+          title: t("Copy Path"),
           keywords: ["copy project path", "clipboard", "directory", "folder", projectPath],
           icon: <Copy className={ICON_CLASS} />,
           hint: truncatePathHead(formatPathWithTilde(projectPath)),
@@ -930,7 +947,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
       const delegatorChatId = state.activeChatId
       list.push({
         id: "toggle-delegated",
-        title: viewerShown ? "Hide Tickets" : "Show Tickets",
+        title: viewerShown ? t("Hide Tickets") : t("Show Tickets"),
         keywords: ["tickets", "ticket", "board", "delegated", "delegator", "delegate", "sub-chats", "subchats", "sub chats", "chats", "list", "pane", "show", "hide", "toggle"],
         icon: <ListTodo className={ICON_CLASS} />,
         run: () => {
@@ -943,7 +960,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
     if (state.activeChatId) {
       list.push({
         id: "share-chat",
-        title: "Share Chat",
+        title: t("Share Chat"),
         keywords: ["export", "link", "standalone", "transcript"],
         icon: <Share2 className={ICON_CLASS} />,
         run: () => {
@@ -954,7 +971,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
       if (currentChatRow && currentChatRow.canFork !== false) {
         list.push({
           id: "fork-chat",
-          title: "Fork Chat",
+          title: t("Fork Chat"),
           keywords: ["duplicate", "branch", "copy"],
           icon: <GitFork className={ICON_CLASS} />,
           run: () => {
@@ -967,7 +984,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
         const chatRow = currentChatRow
         list.push({
           id: "toggle-pin-chat",
-          title: chatRow.pinnedAt ? "Unpin Chat" : "Pin Chat",
+          title: chatRow.pinnedAt ? t("Unpin Chat") : t("Pin Chat"),
           keywords: ["pin", "unpin", "pinned", "keep", "favorite", "star", "top"],
           icon: chatRow.pinnedAt ? <PinOff className={ICON_CLASS} /> : <Pin className={ICON_CLASS} />,
           searchOnly: true,
@@ -978,7 +995,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
         })
         list.push({
           id: "toggle-chat-done",
-          title: chatRow.done ? "Mark Not Done" : "Mark Done",
+          title: chatRow.done ? t("Mark Not Done") : t("Mark Done"),
           keywords: ["done", "finished", "complete", "resolve", "board", "not done", "reopen", "undone"],
           icon: chatRow.done ? <CircleDashed className={ICON_CLASS} /> : <CircleCheck className={ICON_CLASS} />,
           searchOnly: true,
@@ -993,10 +1010,10 @@ export function CommandPalette({ state }: { state: KannaState }) {
         if (chatRow.delegator || chatRow.provider !== "grok") {
           list.push({
             id: "toggle-delegator",
-            title: chatRow.delegator ? "Stop Delegating" : "Make Delegator",
+            title: chatRow.delegator ? t("Stop Delegating") : t("Make Delegator"),
             keywords: ["delegator", "delegate", "delegation", "hand off", "orchestrate", "manager", "sub-chats", "subchats", "ordinary chat"],
             icon: <DelegatorIcon className={ICON_CLASS} />,
-            hint: "Next turn",
+            hint: t("Next turn"),
             searchOnly: true,
             run: () => {
               close()
@@ -1007,7 +1024,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
         }
         list.push({
           id: "archive-chat",
-          title: "Archive Chat",
+          title: t("Archive Chat"),
           keywords: ["hide", "close", "done"],
           icon: <Archive className={ICON_CLASS} />,
           run: () => {
@@ -1019,7 +1036,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
       if (currentChatGroup) {
         list.push({
           id: "hide-project",
-          title: `Hide ${currentChatGroup.title}`,
+          title: t("Hide {project}", { project: currentChatGroup.title }),
           keywords: ["hide", "project", "remove", "sidebar", currentChatGroup.title],
           icon: <EyeOff className={ICON_CLASS} />,
           run: () => {
@@ -1033,7 +1050,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
     if (onChatPage) {
       list.push({
         id: "change-model",
-        title: "Change Model…",
+        title: t("Change Model…"),
         keywords: ["llm", "switch", composer.effectiveState.model, composer.providerConfig?.label ?? ""],
         icon: <Box className={ICON_CLASS} />,
         run: () => pushPage({ page: "models" }),
@@ -1041,7 +1058,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
       if (composer.canChangeProvider && state.availableProviders.length > 1) {
         list.push({
           id: "change-harness",
-          title: "Switch Harness…",
+          title: t("Switch Harness…"),
           keywords: ["provider", "agent", "claude code", "codex", "cursor", "grok", "pi", "change provider"],
           icon: <Box className={ICON_CLASS} />,
           run: () => pushPage({ page: "harness" }),
@@ -1057,7 +1074,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
           const Icon = MODE_COMMAND_ICONS[option]
           list.push({
             id: `mode-${option}`,
-            title: `Switch to ${CHAT_MODE_LABELS[option].label}`,
+            title: t("Switch to {mode}", { mode: t(CHAT_MODE_LABELS[option].label) }),
             keywords: ["mode", "permission", ...MODE_COMMAND_KEYWORDS[option]],
             icon: <Icon className={ICON_CLASS} />,
             run: () => {
@@ -1071,7 +1088,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
         list.push(fastMode.enabled
           ? {
             id: "standard-mode",
-            title: "Switch to Standard Mode",
+            title: t("Switch to Standard Mode"),
             keywords: ["fast mode", "speed", "service tier"],
             icon: <Gauge className={`${ICON_CLASS} -scale-x-100`} />,
             run: () => {
@@ -1081,7 +1098,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
           }
           : {
             id: "fast-mode",
-            title: "Switch to Fast Mode",
+            title: t("Switch to Fast Mode"),
             keywords: ["standard", "speed", "service tier"],
             icon: <Gauge className={ICON_CLASS} />,
             run: () => {
@@ -1096,10 +1113,10 @@ export function CommandPalette({ state }: { state: KannaState }) {
           const isCurrent = reasoning.selectedId === option.id
           list.push({
             id: `set-reasoning-${option.id}`,
-            title: `Reasoning: ${option.label}`,
+            title: t("Reasoning: {level}", { level: t(option.label) }),
             keywords: ["reasoning", "effort", "thinking", option.id],
             icon: <Brain className={ICON_CLASS} />,
-            hint: isCurrent ? "Current effort" : option.description ?? "Reasoning effort",
+            hint: isCurrent ? t("Current effort") : option.description ? t(option.description) : t("Reasoning effort"),
             searchOnly: true,
             run: () => {
               close()
@@ -1113,10 +1130,10 @@ export function CommandPalette({ state }: { state: KannaState }) {
           const isCurrent = contextWindow.selectedId === option.id
           list.push({
             id: `set-context-${option.id}`,
-            title: `Context Window: ${option.label}`,
+            title: t("Context Window: {size}", { size: t(option.label) }),
             keywords: ["context window", "context length", "tokens", option.id],
             icon: <SquareMenu className={ICON_CLASS} />,
-            hint: isCurrent ? "Current window" : "Context window",
+            hint: isCurrent ? t("Current window") : t("Context window"),
             searchOnly: true,
             run: () => {
               close()
@@ -1127,7 +1144,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
       }
       list.push({
         id: "attach-files",
-        title: "Attach Files",
+        title: t("Attach Files"),
         keywords: ["upload", "image", "screenshot", "paperclip", "add attachment"],
         icon: <Paperclip className={ICON_CLASS} />,
         run: () => {
@@ -1148,7 +1165,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
           title: model.label,
           keywords: [model.id, "model", "switch model", providerLabel],
           icon: <Box className={ICON_CLASS} />,
-          hint: isCurrent ? "Current model" : `${providerLabel} model`,
+          hint: isCurrent ? t("Current model") : t("{provider} model", { provider: providerLabel }),
           searchOnly: true,
           run: () => {
             close()
@@ -1162,10 +1179,10 @@ export function CommandPalette({ state }: { state: KannaState }) {
           const ProviderIcon = PROVIDER_ICONS[provider.id]
           list.push({
             id: `set-harness-${provider.id}`,
-            title: `Switch to ${provider.label}`,
+            title: t("Switch to {provider}", { provider: provider.label }),
             keywords: [provider.id, "harness", "provider", "agent"],
             icon: <ProviderIcon className={ICON_CLASS} />,
-            hint: "Harness",
+            hint: t("Harness"),
             searchOnly: true,
             run: () => {
               close()
@@ -1181,6 +1198,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
     close,
     composer,
     dialog,
+    t,
     currentChatGroup,
     currentChatRow,
     currentProjectTitle,
@@ -1694,30 +1712,30 @@ export function CommandPalette({ state }: { state: KannaState }) {
   }, [runProjectAction])
 
   const inputPlaceholder = page === "models"
-    ? `Search ${composer.providerConfig?.label ?? "provider"} models…`
+    ? t("Search {provider} models…", { provider: composer.providerConfig?.label ?? t("provider") })
     : page === "harness"
-      ? "Choose a harness…"
+      ? t("Choose a harness…")
       : page === "new-thread"
-        ? "Choose a project…"
+        ? t("Choose a project…")
         : page === "hide-project"
-          ? "Choose project to hide"
+          ? t("Choose project to hide")
         : page === "open-in"
-          ? "Open project in…"
+          ? t("Open project in…")
           : page === "project-chats"
-            ? `Search chats in ${projectChatsTitle ?? "project"}…`
+            ? t("Search chats in {project}…", { project: projectChatsTitle ?? t("project") })
             : page === "settings"
-            ? "Search settings…"
+            ? t("Search settings…")
             : page === "usage"
-              ? "Harness usage"
+              ? t("Harness usage")
               : page === "add-project"
-                ? "Add a project, or paste a repo to clone…"
+                ? t("Add a project, or paste a repo to clone…")
                 : page === "clone-github"
-                  ? "Search your repos or paste a URL…"
+                  ? t("Search your repos or paste a URL…")
                   : page === "create-new"
-                    ? "Project name"
+                    ? t("Project name")
                     : page === "browse"
-                      ? "Filter folders, or type a path…"
-                      : "Type a command or search threads…"
+                      ? t("Filter folders, or type a path…")
+                      : t("Type a command or search threads…")
 
   return (
     <CommandDialog
@@ -1799,7 +1817,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
             && page !== "create-new"
             && !(page === "clone-github" && (cloneRun !== null || githubReposLoading || githubRepos?.available !== true))
             && !(page === "browse" && (browser.loading || browser.error !== null || !browseDir))
-            ? <CommandEmpty>No results found.</CommandEmpty>
+            ? <CommandEmpty>{t("No results found.")}</CommandEmpty>
             : null}
 
           {page === "usage" ? (
@@ -1810,7 +1828,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
 
           {page === "root" ? (() => {
             const reviewGroup = reviewResults.length > 0 ? (
-              <CommandGroup key="review" heading="Review">
+              <CommandGroup key="review" heading={t("Review")}>
                 {reviewResults.map((thread) => (
                   <ThreadItem key={thread.chatId} thread={thread} onSelect={openThread} showStatus scope="cross-project" nowMs={nowMs} />
                 ))}
@@ -1818,7 +1836,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
             ) : null
 
             const inProgressGroup = inProgressResults.length > 0 ? (
-              <CommandGroup key="in-progress" heading="In Progress">
+              <CommandGroup key="in-progress" heading={t("In Progress")}>
                 {inProgressResults.map((thread) => (
                   <ThreadItem key={thread.chatId} thread={thread} onSelect={openThread} showStatus scope="cross-project" nowMs={nowMs} />
                 ))}
@@ -1826,7 +1844,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
             ) : null
 
             const threadsGroup = threadResults.length > 0 ? (
-              <CommandGroup key="threads" heading={trimmedQuery ? "Chats" : "Recents"}>
+              <CommandGroup key="threads" heading={trimmedQuery ? t("Chats") : t("Recents")}>
                 {threadResults.map((thread) => (
                   <ThreadItem key={thread.chatId} thread={thread} onSelect={openThread} showStatus={!trimmedQuery} scope="cross-project" nowMs={nowMs} />
                 ))}
@@ -1834,7 +1852,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
             ) : null
 
             const actionsGroup = rankedActions.length > 0 ? (
-              <CommandGroup key="actions" heading="Actions">
+              <CommandGroup key="actions" heading={t("Actions")}>
                 {rankedActions.map(({ action }) => (
                   <CommandItem key={action.id} value={`action-${action.id}`} onSelect={action.run}>
                     {action.icon}
@@ -1854,7 +1872,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
             // covers what the "Chats in <project>" sub-page used to be the way
             // in for. (iOS still opens the sub-page.)
             const projectsGroup = projectSearchResults.length > 0 ? (
-              <CommandGroup key="projects" heading="Projects">
+              <CommandGroup key="projects" heading={t("Projects")}>
                 {projectSearchResults.map((project) => (
                   <CommandItem
                     key={project.localPath}
@@ -1879,7 +1897,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
             // palette closes at once, like the "New Chat in…" picker; a
             // failure shows as the app's command error.
             const allProjectsGroup = allProjectSearchResults.length > 0 ? (
-              <CommandGroup key="all-projects" heading="All Projects">
+              <CommandGroup key="all-projects" heading={t("All Projects")}>
                 {allProjectSearchResults.map((project) => {
                   const value = `all-project-${project.localPath}`
                   const busy = pendingActionValue === value || state.startingLocalPath === project.localPath
@@ -1908,7 +1926,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
             ) : null
 
             const settingsGroup = rootSettingsResults.length > 0 ? (
-              <CommandGroup key="settings" heading="Settings">
+              <CommandGroup key="settings" heading={t("Settings")}>
                 {rootSettingsResults.map((entry) => (
                   <CommandItem
                     key={entry.id}
@@ -1931,7 +1949,12 @@ export function CommandPalette({ state }: { state: KannaState }) {
               <CommandGroup key="clone">
                 <CommandItem value="root-clone" onSelect={() => startClone(rootCloneRepo)}>
                   <GitBranch className={ICON_CLASS} />
-                  <span className="min-w-0 truncate">Clone {rootCloneRepo.owner}/{rootCloneRepo.repo}</span>
+                  <span className="min-w-0 truncate">
+                    <SentenceWithValue
+                      sentence={t("Clone {repo}", { repo: EMPHASIS_SLOT })}
+                      value={`${rootCloneRepo.owner}/${rootCloneRepo.repo}`}
+                    />
+                  </span>
                   <span className="ml-auto max-w-[220px] shrink-0 truncate pl-3 text-xs text-muted-foreground">
                     {formatPathWithTilde(joinDirPath(newProjectsDir, rootCloneRepo.repo))}
                   </span>
@@ -1965,7 +1988,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
           })() : null}
 
           {page === "settings" ? (
-            <CommandGroup heading="Settings">
+            <CommandGroup heading={t("Settings")}>
               {settingsResults.map((entry) => (
                 <CommandItem
                   key={entry.id}
@@ -1984,7 +2007,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
           ) : null}
 
           {page === "models" ? (
-            <CommandGroup heading={`${composer.providerConfig?.label ?? "Provider"} Models`}>
+            <CommandGroup heading={t("{provider} Models", { provider: composer.providerConfig?.label ?? t("Provider") })}>
               {modelResults.map((model) => (
                 <CommandItem
                   key={model.id}
@@ -2003,7 +2026,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
           ) : null}
 
           {page === "harness" ? (
-            <CommandGroup heading="Harness">
+            <CommandGroup heading={t("Harness")}>
               {harnessResults.map((provider) => {
                 const ProviderIcon = PROVIDER_ICONS[provider.id]
                 return (
@@ -2027,7 +2050,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
           {page === "new-thread" || page === "hide-project" ? (
             <>
               {localProjectGroups.map((group) => (
-                <CommandGroup key={group.key} heading={group.title}>
+                <CommandGroup key={group.key} heading={t(group.title)}>
                   {group.projects.map((project) => {
                     const value = `local-project-${project.localPath}`
                     const busy = pendingActionValue === value || state.startingLocalPath === project.localPath
@@ -2074,7 +2097,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
                     onSelect={() => pushPage({ page: "add-project" })}
                   >
                     <Plus className={ICON_CLASS} />
-                    <span>Add Project…</span>
+                    <span>{t("Add Project…")}</span>
                   </CommandItem>
                 </CommandGroup>
               ) : null}
@@ -2097,7 +2120,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
                     }}
                   >
                     <SquarePen className={ICON_CLASS} />
-                    <span>New Chat</span>
+                    <span>{t("New Chat")}</span>
                     {projectChatsGroup ? (
                       <span className="ml-auto max-w-[220px] shrink-0 truncate pl-3 text-xs text-muted-foreground">
                         {formatPathWithTilde(projectChatsGroup.localPath)}
@@ -2113,7 +2136,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
                       }}
                     >
                       <Copy className={ICON_CLASS} />
-                      <span>Copy Path</span>
+                      <span>{t("Copy Path")}</span>
                       <span className="ml-auto max-w-[220px] shrink-0 truncate pl-3 text-xs text-muted-foreground">
                         {formatPathWithTilde(projectChatsGroup.localPath)}
                       </span>
@@ -2126,7 +2149,9 @@ export function CommandPalette({ state }: { state: KannaState }) {
               // groups — the same list the new chat page shows.
               <ProjectChatSections threads={projectChatsThreads} nowMs={nowMs} onSelect={openThread} />
             ) : (
-              <CommandGroup heading={projectChatsTitle ? `Chats in ${projectChatsTitle}` : "Project Chats"}>
+              <CommandGroup heading={projectChatsTitle
+                ? t("Chats in {project}", { project: projectChatsTitle })
+                : t("Project Chats")}>
                 {projectChatResults.map((thread) => (
                   <ThreadItem
                     key={thread.chatId}
@@ -2143,7 +2168,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
           ) : null}
 
           {page === "open-in" ? (
-            <CommandGroup heading="Open Project In">
+            <CommandGroup heading={t("Open Project In")}>
               {openInResults.map((item) => (
                 <CommandItem
                   key={item.value}
@@ -2172,7 +2197,12 @@ export function CommandPalette({ state }: { state: KannaState }) {
                 <CommandGroup key="add-clone">
                   <CommandItem value="clone-inline" onSelect={() => startClone(addProjectRepo)}>
                     <GitBranch className={ICON_CLASS} />
-                    <span className="min-w-0 truncate">Clone {addProjectRepo.owner}/{addProjectRepo.repo}</span>
+                    <span className="min-w-0 truncate">
+                      <SentenceWithValue
+                        sentence={t("Clone {repo}", { repo: EMPHASIS_SLOT })}
+                        value={`${addProjectRepo.owner}/${addProjectRepo.repo}`}
+                      />
+                    </span>
                     <span className="ml-auto max-w-[220px] shrink-0 truncate pl-3 text-xs text-muted-foreground">
                       {formatPathWithTilde(joinDirPath(newProjectsDir, addProjectRepo.repo))}
                     </span>
@@ -2180,7 +2210,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
                 </CommandGroup>
               ) : null}
               {addProjectActionRows.length > 0 ? (
-                <CommandGroup key="add-actions" heading="Add Project">
+                <CommandGroup key="add-actions" heading={t("Add Project")}>
                   {addProjectActionRows.map((action) => (
                     <CommandItem
                       key={action.id}
@@ -2197,13 +2227,13 @@ export function CommandPalette({ state }: { state: KannaState }) {
                         : action.id === "create-new"
                           ? <Plus className={ICON_CLASS} />
                           : <Folder className={ICON_CLASS} />}
-                      <span>{action.title}</span>
+                      <span>{t(action.title)}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
               ) : null}
               {localProjectGroups.map((group) => (
-                <CommandGroup key={group.key} heading={group.title}>
+                <CommandGroup key={group.key} heading={t(group.title)}>
                   {group.projects.map((project) => {
                     const value = `local-project-${project.localPath}`
                     const busy = pendingActionValue === value || state.startingLocalPath === project.localPath
@@ -2261,17 +2291,21 @@ export function CommandPalette({ state }: { state: KannaState }) {
                 ) : null}
                 {githubReposLoading && !githubRepos ? (
                   <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Loading your repositories…
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading your repositories…")}
                   </div>
                 ) : null}
                 {githubRepos && !githubRepos.available ? (
                   <div className="px-4 py-3 text-sm text-muted-foreground">
-                    Run <code className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-xs">gh auth login</code> to
-                    see your repositories here — or paste any repository URL to clone it.
+                    <SentenceWithValue
+                      sentence={t("Run {command} to see your repositories here — or paste any repository URL to clone it.", {
+                        command: EMPHASIS_SLOT,
+                      })}
+                      value={<code className="rounded border border-border bg-muted px-1 py-0.5 font-mono text-xs">gh auth login</code>}
+                    />
                   </div>
                 ) : null}
                 {githubRepoResults.length > 0 ? (
-                  <CommandGroup heading="Recent Repositories">
+                  <CommandGroup heading={t("Recent Repositories")}>
                     {githubRepoResults.map((repo) => {
                       const repoName = repo.nameWithOwner.split("/")[1] ?? repo.nameWithOwner
                       return (
@@ -2291,7 +2325,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
                             <span className="min-w-0 truncate text-xs text-muted-foreground">{repo.description}</span>
                           ) : null}
                           <span className="ml-auto shrink-0 pl-3 text-xs text-muted-foreground">
-                            {repo.pushedAt ? formatSidebarAgeLabel(Date.parse(repo.pushedAt), nowMs) : ""}
+                            {repo.pushedAt ? formatSidebarAgeLabel(Date.parse(repo.pushedAt), nowMs, t) : ""}
                           </span>
                         </CommandItem>
                       )
@@ -2307,12 +2341,16 @@ export function CommandPalette({ state }: { state: KannaState }) {
             <>
               {!createName ? (
                 <div className="px-4 py-3 text-sm text-muted-foreground">
-                  Type a name — the project is created in{" "}
-                  <span className="font-mono text-xs">{formatPathWithTilde(newProjectsDir)}</span> with git initialized.
+                  <SentenceWithValue
+                    sentence={t("Type a name — the project is created in {path} with git initialized.", {
+                      path: EMPHASIS_SLOT,
+                    })}
+                    value={<span className="font-mono text-xs">{formatPathWithTilde(newProjectsDir)}</span>}
+                  />
                 </div>
               ) : !createNameValid ? (
                 <div className="px-4 py-3 text-sm text-muted-foreground">
-                  Project names can't contain slashes.
+                  {t("Project names can't contain slashes.")}
                 </div>
               ) : (
                 <CommandGroup>
@@ -2328,13 +2366,15 @@ export function CommandPalette({ state }: { state: KannaState }) {
                   >
                     {createNameExists ? <Folder className={ICON_CLASS} /> : <Plus className={ICON_CLASS} />}
                     <span className="min-w-0 truncate">
-                      {createNameExists ? <>Open {createName}</> : <>Create {createName}</>}
+                      {createNameExists
+                        ? <SentenceWithValue sentence={t("Open {name}", { name: EMPHASIS_SLOT })} value={createName} />
+                        : <SentenceWithValue sentence={t("Create {name}", { name: EMPHASIS_SLOT })} value={createName} />}
                     </span>
                     {pendingActionValue === "create-new-row" ? (
                       <Loader2 className="ml-auto h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
                     ) : (
                       <span className="ml-auto max-w-[240px] shrink-0 truncate pl-3 text-xs text-muted-foreground">
-                        {createNameExists ? "already exists" : formatPathWithTilde(joinDirPath(newProjectsDir, createName))}
+                        {createNameExists ? t("already exists") : formatPathWithTilde(joinDirPath(newProjectsDir, createName))}
                       </span>
                     )}
                   </CommandItem>
@@ -2355,7 +2395,10 @@ export function CommandPalette({ state }: { state: KannaState }) {
                     <CommandItem value="browse-jump" onSelect={() => void handleBrowseJump()}>
                       <CornerDownRight className={ICON_CLASS} />
                       <span className="min-w-0 truncate">
-                        Go to <span className="font-mono">{trimmedQuery}</span>
+                        <SentenceWithValue
+                          sentence={t("Go to {path}", { path: EMPHASIS_SLOT })}
+                          value={<span className="font-mono">{trimmedQuery}</span>}
+                        />
                       </span>
                       {browser.loading ? (
                         <Loader2 className="ml-auto h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
@@ -2390,7 +2433,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
                       </CommandItem>
                     </CommandGroup>
                     {visibleBrowseEntries.length > 0 || browseCreateVisible || dir.truncated ? (
-                      <CommandGroup key={`${dir.path}:entries`} heading="In this folder">
+                      <CommandGroup key={`${dir.path}:entries`} heading={t("In this folder")}>
                         {visibleBrowseEntries.map((entry) => entry.kind === "dir" ? (
                           <CommandItem
                             key={`dir-${entry.name}`}
@@ -2421,7 +2464,9 @@ export function CommandPalette({ state }: { state: KannaState }) {
                             })}
                           >
                             <Plus className={ICON_CLASS} />
-                            <span className="min-w-0 truncate">Create "{trimmedQuery}"</span>
+                            <span className="min-w-0 truncate">
+                              {t("Create “{name}”", { name: trimmedQuery })}
+                            </span>
                             {pendingActionValue === `browse-open:${joinDirPath(dir.path, trimmedQuery)}` ? (
                               <Loader2 className="ml-auto h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
                             ) : (
@@ -2433,7 +2478,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
                         ) : null}
                         {dir.truncated ? (
                           <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                            Showing the first {dir.entries.length.toLocaleString()} entries
+                            {t("Showing the first {count} entries", { count: dir.entries.length.toLocaleString() })}
                           </div>
                         ) : null}
                       </CommandGroup>
@@ -2441,7 +2486,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
                   </>
                 ) : !browser.error ? (
                   <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading…")}
                   </div>
                 ) : null}
                 {actionError ? <PaletteErrorRow message={actionError} /> : null}
@@ -2461,7 +2506,9 @@ export function CommandPalette({ state }: { state: KannaState }) {
             >
               <span className="tracking-widest">{isMac ? "⌘↵" : "CTRL+↵"}</span>
               <span className="max-w-[260px] truncate text-foreground">
-                {footerBrowseTarget.create ? `Create ${footerBrowseTarget.name}` : `Open ${footerBrowseTarget.name}`}
+                {footerBrowseTarget.create
+                  ? t("Create {name}", { name: footerBrowseTarget.name })
+                  : t("Open {name}", { name: footerBrowseTarget.name })}
               </span>
             </button>
           </div>
@@ -2470,7 +2517,7 @@ export function CommandPalette({ state }: { state: KannaState }) {
           // grows the palette; the list gets matching bottom padding so the
           // last rows aren't hidden underneath when scrolled down.
           <div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-9 items-center justify-between rounded-b-xl border-t border-border bg-popover px-3.5 text-xs text-muted-foreground">
-            <span>Copy path</span>
+            <span>{t("Copy path")}</span>
             <span>{isMac ? "⌘C" : "CTRL+C"}</span>
           </div>
         ) : null}

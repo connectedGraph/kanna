@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
 import { type VisualizationArtifact, VISUALIZATION_EXPAND_BUTTON, visualizationHeight, visualizationLink, visualizationDownload, visualizationWidthBucket } from "../../../shared/visualization"
 import { prepareVisualizationDocument, type VisualizationTheme } from "../../../shared/visualization-host"
 import { cssColorAlpha, isPngSignature, visualizationImageFilename, visualizationImageName } from "../../../shared/visualization-capture"
+import { useT } from "../../i18n/useT"
 
 /** Read actual host tokens, rather than deriving dark mode from the OS. This also
  * covers custom transcript backgrounds and theme changes while a widget is live. */
@@ -82,6 +83,7 @@ function VisualizationFrame({ artifact, onLoaded, onEscape, captureRef }: {
   /** Escape was pressed in the frame and the visualization had no use for it. */
   onEscape?: (repeat: boolean) => void
 }) {
+  const t = useT()
   const frame = useRef<HTMLIFrameElement>(null)
   const onEscapeRef = useRef(onEscape)
   onEscapeRef.current = onEscape
@@ -230,7 +232,7 @@ function VisualizationFrame({ artifact, onLoaded, onEscape, captureRef }: {
     }
   }, [captureRef])
 
-  if (failed) return <p role="alert" className="text-sm text-muted-foreground">This visualization could not be loaded.</p>
+  if (failed) return <p role="alert" className="text-sm text-muted-foreground">{t("This visualization could not be loaded.")}</p>
   return (
     <div ref={box} className="min-w-0" style={{ height }}>
       {document ? (
@@ -248,7 +250,7 @@ function VisualizationFrame({ artifact, onLoaded, onEscape, captureRef }: {
             onLoaded?.()
           }}
         />
-      ) : <p className="text-sm text-muted-foreground">Loading visualization...</p>}
+      ) : <p className="text-sm text-muted-foreground">{t("Loading visualization...")}</p>}
     </div>
   )
 }
@@ -274,13 +276,14 @@ export function Visualization({ artifact }: { artifact: VisualizationArtifact })
  * arrows point at the corners, which a circle does not have.
  */
 export function VisualizationExpandButton({ onClick }: { onClick: () => void }) {
+  const t = useT()
   const { size, inset } = VISUALIZATION_EXPAND_BUTTON
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild>
         <button
           type="button"
-          aria-label="Expand"
+          aria-label={t("Expand")}
           onClick={onClick}
           style={{ top: inset, right: inset, width: size, height: size }}
           className="visualization-expand absolute flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-xs hover:bg-muted hover:text-foreground [&_svg]:size-3.5"
@@ -288,7 +291,7 @@ export function VisualizationExpandButton({ onClick }: { onClick: () => void }) 
           <Maximize2 />
         </button>
       </TooltipTrigger>
-      <TooltipContent>Expand</TooltipContent>
+      <TooltipContent>{t("Expand")}</TooltipContent>
     </Tooltip>
   )
 }
@@ -305,6 +308,7 @@ export function VisualizationExpandButton({ onClick }: { onClick: () => void }) 
  * to its own height, not the viewport's.
  */
 export function VisualizationFullView({ artifact, onClose }: { artifact: VisualizationArtifact; onClose: () => void }) {
+  const t = useT()
   const capture = useRef<VisualizationCapture | null>(null)
   const dialog = useOptionalAppDialog()
   const saving = useRef(false)
@@ -320,11 +324,11 @@ export function VisualizationFullView({ artifact, onClose }: { artifact: Visuali
       png.catch(() => {})
       const name = dialog
         ? await dialog.prompt({
-            title: "Download as PNG",
-            description: "The .png extension is added for you.",
+            title: t("Download as PNG"),
+            description: t("The .png extension is added for you."),
             initialValue: visualizationImageName(artifact.title),
-            placeholder: "visualization",
-            confirmLabel: "Download",
+            placeholder: t("visualization"),
+            confirmLabel: t("Download"),
           })
         : visualizationImageName(artifact.title)
       if (name === null) return
@@ -332,7 +336,7 @@ export function VisualizationFullView({ artifact, onClose }: { artifact: Visuali
         saveFile(await png, visualizationImageFilename(name, artifact.title))
       } catch (error) {
         const description = error instanceof Error ? error.message : undefined
-        if (dialog) await dialog.alert({ title: "Could not save the image", description })
+        if (dialog) await dialog.alert({ title: t("Could not save the image"), description })
         else console.error("Could not save the visualization as a PNG", error)
       }
     } finally {
@@ -342,11 +346,11 @@ export function VisualizationFullView({ artifact, onClose }: { artifact: Visuali
 
   return (
     <ViewerSurface
-      label={`Visualization: ${artifact.title}`}
+      label={t("Visualization: {title}", { title: artifact.title })}
       icon={<Shapes />}
       title={artifact.title}
       onClose={onClose}
-      toolbar={<ViewerIconButton label="Download as PNG" onClick={() => void download()}><Download /></ViewerIconButton>}
+      toolbar={<ViewerIconButton label={t("Download as PNG")} onClick={() => void download()}><Download /></ViewerIconButton>}
     >
       <div className="p-4">
         <VisualizationFrame

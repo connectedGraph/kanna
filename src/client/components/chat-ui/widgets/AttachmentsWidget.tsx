@@ -1,6 +1,7 @@
 import { ArrowUpRight, FileText, Film, Paperclip } from "lucide-react"
 import { useState } from "react"
 import { cn } from "../../../lib/utils"
+import { useT } from "../../../i18n/useT"
 import { WidgetList, WidgetRow, WidgetTile, WidgetTileGrid } from "./parts"
 import { WidgetCard } from "./WidgetCard"
 import { openViewer, viewerAttachmentFromDisplay } from "../../../stores/viewerStore"
@@ -35,10 +36,11 @@ function AttachmentThumbnail({ url, name }: { url: string; name: string }) {
  * Either opens in a new tab.
  */
 export function AttachmentsWidget({ attachments }: { attachments: WidgetAttachment[] }) {
+  const t = useT()
   const images = attachments.filter((attachment) => attachment.kind === "image")
   const others = attachments.filter((attachment) => attachment.kind !== "image")
   return (
-    <WidgetCard icon={<Paperclip />} title="Attachments" count={attachments.length}>
+    <WidgetCard icon={<Paperclip />} title={t("Attachments")} count={attachments.length}>
       {/* Scrolls inside a cap: a chat that generated dozens of images would
           otherwise push every widget below it off screen. No overscroll
           containment, so a wheel that reaches the end carries on into the

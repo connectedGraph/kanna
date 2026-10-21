@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react"
 import { CalendarClock, Clock, Pencil, Repeat, type LucideIcon } from "lucide-react"
 import type { ChatSchedule, ScheduleRun, ScheduleTrigger } from "../../../../shared/types"
 import { toMessagePreview } from "../../../../shared/message-preview"
+import { translate } from "../../../../shared/i18n"
 import { cn } from "../../../lib/utils"
+import { useT, type TFunction } from "../../../i18n/useT"
 import { formatPromptTimestamp } from "../../messages/ResultMessage"
 import { useChatReferenceActions, useSidebarThread } from "../chat-reference"
 import { ContextMenuItem } from "../../ui/context-menu"
@@ -29,6 +31,9 @@ const CARD_RUNS = 5
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
+/** English, for callers with no translator: a key is its own translation. */
+const englishT: TFunction = (key, vars) => translate(undefined, key, vars)
+
 export const TRIGGER_ICON: Record<ScheduleTrigger["kind"], LucideIcon> = {
   once: Clock,
   interval: Repeat,
@@ -36,28 +41,34 @@ export const TRIGGER_ICON: Record<ScheduleTrigger["kind"], LucideIcon> = {
 }
 
 /** "Every 5 min", "Daily at 09:00 · Mon, Wed", "Once". */
-export function formatScheduleTrigger(trigger: ScheduleTrigger): string {
-  if (trigger.kind === "once") return "Once"
+export function formatScheduleTrigger(trigger: ScheduleTrigger, t: TFunction = englishT): string {
+  if (trigger.kind === "once") return t("Once")
   if (trigger.kind === "interval") {
     const minutes = Math.round(trigger.everyMs / 60_000)
-    if (minutes % 1_440 === 0) return minutes === 1_440 ? "Every day" : `Every ${minutes / 1_440} days`
-    if (minutes % 60 === 0) return minutes === 60 ? "Every hour" : `Every ${minutes / 60} hours`
-    return `Every ${minutes} min`
+    if (minutes % 1_440 === 0) return minutes === 1_440 ? t("Every day") : t("Every {count} days", { count: minutes / 1_440 })
+    if (minutes % 60 === 0) return minutes === 60 ? t("Every hour") : t("Every {count} hours", { count: minutes / 60 })
+    return t("Every {count} min", { count: minutes })
   }
+  // Weekday names are not translated: a cron-like string reads the same in a
+  // Chinese UI, and the names sit in one short line beside a time.
   const days = trigger.weekdays?.length && trigger.weekdays.length < 7
     ? ` · ${[...trigger.weekdays].sort((a, b) => a - b).map((day) => WEEKDAYS[day]).join(", ")}`
     : ""
-  return `Daily at ${trigger.timeOfDay}${days}`
+  return `${t("Daily at {time}", { time: trigger.timeOfDay })}${days}`
 }
 
 /** How long until a time, to the minute: "in 4m", "in 2h 10m", "in 3d". Due or overdue reads "now". */
-export function formatUntil(at: number, now: number): string {
+export function formatUntil(at: number, now: number, t: TFunction = englishT): string {
   const minutes = Math.ceil((at - now) / 60_000)
-  if (minutes <= 0) return "now"
-  if (minutes < 60) return `in ${minutes}m`
+  if (minutes <= 0) return t("now")
+  if (minutes < 60) return t("in {count}m", { count: minutes })
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return minutes % 60 ? `in ${hours}h ${minutes % 60}m` : `in ${hours}h`
-  return `in ${Math.floor(hours / 24)}d`
+  if (hours < 24) {
+    return minutes % 60
+      ? t("in {hours}h {minutes}m", { hours, minutes: minutes % 60 })
+      : t("in {count}h", { count: hours })
+  }
+  return t("in {count}d", { count: Math.floor(hours / 24) })
 }
 
 /**
@@ -65,11 +76,12 @@ export function formatUntil(at: number, now: number): string {
  * or why it will not. A one-shot that ran, and a repeat that reached its
  * limit, are both simply done.
  */
-export function formatScheduleState(schedule: ChatSchedule, now: number): string {
-  if (schedule.enabled && schedule.nextRunAt != null) return formatUntil(schedule.nextRunAt, now)
-  return schedule.nextRunAt == null ? "Done" : "Paused"
+export function formatScheduleState(schedule: ChatSchedule, now: number, t: TFunction = englishT): string {
+  if (schedule.enabled && schedule.nextRunAt != null) return formatUntil(schedule.nextRunAt, now, t)
+  return schedule.nextRunAt == null ? t("Done") : t("Paused")
 }
 
+/** Labels are keys; `sent` and `skipped` reuse the task status words on purpose. */
 const RUN_OUTCOME: Record<ScheduleRun["outcome"], { label: string; className: string }> = {
   sent: { label: "Sent", className: "bg-emerald-500" },
   // Not a failure: the run before it was still going.
@@ -77,7 +89,12 @@ const RUN_OUTCOME: Record<ScheduleRun["outcome"], { label: string; className: st
   failed: { label: "Failed", className: "bg-destructive" },
 }
 
-/** The text Edit starts in the composer. The name is how the agent finds the schedule. */
+/**
+ * The text Edit starts in the composer. The name is how the agent finds the
+ * schedule. Always addressed to the agent, so it stays English in every
+ * locale: the model reads a mixed-language instruction worse than an English
+ * one, and the schedule's name in the middle is the agent's handle on it.
+ */
 export function scheduleEditPrompt(schedule: ChatSchedule): string {
   return `Update the schedule "${schedule.name}" to `
 }
@@ -95,6 +112,7 @@ export function useMinuteClock(active: boolean): number {
 }
 
 function RunRow({ run, currentChatId }: { run: ScheduleRun; currentChatId: string | null }) {
+  const t = useT()
   const actions = useChatReferenceActions()
   const outcome = RUN_OUTCOME[run.outcome]
   // A run into another chat names it and opens it. One into this chat has
@@ -104,7 +122,7 @@ function RunRow({ run, currentChatId }: { run: ScheduleRun; currentChatId: strin
   const content = (
     <>
       <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", outcome.className)} />
-      <span className="shrink-0 text-popover-foreground">{outcome.label}</span>
+      <span className="shrink-0 text-popover-foreground">{t(outcome.label)}</span>
       {thread ? <span className="min-w-0 truncate">{thread.title}</span> : null}
       <span className="ml-auto shrink-0 pl-2 tabular-nums">{formatPromptTimestamp(new Date(run.at).toISOString())}</span>
     </>
@@ -124,23 +142,24 @@ export function ScheduleCard({ schedule, now, currentChatId, onEdit }: {
   currentChatId: string | null
   onEdit: () => void
 }) {
+  const t = useT()
   const target = schedule.target
   const targetThread = useSidebarThread(target.kind === "chat" && target.chatId !== currentChatId ? target.chatId : null)
   const runs = [...(schedule.runs ?? [])].reverse().slice(0, CARD_RUNS)
   const destination = target.kind === "new_chat"
-    ? "Starts a new chat each run"
+    ? t("Starts a new chat each run")
     : target.chatId === currentChatId
-      ? "Sends to this chat"
-      : `Sends to ${targetThread?.title ?? "another chat"}`
+      ? t("Sends to this chat")
+      : t("Sends to {chat}", { chat: targetThread?.title ?? t("another chat") })
   return (
     <>
       <TurnCardMetaRow>
-        <span className="truncate">{formatScheduleTrigger(schedule.trigger)}</span>
+        <span className="truncate">{formatScheduleTrigger(schedule.trigger, t)}</span>
         <TurnCardMetaSeparator />
         <span className="shrink-0">
           {schedule.enabled && schedule.nextRunAt != null
-            ? `Next ${formatPromptTimestamp(new Date(schedule.nextRunAt).toISOString())}`
-            : formatScheduleState(schedule, now)}
+            ? t("Next {time}", { time: formatPromptTimestamp(new Date(schedule.nextRunAt).toISOString()) })
+            : formatScheduleState(schedule, now, t)}
         </span>
       </TurnCardMetaRow>
       <div className={cn("mt-1 line-clamp-2 text-sm font-medium text-popover-foreground", TURN_CARD_ROW_INSET)}>{schedule.name}</div>
@@ -150,7 +169,7 @@ export function ScheduleCard({ schedule, now, currentChatId, onEdit }: {
         {schedule.maxRuns ? (
           <>
             <TurnCardMetaSeparator />
-            <span className="shrink-0">{schedule.runCount} of {schedule.maxRuns} runs</span>
+            <span className="shrink-0">{t("{count} of {total} runs", { count: schedule.runCount, total: schedule.maxRuns })}</span>
           </>
         ) : null}
       </TurnCardMetaRow>
@@ -159,7 +178,7 @@ export function ScheduleCard({ schedule, now, currentChatId, onEdit }: {
       <div className="mt-1.5">
         {runs.length > 0
           ? runs.map((run) => <RunRow key={`${run.at}:${run.outcome}`} run={run} currentChatId={currentChatId} />)
-          : <div className={cn("text-[12px] text-muted-foreground/70", TURN_CARD_ROW_INSET)}>No runs yet</div>}
+          : <div className={cn("text-[12px] text-muted-foreground/70", TURN_CARD_ROW_INSET)}>{t("No runs yet")}</div>}
       </div>
       <div className="-mx-1.5 mt-2 border-t border-border/60" aria-hidden />
       {/* The card's one action, full width so it is the same target every
@@ -174,7 +193,7 @@ export function ScheduleCard({ schedule, now, currentChatId, onEdit }: {
         )}
       >
         <Pencil className="size-3 shrink-0" />
-        <span>Edit by asking the agent</span>
+        <span>{t("Edit by asking the agent")}</span>
       </button>
     </>
   )
@@ -186,14 +205,17 @@ export function SchedulesWidget({ schedules, chatId, onEdit }: {
   /** Starts an edit of the schedule in the composer. */
   onEdit: (schedule: ChatSchedule) => void
 }) {
+  const t = useT()
   const listRef = useRef<HTMLDivElement | null>(null)
   const active = schedules.filter((schedule) => schedule.enabled && schedule.nextRunAt != null).length
   const now = useMinuteClock(active > 0)
   return (
     <WidgetCard
       icon={<CalendarClock />}
-      title="Schedules"
-      count={active === schedules.length ? String(schedules.length) : `${active} of ${schedules.length} on`}
+      title={t("Schedules")}
+      count={active === schedules.length
+        ? String(schedules.length)
+        : t("{count} of {total} on", { count: active, total: schedules.length })}
     >
       <WidgetList listRef={listRef}>
         {schedules.map((schedule) => {
@@ -207,13 +229,13 @@ export function SchedulesWidget({ schedules, chatId, onEdit }: {
               muted={!on}
               icon={<Icon />}
               title={schedule.name}
-              subtitle={formatScheduleTrigger(schedule.trigger)}
-              meta={formatScheduleState(schedule, now)}
-              menuLabel="Schedule actions"
+              subtitle={formatScheduleTrigger(schedule.trigger, t)}
+              meta={formatScheduleState(schedule, now, t)}
+              menuLabel={t("Schedule actions")}
               menu={(
                 <ContextMenuItem onSelect={() => onEdit(schedule)}>
                   <Pencil className="size-3.5" />
-                  <span>Edit Schedule…</span>
+                  <span>{t("Edit Schedule…")}</span>
                 </ContextMenuItem>
               )}
             />

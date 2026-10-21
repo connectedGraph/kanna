@@ -14,6 +14,7 @@ import { ChatReplyQuote } from "./ChatToolMessage"
 import { ScheduleCardBox } from "./ScheduleToolMessage"
 import { QUOTE_MARK_CENTER_PX, TOOL_QUOTE_CLASS } from "./tool-card"
 import { USER_BUBBLE_CLASS, UserMessageAttachments } from "./UserMessage"
+import { useT } from "../../i18n/useT"
 
 /**
  * A message that reached the chat as a prompt without the user typing it: a
@@ -59,6 +60,7 @@ export function SourceQuote({ source, chatId }: {
   /** For a report: the sub-chat this part is from. */
   chatId: string | null
 }) {
+  const t = useT()
   const schedules = useChatSchedules()
 
   if (source.kind === "schedule") {
@@ -70,7 +72,7 @@ export function SourceQuote({ source, chatId }: {
           context={schedules}
           // No preview of the schedule's message, as its own card has: the
           // message is what the bubble is showing.
-          caption={`Automation · ${formatScheduleTrigger(schedule.trigger)}`}
+          caption={`${t("Automation")} · ${formatScheduleTrigger(schedule.trigger)}`}
           quote
         />
       )
@@ -79,17 +81,17 @@ export function SourceQuote({ source, chatId }: {
       <div className={TOOL_QUOTE_CLASS}>
         <div className="flex min-w-0 items-center gap-2.5">
           <CalendarClock className="size-4 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 truncate text-muted-foreground">Automation</span>
+          <span className="min-w-0 truncate text-muted-foreground">{t("Automation")}</span>
         </div>
       </div>
     )
   }
 
-  if (source.kind === "agent") return <ChatReplyQuote chatId={source.chatId} title="Another agent" />
+  if (source.kind === "agent") return <ChatReplyQuote chatId={source.chatId} title={t("Another agent")} />
 
   // A report draws its own line (`ReportMarker`), not a quote. This is for
   // completeness, should one ever be drawn as a quoted bubble.
-  return <ChatReplyQuote chatId={chatId} title={chatId ? "Sub-chat" : "Sub-chats"} />
+  return <ChatReplyQuote chatId={chatId} title={chatId ? t("Sub-chat") : t("Sub-chats")} />
 }
 
 /** A chat's name in a sentence, opening the chat where there is one to open. */
@@ -119,14 +121,15 @@ function ChatName({ chatId, fallback }: { chatId: string | null | undefined; fal
  * opened, the adopter because that is where the result went.
  */
 export function AdoptionNotice({ section }: { section: ReportSection }) {
+  const t = useT()
   return (
     <p className="not-prose flex min-w-0 items-start gap-2 text-sm leading-5 text-muted-foreground">
       <Split aria-hidden className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0">
-        <ChatName chatId={section.chatId} fallback="A sub-chat" />
-        {" was adopted by "}
-        <ChatName chatId={section.adoptedByChatId} fallback="another chat" />
-        {". Its result will not arrive here."}
+        <ChatName chatId={section.chatId} fallback={t("A sub-chat")} />
+        {t(" was adopted by ")}
+        <ChatName chatId={section.adoptedByChatId} fallback={t("another chat")} />
+        {t(". Its result will not arrive here.")}
       </span>
     </p>
   )
@@ -201,7 +204,7 @@ export function ReplyQuoteRow({ children }: { children: ReactNode }) {
  */
 export function ReportMarker({ section, outcome, tickets = [], flash = false }: {
   section: ReportSection
-  /** What to say happened, where the header cannot: see QueuedUserMessage. */
+  /** What to say happened, where the header cannot: see QueuedUserMessage. Already translated. */
   outcome?: string
   /**
    * The tickets the sub-chat was working on, in a delegator's transcript
@@ -211,11 +214,12 @@ export function ReportMarker({ section, outcome, tickets = [], flash = false }: 
   tickets?: readonly number[]
   flash?: boolean
 }) {
+  const t = useT()
   const actions = useChatReferenceActions()
   const thread = useSidebarThread(section.chatId)
   const chatId = section.chatId
   const failed = section.status === "failed"
-  const label = `${thread?.title || "A sub-chat"} ${outcome ?? reportOutcome(section.status)}`
+  const label = `${thread?.title || t("A sub-chat")} ${outcome ?? t(reportOutcome(section.status))}`
   const content = (
     <span className={cn("grid min-w-0 items-center gap-1.5", tickets.length > 0 ? "grid-cols-[auto_1fr_auto]" : "grid-cols-[auto_1fr]")}>
       {/* A tool row's mark slot, mark and words (ToolCallMessage). */}
@@ -270,6 +274,7 @@ function SourcedPart({ section, source, steered, flash }: {
   steered: boolean
   flash: boolean
 }) {
+  const t = useT()
   const partRef = useRef<HTMLDivElement | null>(null)
   return (
     // Each child keeps its own width: the bubble is as wide as its text and
@@ -286,9 +291,9 @@ function SourcedPart({ section, source, steered, flash }: {
             before: on the side that faces the middle of the column. */}
         {steered ? (
           <span
-            aria-label="Sent mid-turn"
+            aria-label={t("Sent mid-turn")}
             role="img"
-            title="Sent mid-turn"
+            title={t("Sent mid-turn")}
             className="shrink-0 text-muted-foreground"
           >
             <CornerUpRight className="h-4 w-4" />

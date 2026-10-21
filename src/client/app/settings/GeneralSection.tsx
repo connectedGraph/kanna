@@ -3,7 +3,7 @@ import { DownloadCloud } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { ANALYTICS_STATIC_EVENT_NAMES, ANALYTICS_STATIC_PROPERTY_NAMES } from "../../../shared/analytics"
 import type { EditorPreset } from "../../../shared/protocol"
-import { DEFAULT_NEW_PROJECTS_DIRECTORY, isNightlyVersion, type PaneVisibilityScope, type SubmitWhileRunning } from "../../../shared/types"
+import { DEFAULT_NEW_PROJECTS_DIRECTORY, isNightlyVersion, type AppLocale, type PaneVisibilityScope, type SubmitWhileRunning } from "../../../shared/types"
 import { EDITOR_OPTIONS, EditorIcon } from "../../components/editor-icons"
 import { useInstalledEditors } from "../../components/open-external-menu"
 import { Button } from "../../components/ui/button"
@@ -12,7 +12,9 @@ import { Input } from "../../components/ui/input"
 import { Switch } from "../../components/ui/switch"
 import { SelectItem } from "../../components/ui/select"
 import { useTheme, type ThemePreference } from "../../hooks/useTheme"
+import { LOCALES, normalizeLocale } from "../../../shared/i18n"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import { playChatNotificationSound } from "../../lib/chatSounds"
 import {
   DEFAULT_TERMINAL_MIN_COLUMN_WIDTH,
@@ -88,6 +90,7 @@ export function GeneralSection({
   >
   appVersion: string
 }) {
+  const t = useT()
   const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const appSettings = state.appSettings
@@ -115,6 +118,7 @@ export function GeneralSection({
   const [editorCommandDraft, setEditorCommandDraft] = useState(editorCommandTemplate)
   const newProjectsDirectory = appSettings?.newProjectsDirectory ?? DEFAULT_NEW_PROJECTS_DIRECTORY
   const [newProjectsDirectoryDraft, setNewProjectsDirectoryDraft] = useState(newProjectsDirectory)
+  const locale = normalizeLocale(appSettings?.locale)
   const submitWhileRunning = appSettings?.submitWhileRunning ?? "queue"
   const paneVisibility = appSettings?.paneVisibility ?? { widgets: "chat", terminal: "chat" }
   const transcriptWindow = appSettings?.transcript?.windowAssistantMessages ?? DEFAULT_TRANSCRIPT_WINDOW_ASSISTANT_MESSAGES
@@ -123,18 +127,20 @@ export function GeneralSection({
   const [analyticsDialogOpen, setAnalyticsDialogOpen] = useState(false)
 
   const updateStatusLabel = updateSnapshot?.status === "checking"
-    ? "Checking for updates…"
+    ? t("Checking for updates…")
     : updateSnapshot?.status === "updating"
-      ? "Installing update…"
+      ? t("Installing update…")
       : updateSnapshot?.status === "restart_pending"
-        ? "Restarting Kanna…"
+        ? t("Restarting Kanna…")
         : updateSnapshot?.status === "available"
-          ? `Update available${updateSnapshot.latestVersion ? `: ${updateSnapshot.latestVersion}` : ""}`
+          ? updateSnapshot.latestVersion
+            ? t("Update available: {version}", { version: updateSnapshot.latestVersion })
+            : t("Update available")
           : updateSnapshot?.status === "up_to_date"
-            ? isNightlyVersion(updateSnapshot.currentVersion) ? "No newer stable release" : "Up to date"
+            ? isNightlyVersion(updateSnapshot.currentVersion) ? t("No newer stable release") : t("Up to date")
             : updateSnapshot?.status === "error"
-              ? "Update check failed"
-              : "Not checked yet"
+              ? t("Update check failed")
+              : t("Not checked yet")
 
   useEffect(() => {
     setScrollbackDraft(String(scrollbackLines))
@@ -163,7 +169,7 @@ export function GeneralSection({
       return
     }
     void handleWriteAppSettings({ transcript: { windowAssistantMessages: nextValue } }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save transcript settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save transcript settings."))
     })
   }
 
@@ -175,7 +181,7 @@ export function GeneralSection({
     }
     setScrollbackLines(nextValue)
     void handleWriteAppSettings({ terminal: { scrollbackLines: nextValue } }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save terminal settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save terminal settings."))
     })
   }
 
@@ -187,14 +193,14 @@ export function GeneralSection({
     }
     setMinColumnWidth(nextValue)
     void handleWriteAppSettings({ terminal: { minColumnWidth: nextValue } }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save terminal settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save terminal settings."))
     })
   }
 
   function commitEditorCommand() {
     setEditorCommandTemplate(editorCommandDraft)
     void handleWriteAppSettings({ editor: { commandTemplate: editorCommandDraft } }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save editor settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save editor settings."))
     })
   }
 
@@ -207,14 +213,20 @@ export function GeneralSection({
     // The server normalizes an empty value back to the default; the snapshot
     // round-trips into the draft via the effect above.
     void handleWriteAppSettings({ newProjectsDirectory: trimmed || DEFAULT_NEW_PROJECTS_DIRECTORY }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save the new projects directory.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save the new projects directory."))
+    })
+  }
+
+  function handleLocaleChange(nextLocale: AppLocale) {
+    void handleWriteAppSettings({ locale: nextLocale }).catch((error) => {
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save the language."))
     })
   }
 
   function handleThemeChange(nextTheme: typeof theme) {
     setTheme(nextTheme)
     void handleWriteAppSettings({ theme: nextTheme }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save theme settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save theme settings."))
     })
   }
 
@@ -227,7 +239,7 @@ export function GeneralSection({
         commandTemplate,
       },
     }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save editor settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save editor settings."))
     })
   }
 
@@ -238,7 +250,7 @@ export function GeneralSection({
 
     setChatSoundPreference(nextValue)
     void handleWriteAppSettings({ chatSoundPreference: nextValue }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save chat sound settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save chat sound settings."))
     })
     void playChatNotificationSound(chatSoundId, 1).catch(() => undefined)
   }
@@ -250,7 +262,7 @@ export function GeneralSection({
 
     setChatSoundId(nextValue)
     void handleWriteAppSettings({ chatSoundId: nextValue }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save chat sound settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save chat sound settings."))
     })
     void playChatNotificationSound(nextValue, 1).catch(() => undefined)
   }
@@ -270,17 +282,17 @@ export function GeneralSection({
         setChatBrowserNotificationPreference(resolvedPreference)
         await handleWriteAppSettings({ chatBrowserNotificationPreference: resolvedPreference })
         if (nextValue !== "never" && resolvedPreference === "never") {
-          setAppSettingsError("Browser notifications are blocked or unsupported in this browser.")
+          setAppSettingsError(t("Browser notifications are blocked or unsupported in this browser."))
         }
       } catch (error) {
-        setAppSettingsError(error instanceof Error ? error.message : "Unable to save chat notification settings.")
+        setAppSettingsError(error instanceof Error ? error.message : t("Unable to save chat notification settings."))
       }
     })()
   }
 
   function handlePaneVisibilityChange(pane: "widgets" | "terminal", scope: PaneVisibilityScope) {
     void handleWriteAppSettings({ paneVisibility: { [pane]: scope } }).catch((error) => {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save layout settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save layout settings."))
     })
   }
 
@@ -289,7 +301,7 @@ export function GeneralSection({
       setAppSettingsError(null)
       await handleWriteAppSettings({ projectIconsInChats: enabled })
     } catch (error) {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save appearance settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save appearance settings."))
     }
   }
 
@@ -298,7 +310,7 @@ export function GeneralSection({
       setAppSettingsError(null)
       await handleWriteAppSettings({ chatTabsEnabled: enabled })
     } catch (error) {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save appearance settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save appearance settings."))
     }
   }
 
@@ -307,7 +319,7 @@ export function GeneralSection({
       setAppSettingsError(null)
       await handleWriteAppSettings({ widgetsPeekEnabled: enabled })
     } catch (error) {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save appearance settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save appearance settings."))
     }
   }
 
@@ -316,7 +328,7 @@ export function GeneralSection({
       setAppSettingsError(null)
       await handleWriteAppSettings({ analyticsEnabled: enabled })
     } catch (error) {
-      setAppSettingsError(error instanceof Error ? error.message : "Unable to save analytics settings.")
+      setAppSettingsError(error instanceof Error ? error.message : t("Unable to save analytics settings."))
     }
   }
 
@@ -339,14 +351,16 @@ export function GeneralSection({
             def={SETTINGS_ROWS.applicationUpdate}
             description={(
               <>
-                <span>Kanna {currentVersionLabel}. {updateStatusLabel}.</span>
+                <span>{t("Kanna {version}. {status}.", { version: currentVersionLabel, status: updateStatusLabel })}</span>
                 {updateSnapshot?.lastCheckedAt ? (
-                  <span> Last checked {new Intl.DateTimeFormat(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  }).format(updateSnapshot.lastCheckedAt)}.</span>
+                  <span>{" "}{t("Last checked {date}.", {
+                    date: new Intl.DateTimeFormat(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    }).format(updateSnapshot.lastCheckedAt),
+                  })}</span>
                 ) : null}
                 {updateSnapshot?.error ? (
                   <span> {updateSnapshot.error}</span>
@@ -357,7 +371,7 @@ export function GeneralSection({
                   onClick={() => navigate("/settings/changelog")}
                   className={SETTINGS_INLINE_ACTION_CLASS}
                 >
-                  Changelog
+                  {t("Changelog")}
                 </button>
               </>
             )}
@@ -369,25 +383,38 @@ export function GeneralSection({
                 disabled={isInstallingUpdate}
                 icon={<DownloadCloud />}
               >
-                {isInstallingUpdate ? "Updating…" : `Update to ${updateSnapshot.latestVersion ?? "latest"}`}
+                {isInstallingUpdate ? t("Updating…") : t("Update to {version}", { version: updateSnapshot.latestVersion ?? t("latest") })}
               </SettingsActionButton>
             ) : (
               <SettingsActionButton
                 onClick={() => { void state.handleCheckForUpdates({ force: true }) }}
                 disabled={isCheckingForUpdate || isInstallingUpdate}
               >
-                {isCheckingForUpdate ? "Checking…" : "Check for updates"}
+                {isCheckingForUpdate ? t("Checking…") : t("Check for updates")}
               </SettingsActionButton>
             )}
           </SettingsRow>
         </SettingsGroup>
 
-        <SettingsGroup title="Appearance">
+        <SettingsGroup title={t("Appearance")}>
           <SettingsRow def={SETTINGS_ROWS.theme}>
             <SettingsSelect value={theme} onValueChange={(value) => handleThemeChange(value as ThemePreference)}>
               {themeOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
+                </SelectItem>
+              ))}
+            </SettingsSelect>
+          </SettingsRow>
+          <SettingsRow def={SETTINGS_ROWS.language}>
+            <SettingsSelect
+              value={locale}
+              onValueChange={(value) => handleLocaleChange(value as AppLocale)}
+              aria-label={t(SETTINGS_ROWS.language.title)}
+            >
+              {LOCALES.map((entry) => (
+                <SelectItem key={entry.id} value={entry.id}>
+                  {entry.label}
                 </SelectItem>
               ))}
             </SettingsSelect>
@@ -398,7 +425,7 @@ export function GeneralSection({
               onCheckedChange={(checked) => {
                 void handleProjectIconsInChatsChange(checked)
               }}
-              aria-label={SETTINGS_ROWS.projectIconsInChats.title}
+              aria-label={t(SETTINGS_ROWS.projectIconsInChats.title)}
             />
           </SettingsRow>
           <SettingsRow def={SETTINGS_ROWS.chatTabs}>
@@ -407,7 +434,7 @@ export function GeneralSection({
               onCheckedChange={(checked) => {
                 void handleChatTabsChange(checked)
               }}
-              aria-label={SETTINGS_ROWS.chatTabs.title}
+              aria-label={t(SETTINGS_ROWS.chatTabs.title)}
             />
           </SettingsRow>
           <SettingsRow def={SETTINGS_ROWS.widgetsPeek}>
@@ -416,12 +443,12 @@ export function GeneralSection({
               onCheckedChange={(checked) => {
                 void handleWidgetsPeekChange(checked)
               }}
-              aria-label={SETTINGS_ROWS.widgetsPeek.title}
+              aria-label={t(SETTINGS_ROWS.widgetsPeek.title)}
             />
           </SettingsRow>
         </SettingsGroup>
 
-        <SettingsGroup title="Notifications">
+        <SettingsGroup title={t("Notifications")}>
           <SettingsRow def={SETTINGS_ROWS.chatSounds}>
             <SettingsSelect
               value={chatSoundPreference}
@@ -429,7 +456,7 @@ export function GeneralSection({
             >
               {chatSoundPreferenceOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SettingsSelect>
@@ -444,7 +471,7 @@ export function GeneralSection({
             >
               {CHAT_SOUND_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SettingsSelect>
@@ -457,31 +484,34 @@ export function GeneralSection({
             >
               {chatBrowserNotificationPreferenceOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SettingsSelect>
           </SettingsRow>
         </SettingsGroup>
 
-        <SettingsGroup title="Chats">
+        <SettingsGroup title={t("Chats")}>
           <SettingsRow def={SETTINGS_ROWS.submitWhileRunning}>
             <SettingsSelect
               value={submitWhileRunning}
               onValueChange={(value) => {
                 void handleWriteAppSettings({ submitWhileRunning: value as SubmitWhileRunning }).catch((error) => {
-                  setAppSettingsError(error instanceof Error ? error.message : "Unable to save composer settings.")
+                  setAppSettingsError(error instanceof Error ? error.message : t("Unable to save composer settings."))
                 })
               }}
             >
-              <SelectItem value="queue">Queue message</SelectItem>
-              <SelectItem value="steer">Steer now</SelectItem>
+              <SelectItem value="queue">{t("Queue message")}</SelectItem>
+              <SelectItem value="steer">{t("Steer now")}</SelectItem>
             </SettingsSelect>
           </SettingsRow>
 
           <SettingsRow def={SETTINGS_ROWS.transcriptWindow} wideControl>
             <SettingsField
-              hint={`${MIN_TRANSCRIPT_WINDOW_ASSISTANT_MESSAGES}–${MAX_TRANSCRIPT_WINDOW_ASSISTANT_MESSAGES} messages${transcriptWindow === DEFAULT_TRANSCRIPT_WINDOW_ASSISTANT_MESSAGES ? " (default)" : ""}`}
+              hint={`${t("{min}–{max} messages", {
+                min: MIN_TRANSCRIPT_WINDOW_ASSISTANT_MESSAGES,
+                max: MAX_TRANSCRIPT_WINDOW_ASSISTANT_MESSAGES,
+              })}${transcriptWindow === DEFAULT_TRANSCRIPT_WINDOW_ASSISTANT_MESSAGES ? t(" (default)") : ""}`}
             >
               <Input
                 type="number"
@@ -498,7 +528,7 @@ export function GeneralSection({
           </SettingsRow>
         </SettingsGroup>
 
-        <SettingsGroup title="Layout">
+        <SettingsGroup title={t("Layout")}>
           {([
             ["widgets", SETTINGS_ROWS.widgetsVisibility],
             ["terminal", SETTINGS_ROWS.terminalVisibility],
@@ -510,7 +540,7 @@ export function GeneralSection({
               >
                 {paneVisibilityScopeOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SettingsSelect>
@@ -518,7 +548,7 @@ export function GeneralSection({
           ))}
         </SettingsGroup>
 
-        <SettingsGroup title="Editor & Projects">
+        <SettingsGroup title={t("Editor & Projects")}>
           <SettingsRow def={SETTINGS_ROWS.defaultEditor}>
             <SettingsSelect
               value={editorPreset}
@@ -532,10 +562,10 @@ export function GeneralSection({
                   <SelectItem key={option.value} value={option.value} disabled={!installed}>
                     <span className="flex items-center gap-2">
                       <EditorIcon preset={option.value} className={`h-4 w-4 shrink-0${installed ? "" : " opacity-40 grayscale"}`} />
-                      <span className={installed ? undefined : "text-muted-foreground"}>{option.label}</span>
+                      <span className={installed ? undefined : "text-muted-foreground"}>{t(option.label)}</span>
                       {installed ? null : (
                         <span className="ml-auto shrink-0 rounded-full border border-border/70 px-1.5 py-px text-[10px] leading-4 font-medium text-muted-foreground">
-                          Not installed
+                          {t("Not installed")}
                         </span>
                       )}
                     </span>
@@ -549,10 +579,14 @@ export function GeneralSection({
             <SettingsRow
               nested
               wideControl
-              title="Command Template"
-              description={<>Include {"{path}"} and optionally {"{line}"} and {"{column}"} in your command.</>}
+              title={t("Command Template")}
+              description={<>{t("Include {path} and optionally {line} and {column} in your command.", {
+                path: "{path}",
+                line: "{line}",
+                column: "{column}",
+              })}</>}
             >
-              <SettingsField hint={<>Preview: <span className="font-mono">{customEditorPreview}</span></>}>
+              <SettingsField hint={<>{t("Preview: ")}<span className="font-mono">{customEditorPreview}</span></>}>
                 <Input
                   type="text"
                   value={editorCommandDraft}
@@ -569,7 +603,7 @@ export function GeneralSection({
 
           <SettingsRow def={SETTINGS_ROWS.newProjectsDirectory} wideControl>
             <SettingsField
-              hint={`Created on first use${newProjectsDirectory === DEFAULT_NEW_PROJECTS_DIRECTORY ? " (default)" : ""}`}
+              hint={`${t("Created on first use")}${newProjectsDirectory === DEFAULT_NEW_PROJECTS_DIRECTORY ? t(" (default)") : ""}`}
             >
               <Input
                 type="text"
@@ -585,10 +619,13 @@ export function GeneralSection({
           </SettingsRow>
         </SettingsGroup>
 
-        <SettingsGroup title="Terminal">
+        <SettingsGroup title={t("Terminal")}>
           <SettingsRow def={SETTINGS_ROWS.terminalScrollback} wideControl>
             <SettingsField
-              hint={`${MIN_TERMINAL_SCROLLBACK}–${MAX_TERMINAL_SCROLLBACK} lines${scrollbackLines === DEFAULT_TERMINAL_SCROLLBACK ? " (default)" : ""}`}
+              hint={`${t("{min}–{max} lines", {
+                min: MIN_TERMINAL_SCROLLBACK,
+                max: MAX_TERMINAL_SCROLLBACK,
+              })}${scrollbackLines === DEFAULT_TERMINAL_SCROLLBACK ? t(" (default)") : ""}`}
             >
               <Input
                 type="number"
@@ -606,7 +643,10 @@ export function GeneralSection({
 
           <SettingsRow def={SETTINGS_ROWS.terminalMinColumnWidth} wideControl>
             <SettingsField
-              hint={`${MIN_TERMINAL_MIN_COLUMN_WIDTH}–${MAX_TERMINAL_MIN_COLUMN_WIDTH} px${minColumnWidth === DEFAULT_TERMINAL_MIN_COLUMN_WIDTH ? " (default)" : ""}`}
+              hint={`${t("{min}–{max} px", {
+                min: MIN_TERMINAL_MIN_COLUMN_WIDTH,
+                max: MAX_TERMINAL_MIN_COLUMN_WIDTH,
+              })}${minColumnWidth === DEFAULT_TERMINAL_MIN_COLUMN_WIDTH ? t(" (default)") : ""}`}
             >
               <Input
                 type="number"
@@ -623,23 +663,23 @@ export function GeneralSection({
           </SettingsRow>
         </SettingsGroup>
 
-        <SettingsGroup title="Privacy">
+        <SettingsGroup title={t("Privacy")}>
           <SettingsRow
             def={SETTINGS_ROWS.anonymousAnalytics}
             description={(
               <>
                 <span>
-                  Help improve Kanna with anonymous product analytics. Kanna sends tracked event names plus a small set of event properties like current version, environment, update version info, and launch flags. No message content, prompts, file paths, or provider credentials are sent.
+                  {t("Help improve Kanna with anonymous product analytics. Kanna sends tracked event names plus a small set of event properties like current version, environment, update version info, and launch flags. No message content, prompts, file paths, or provider credentials are sent.")}
                 </span>
                 <span className="mt-1 block">
-                  Stored in {appSettings?.filePathDisplay ?? "~/.kanna/data/settings.json"}.
+                  {t("Stored in {path}.", { path: appSettings?.filePathDisplay ?? "~/.kanna/data/settings.json" })}
                   {" "}
                   <button
                     type="button"
                     onClick={() => setAnalyticsDialogOpen(true)}
                     className={SETTINGS_INLINE_ACTION_CLASS}
                   >
-                    View tracked events
+                    {t("View tracked events")}
                   </button>
                 </span>
                 {appSettings?.warning ? (
@@ -653,7 +693,7 @@ export function GeneralSection({
               onCheckedChange={(checked) => {
                 void handleAnalyticsPreferenceChange(checked)
               }}
-              aria-label={SETTINGS_ROWS.anonymousAnalytics.title}
+              aria-label={t(SETTINGS_ROWS.anonymousAnalytics.title)}
             />
           </SettingsRow>
         </SettingsGroup>
@@ -661,13 +701,13 @@ export function GeneralSection({
       <Dialog open={analyticsDialogOpen} onOpenChange={setAnalyticsDialogOpen}>
         <DialogContent size="lg">
           <DialogBody className="space-y-4">
-            <DialogTitle>Tracked Events</DialogTitle>
+            <DialogTitle>{t("Tracked Events")}</DialogTitle>
             <div className="text-sm text-muted-foreground">
-              Kanna sends these event names plus the limited property keys below, depending on the event type.
+              {t("Kanna sends these event names plus the limited property keys below, depending on the event type.")}
             </div>
             <div className="max-h-[60vh] overflow-auto rounded-lg border border-border bg-muted/40 p-3">
               <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Event Names
+                {t("Event Names")}
               </div>
               <ul className="mt-3 space-y-2 text-sm">
                 {ANALYTICS_STATIC_EVENT_NAMES.map((eventName) => (
@@ -677,7 +717,7 @@ export function GeneralSection({
                 ))}
               </ul>
               <div className="mt-6 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Property Keys
+                {t("Property Keys")}
               </div>
               <ul className="mt-3 space-y-2 text-sm">
                 {ANALYTICS_STATIC_PROPERTY_NAMES.map((propertyName) => (
@@ -690,7 +730,7 @@ export function GeneralSection({
           </DialogBody>
           <DialogFooter>
             <Button variant="secondary" size="sm" onClick={() => setAnalyticsDialogOpen(false)}>
-              Close
+              {t("Close")}
             </Button>
           </DialogFooter>
         </DialogContent>

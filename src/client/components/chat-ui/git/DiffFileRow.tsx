@@ -1,5 +1,6 @@
 import { Ban, Code, Copy, Eye, FolderOpen, Trash2 } from "lucide-react"
 import { memo } from "react"
+import { useT, type TFunction } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { ContextMenuItem, ContextMenuSeparator } from "../../ui/context-menu"
 import { WidgetRow } from "../widgets/parts"
@@ -13,6 +14,22 @@ export interface DiffFileActions {
   onIgnoreFolder: (path: string) => void
   onCopyFilePath: (path: string) => void
   onCopyRelativePath: (path: string) => void
+}
+
+/** A file's status word, translated. Shared so the diff UI says "Added" one way. */
+export function diffStatusLabel(status: { label: string }, t: TFunction): string {
+  switch (status.label) {
+    case "Added":
+      return t("Added")
+    case "Deleted":
+      return t("Deleted")
+    case "Renamed":
+      return t("Renamed")
+    case "Modified":
+      return t("Modified")
+    default:
+      return status.label
+  }
 }
 
 export function canIgnoreDiffFile(file: DiffFile) {
@@ -58,6 +75,7 @@ export const DiffFileRow = memo(function DiffFileRow({
   onReview: () => void
   className?: string
 }) {
+  const t = useT()
   const status = diffStatus(file)
   const { name, folder } = splitDiffPath(file.path)
   const canIgnore = canIgnoreDiffFile(file)
@@ -85,46 +103,46 @@ export const DiffFileRow = memo(function DiffFileRow({
       // hover: the row's last glyph is what happened to the file, until you
       // reach for what you can do with it.
       menuIdle={(
-        <span className={cn("font-mono text-[11px] font-semibold leading-none", status.className)} title={status.label}>{status.letter}</span>
+        <span className={cn("font-mono text-[11px] font-semibold leading-none", status.className)} title={diffStatusLabel(status, t)}>{status.letter}</span>
       )}
-      menuLabel={`Actions for ${file.path}`}
+      menuLabel={t("Actions for {path}", { path: file.path })}
       menu={(
         <>
           <ContextMenuItem onSelect={onReview}>
             <Eye className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Review</span>
+            <span className="text-xs font-medium">{t("Review")}</span>
           </ContextMenuItem>
           <ContextMenuItem onSelect={() => fileActions.onOpenFile(file.path)}>
             <Code className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Open in {editorLabel}</span>
+            <span className="text-xs font-medium">{t("Open in {editor}", { editor: editorLabel })}</span>
           </ContextMenuItem>
           <ContextMenuItem onSelect={() => fileActions.onOpenInFinder(file.path)}>
             <FolderOpen className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Open in Finder</span>
+            <span className="text-xs font-medium">{t("Open in Finder")}</span>
           </ContextMenuItem>
           <ContextMenuItem
             onSelect={() => fileActions.onDiscardFile(file.path)}
             className="text-destructive dark:text-red-400 hover:bg-destructive/10 focus:bg-destructive/10 dark:hover:bg-red-500/20 dark:focus:bg-red-500/20"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Discard Changes</span>
+            <span className="text-xs font-medium">{t("Discard Changes")}</span>
           </ContextMenuItem>
           <ContextMenuItem disabled={!canIgnore} onSelect={() => { if (canIgnore) fileActions.onIgnoreFile(file.path) }}>
             <Ban className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Ignore File</span>
+            <span className="text-xs font-medium">{t("Ignore File")}</span>
           </ContextMenuItem>
           <ContextMenuItem disabled={!canIgnoreFolder} onSelect={() => { if (canIgnoreFolder) fileActions.onIgnoreFolder(file.path) }}>
             <Ban className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Ignore folder...</span>
+            <span className="text-xs font-medium">{t("Ignore folder...")}</span>
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={() => fileActions.onCopyFilePath(file.path)}>
             <Copy className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Copy File Path</span>
+            <span className="text-xs font-medium">{t("Copy File Path")}</span>
           </ContextMenuItem>
           <ContextMenuItem onSelect={() => fileActions.onCopyRelativePath(file.path)}>
             <Copy className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Copy Relative Path</span>
+            <span className="text-xs font-medium">{t("Copy Relative Path")}</span>
           </ContextMenuItem>
         </>
       )}
