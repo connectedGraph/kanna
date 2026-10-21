@@ -15,6 +15,7 @@ import { Button } from "../ui/button"
 import { Textarea } from "../ui/textarea"
 import { ScrollArea } from "../ui/scroll-area"
 import { cn, generateUUID } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import { useComposer } from "../../hooks/useComposer"
 import { useIsStandalone } from "../../hooks/useIsStandalone"
 import { useMediaQuery } from "../../hooks/useMediaQuery"
@@ -307,6 +308,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
   onSendQueuedNow,
   layout,
 }, forwardedRef) {
+  const t = useT()
   // The draft's key: the chat's, unless the composer keeps its own.
   const draftId = draftKey ?? chatId ?? null
   // Actions only. Selecting the whole store re-rendered this component on
@@ -675,8 +677,8 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
   // line shows the harness's icon alone, so there the model leads it:
   // "Opus · kanna/main".
   const placeholder = phoneLayout
-    ? placeholderOverride ?? (projectLabel ? `Build in ${projectLabel}...` : "Build something...")
-    : `${modelLabel} · ${placeholderOverride ?? projectLabel ?? "Build something..."}`
+    ? placeholderOverride ?? (projectLabel ? t("Build in {project}...", { project: projectLabel }) : t("Build something..."))
+    : `${modelLabel} · ${placeholderOverride ?? projectLabel ?? t("Build something...")}`
   const phoneBusy = recording || transcribing
   // The new shape changes the field's width and the composer's height.
   useLayoutEffect(() => {
@@ -1278,7 +1280,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
   )
   const renderPlus = (sizeClassName: string, inert = false) => (
 <label
-                  aria-label="Add attachment"
+                  aria-label={t("Add attachment")}
                   style={{ gridArea: "plus" }}
                   className={cn(
                     "relative flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-muted/50",
@@ -1294,7 +1296,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
                     type="file"
                     multiple
                     disabled={disabled || inert}
-                    aria-label="Add attachment"
+                    aria-label={t("Add attachment")}
                     className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                     onChange={(event) => {
                       const files = [...(event.target.files ?? [])]
@@ -1335,7 +1337,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
                 type="button"
                 variant="ghost"
                 size="icon"
-                title="Discard recording"
+                title={t("Discard recording")}
                 onPointerDown={(event) => {
                   event.preventDefault()
                   discardRecording()
@@ -1443,7 +1445,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
             <div
               className="absolute bottom-full left-0 right-0 mb-2 z-30 max-h-64 overflow-y-auto rounded-2xl border border-border bg-popover/95 backdrop-blur-lg shadow-lg py-1"
               role="listbox"
-              aria-label="Skills"
+              aria-label={t("Skills")}
               // Counted as an open layer by everything that asks whether
               // Escape is spoken for (`hasOpenLayer`): it closes this first.
               data-state="open"
@@ -1481,7 +1483,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
             <div
               className="absolute bottom-full left-0 right-0 mb-2 z-30 max-h-64 overflow-y-auto rounded-2xl border border-border bg-popover/95 backdrop-blur-lg shadow-lg py-1"
               role="listbox"
-              aria-label="Projects"
+              aria-label={t("Projects")}
               data-state="open"
             >
               {projectMenuItems.map((project, index) => (
@@ -1569,8 +1571,8 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  title="Discard recording"
-                  aria-label="Discard recording"
+                  title={t("Discard recording")}
+                  aria-label={t("Discard recording")}
                   onPointerDown={(event) => {
                     event.preventDefault()
                     discardRecording()

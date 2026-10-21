@@ -1,4 +1,5 @@
 import { Archive, Folder, Hash, ListFilter, MessageCircle } from "lucide-react"
+import { useT } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { buttonVariants } from "../../ui/button"
 import { InputPopover, PopoverMenuItem } from "../ChatPreferenceControls"
@@ -23,6 +24,7 @@ export function SidebarViewSwitcher({
   view: SidebarView
   onChange: (view: SidebarView) => void
 }) {
+  const t = useT()
   return (
     <InputPopover
       // Right-edge trigger: hang the 16rem panel leftward, into the sidebar.
@@ -43,7 +45,7 @@ export function SidebarViewSwitcher({
             }}
             selected={view === "recents"}
             icon={<MessageCircle className="h-4 w-4" />}
-            label="Chats"
+            label={t("Chats")}
           />
           <PopoverMenuItem
             onClick={() => {
@@ -52,7 +54,7 @@ export function SidebarViewSwitcher({
             }}
             selected={view === "projects"}
             icon={<Folder className="h-4 w-4" />}
-            label="Projects"
+            label={t("Projects")}
           />
           <PopoverMenuItem
             onClick={() => {
@@ -61,7 +63,7 @@ export function SidebarViewSwitcher({
             }}
             selected={view === "channels"}
             icon={<Hash className="h-4 w-4" />}
-            label="Channels"
+            label={t("Channels")}
           />
           <PopoverMenuItem
             onClick={() => {
@@ -70,7 +72,7 @@ export function SidebarViewSwitcher({
             }}
             selected={view === "archived"}
             icon={<Archive className="h-4 w-4" />}
-            label="Archived"
+            label={t("Archived")}
           />
         </>
       )}

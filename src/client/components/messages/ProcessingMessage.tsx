@@ -5,6 +5,7 @@ import type { WaitingOn } from "../../../shared/types"
 import { waitingOnLabel } from "../../lib/waiting-on"
 import { MetaRow, MetaContent } from "./shared"
 import { AnimatedShinyText } from "../ui/animated-shiny-text"
+import { useT, type TFunction } from "../../i18n/useT"
 
 const STATUS_LABELS: Record<string, string> = {
   connecting: "Connecting...",
@@ -25,7 +26,7 @@ interface ProcessingMessageProps {
 }
 
 /** "Working for 1m 3s...", ticking once a second; "Working..." for the first second. */
-function useWorkingLabel(since: number | null | undefined): string | null {
+function useWorkingLabel(since: number | null | undefined, t: TFunction): string | null {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     if (since == null) return
@@ -35,11 +36,12 @@ function useWorkingLabel(since: number | null | undefined): string | null {
   }, [since])
   if (since == null) return null
   const elapsed = now - since
-  return elapsed < 1000 ? "Working..." : `Working for ${formatWorkedDuration(elapsed)}...`
+  return elapsed < 1000 ? t("Working...") : t("Working for {duration}...", { duration: formatWorkedDuration(elapsed) })
 }
 
 export function ProcessingMessage({ status, waitingOn, workingSince }: ProcessingMessageProps) {
-  const workingLabel = useWorkingLabel(status === "running" ? workingSince : null)
+  const t = useT()
+  const workingLabel = useWorkingLabel(status === "running" ? workingSince : null, t)
   // Waiting on a subagent is a line of words and no more. Nothing is
   // happening in this chat for a spinner to stand for, and the shimmer on the
   // words already says the wait is live. With no mark before it the line
@@ -49,14 +51,14 @@ export function ProcessingMessage({ status, waitingOn, workingSince }: Processin
       <MetaRow className="mt-3">
         <MetaContent>
           <AnimatedShinyText className="!mx-0 text-sm" shimmerWidth={44}>
-            {waitingOnLabel(waitingOn)}
+            {waitingOnLabel(waitingOn, t)}
           </AnimatedShinyText>
         </MetaContent>
       </MetaRow>
     )
   }
 
-  const label = workingLabel ?? ((status ? STATUS_LABELS[status] : undefined) || "Processing...")
+  const shown = workingLabel ?? t((status ? STATUS_LABELS[status] : undefined) || "Processing...")
   const isFailed = status === "failed"
 
   return (
@@ -68,7 +70,7 @@ export function ProcessingMessage({ status, waitingOn, workingSince }: Processin
           <Loader2 className="size-4.5 animate-spin text-muted-icon" />
         )}
         <AnimatedShinyText className="ml-[1px] text-sm" shimmerWidth={44}>
-          {label}
+          {shown}
         </AnimatedShinyText>
       </MetaContent>
     </MetaRow>

@@ -8,6 +8,7 @@ import { Button } from "../../ui/button"
 import { useChatHasDraft, useChatInputStore } from "../../../stores/chatInputStore"
 import { ThreadRowContent } from "../ThreadRowContent"
 import { useChatMenuCommands } from "../chat-menu-commands"
+import { useT } from "../../../i18n/useT"
 import { ChatRowMenu } from "./Menus"
 
 interface ThreadRowProps {
@@ -88,6 +89,7 @@ export function ThreadRowBody({
   // menu offers "Clear Draft"; neither needs the text, and subscribing to it
   // re-rendered this row on every keystroke in the composer. The card reads the
   // text itself, from inside its own open subtree.
+  const t = useT()
   const hasDraft = useChatHasDraft(thread.row.chatId)
   const detailLabel = detailLabelOverride ?? getThreadDetailLabel(thread, detailScope, nowMs)
   const hoverActions = archived ? (
@@ -99,7 +101,7 @@ export function ThreadRowBody({
         event.stopPropagation()
         onRestoreChat(thread.row.chatId)
       }}
-      title="Restore chat"
+      title={t("Restore chat")}
     >
       <RotateCcw className="size-3.5" />
     </Button>
@@ -114,7 +116,7 @@ export function ThreadRowBody({
             event.stopPropagation()
             onForkChat(thread.row)
           }}
-          title="Fork chat"
+          title={t("Fork chat")}
         >
           <Split className="size-3.5" />
         </Button>
@@ -127,7 +129,7 @@ export function ThreadRowBody({
           event.stopPropagation()
           onArchiveChat(thread.row)
         }}
-        title="Archive chat"
+        title={t("Archive chat")}
       >
         <Archive className="size-3.5" />
       </Button>

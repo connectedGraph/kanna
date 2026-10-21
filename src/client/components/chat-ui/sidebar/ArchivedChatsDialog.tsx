@@ -1,5 +1,6 @@
 import { RotateCcw } from "lucide-react"
 import type { SidebarChatRow } from "../../../../shared/types"
+import { useT } from "../../../i18n/useT"
 import { formatSidebarAgeLabel } from "../../../lib/formatters"
 import { getSidebarChatTimestamp } from "../../../lib/sidebarChats"
 import { Button } from "../../ui/button"
@@ -38,11 +39,12 @@ export function ArchivedChatsDialog({
   onOpenChat: (chatId: string) => void
   onRestoreChat: (chatId: string) => void
 }) {
+  const t = useT()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>Archived Chats</DialogTitle>
+          <DialogTitle>{t("Archived Chats")}</DialogTitle>
           <DialogDescription>{description ?? ""}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-1">
@@ -69,8 +71,8 @@ export function ArchivedChatsDialog({
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 shrink-0 rounded-md text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                  title="Restore chat"
-                  aria-label={`Restore ${chat.title}`}
+                  title={t("Restore chat")}
+                  aria-label={t("Restore {title}", { title: chat.title })}
                   onClick={() => onRestoreChat(chat.chatId)}
                 >
                   <RotateCcw className="size-3.5" />
@@ -78,7 +80,7 @@ export function ArchivedChatsDialog({
               </div>
             ))
           ) : (
-            <p className="px-1 py-3 text-sm text-muted-foreground">No archived chats</p>
+            <p className="px-1 py-3 text-sm text-muted-foreground">{t("No archived chats")}</p>
           )}
         </DialogBody>
       </DialogContent>

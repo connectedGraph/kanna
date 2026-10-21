@@ -17,6 +17,7 @@ import { useAppSettingsStore } from "../stores/appSettingsStore"
 import { findCurrentMachine, useConnectionStore } from "../stores/connectionStore"
 import { displayClaimUrl } from "../lib/pairSession"
 import { postToMacApp } from "../lib/macApp"
+import { useT } from "../i18n/useT"
 import { cn } from "../lib/utils"
 import type { CloudMachineSummary } from "../../shared/cloud-api"
 
@@ -65,6 +66,7 @@ function OnlineDot({ online }: { online: boolean }) {
  * kanna.sh).
  */
 export function MachineSwitcher({ onDismissCloudSetup }: { onDismissCloudSetup: () => void }) {
+  const t = useT()
   const mode = useConnectionStore((state) => state.mode)
   const machines = useConnectionStore((state) => state.machines)
   const load = useConnectionStore((state) => state.load)
@@ -140,7 +142,7 @@ export function MachineSwitcher({ onDismissCloudSetup }: { onDismissCloudSetup: 
             <button type="button" onClick={() => setPairDialogOpen(true)} className={SIDEBAR_BUTTON_CLASS}>
               <span className="flex min-w-0 items-center gap-2">
                 <Cloud className="ml-[1px] size-4 shrink-0" />
-                <span className="truncate text-xs font-medium">Setup Kanna Cloud</span>
+                <span className="truncate text-xs font-medium">{t("Setup Kanna Cloud")}</span>
               </span>
               <ExternalLink className="size-3.5 shrink-0 opacity-60 transition-opacity duration-150 [@media(hover:none)]:invisible [@media(hover:hover)]:group-hover/cloud-setup:opacity-0 group-has-[:focus-visible]/cloud-setup:opacity-0" />
             </button>
@@ -150,7 +152,7 @@ export function MachineSwitcher({ onDismissCloudSetup }: { onDismissCloudSetup: 
                   variant="ghost"
                   size="icon"
                   onClick={onDismissCloudSetup}
-                  aria-label="Dismiss Kanna Cloud setup"
+                  aria-label={t("Dismiss Kanna Cloud setup")}
                   className={cn(
                     "absolute right-1.5 top-1/2 h-5.5 w-5.5 -translate-y-1/2 !rounded",
                     "duration-150 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/cloud-setup:opacity-100 [@media(hover:hover)]:group-has-[:focus-visible]/cloud-setup:opacity-100",
@@ -161,7 +163,7 @@ export function MachineSwitcher({ onDismissCloudSetup }: { onDismissCloudSetup: 
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={4}>
-                Dismiss
+                {t("Dismiss")}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -169,9 +171,9 @@ export function MachineSwitcher({ onDismissCloudSetup }: { onDismissCloudSetup: 
         <Dialog open={pairDialogOpen} onOpenChange={setPairDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Use this machine from anywhere</DialogTitle>
+              <DialogTitle>{t("Use this machine from anywhere")}</DialogTitle>
               <DialogDescription>
-                Get a personal URL that works from any browser, 100% free.
+                {t("Get a personal URL that works from any browser, 100% free.")}
               </DialogDescription>
             </DialogHeader>
             <DialogBody>
@@ -189,7 +191,7 @@ export function MachineSwitcher({ onDismissCloudSetup }: { onDismissCloudSetup: 
   // it isn't on Kanna Cloud, so there's a way back.
   const knowsSelf = fromMacApp || thisMachineSubdomain !== null
   // Kanna for Mac is always on a Mac; a localhost page could be any machine.
-  const thisMachineLabel = fromMacApp ? THIS_MAC_NAME : "This machine"
+  const thisMachineLabel = fromMacApp ? THIS_MAC_NAME : t("This machine")
   const thisMachine = knowsSelf ? machines.find((machine) => machine.subdomain === thisMachineSubdomain) : undefined
   const currentMachine = knowsSelf
     ? machines.find((machine) => machine.subdomain === (showingMachine ?? thisMachineSubdomain)) ?? null
@@ -222,7 +224,7 @@ export function MachineSwitcher({ onDismissCloudSetup }: { onDismissCloudSetup: 
             {/* The list opens upward from the footer, so the chevron points
                 both ways, as a macOS pop-up button does. */}
             {switchingTo !== null ? (
-              <Loader2 aria-label={`Switching to ${switchingTo}`} className="size-3.5 shrink-0 animate-spin" />
+              <Loader2 aria-label={t("Switching to {machine}", { machine: switchingTo })} className="size-3.5 shrink-0 animate-spin" />
             ) : (
               <ChevronsUpDown className="size-3.5 shrink-0 opacity-60" />
             )}
@@ -271,7 +273,7 @@ export function MachineSwitcher({ onDismissCloudSetup }: { onDismissCloudSetup: 
               }}
               selected={false}
               icon={<Settings2 className="size-4 shrink-0 text-muted-foreground" />}
-              label="Manage Fleet"
+              label={t("Manage Fleet")}
               // Says it leaves the app, on the side the other rows use.
               trailing={<ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />}
             />

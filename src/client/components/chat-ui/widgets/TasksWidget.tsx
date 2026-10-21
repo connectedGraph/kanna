@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Loader2, MessageSquare, Network, Radar, Square } from "lucide-react"
 import { PROVIDERS, type SubagentActivity, type TranscriptEntry } from "../../../../shared/types"
+import { translate } from "../../../../shared/i18n"
 import { cn } from "../../../lib/utils"
+import { useT, type TFunction } from "../../../i18n/useT"
 import { useChatReferenceActions, useSidebarThread } from "../chat-reference"
 import { chatOpenMenuItems } from "../ChatOpenMenuItems"
 import { SidebarChatCard } from "../sidebar/ChatHoverCard"
@@ -55,11 +57,16 @@ export function formatElapsed(ms: number): string {
 /** Rows the Tasks log shows before "Show more". */
 const TASK_LOG_ROWS = 5
 
+/** English, for callers with no translator: a key is its own translation. */
+const englishT: TFunction = (key, vars) => translate(undefined, key, vars)
+
 /** "3 of 5 running" while some run, "3 running" while all do, then the total. */
-export function formatTasksCount(tasks: readonly SubagentActivity[]): string {
+export function formatTasksCount(tasks: readonly SubagentActivity[], t: TFunction = englishT): string {
   const running = tasks.filter((task) => task.status === "running").length
   if (running === 0) return String(tasks.length)
-  return running === tasks.length ? `${running} running` : `${running} of ${tasks.length} running`
+  return running === tasks.length
+    ? t("{count} running", { count: running })
+    : t("{count} of {total} running", { count: running, total: tasks.length })
 }
 
 /** The word a row puts under its title for each kind, as Claude Code names them. */
@@ -92,8 +99,8 @@ function statusIcon(task: SubagentActivity, stopping: boolean): StatusIcon {
 }
 
 /** "1 tool call", "12 messages". */
-function countLabel(count: number, noun: string) {
-  return `${count.toLocaleString()} ${noun}${count === 1 ? "" : "s"}`
+function countLabel(count: number, one: string, many: string, t: TFunction = englishT) {
+  return t(count === 1 ? one : many, { count: count.toLocaleString() })
 }
 
 /** The row's title: the task it was given, not its kind ("general-purpose" six times says nothing). */
@@ -108,14 +115,14 @@ function taskTitle(task: SubagentActivity, details: SubagentDetails | undefined)
  * "Watch the deploy log" could be a monitor or a shell, and a workflow says
  * how far it has got.
  */
-function taskSubtitle(task: SubagentActivity): string | undefined {
+function taskSubtitle(task: SubagentActivity, t: TFunction = englishT): string | undefined {
   if (task.type === "subagent") return task.summary
-  const kind = taskKindName(task.type)
+  const kind = t(taskKindName(task.type))
   if (task.type === "workflow") {
     const summary = summarizeWorkflow(task.workflow)
-    if (summary.total === 0) return task.status === "running" ? `${kind} · Starting` : kind
+    if (summary.total === 0) return task.status === "running" ? t("{kind} · Starting", { kind }) : kind
     const phase = task.status === "running" && summary.currentPhase ? ` · ${summary.currentPhase.title}` : ""
-    return `${kind} · ${summary.done} of ${summary.total} agents${phase}`
+    return `${t("{kind} · {done} of {total} agents", { kind, done: summary.done, total: summary.total })}${phase}`
   }
   return task.summary ? `${kind} · ${task.summary}` : kind
 }
@@ -139,6 +146,7 @@ export function AgentHoverCardContent({
   now: number
   canJump: boolean
 }) {
+  const t = useT()
   const running = agent.status === "running"
   const latest = details.latestTool ? formatToolCallTitle(details.latestTool) : null
   return (
@@ -146,7 +154,7 @@ export function AgentHoverCardContent({
       <TurnCardMetaRow>
         <span className="truncate">{details.subagentType ?? agent.label}</span>
         <TurnCardMetaSeparator />
-        <span className="shrink-0">{TASK_STATUS_ICON[agent.status].label}</span>
+        <span className="shrink-0">{t(TASK_STATUS_ICON[agent.status].label)}</span>
         <span className="ml-auto shrink-0 pl-2 tabular-nums">
           {formatPromptTimestamp(new Date(agent.startedAt).toISOString())} · {formatElapsed((agent.endedAt ?? now) - agent.startedAt)}
         </span>
@@ -161,26 +169,26 @@ export function AgentHoverCardContent({
       ) : null}
       <div className="-mx-1.5 mt-2 border-t border-border/60" aria-hidden />
       <TurnCardMetaRow className="mt-1.5">
-        <span>{countLabel(details.toolCalls, "tool call")}</span>
+        <span>{countLabel(details.toolCalls, "{count} tool call", "{count} tool calls", t)}</span>
         <TurnCardMetaSeparator />
-        <span>{countLabel(details.messages, "message")}</span>
+        <span>{countLabel(details.messages, "{count} message", "{count} messages", t)}</span>
         {agent.usage?.totalTokens ? (
           <>
             <TurnCardMetaSeparator />
-            <span>{formatTokens(agent.usage.totalTokens)} tokens</span>
+            <span>{t("{count} tokens", { count: formatTokens(agent.usage.totalTokens) })}</span>
           </>
         ) : null}
       </TurnCardMetaRow>
       {latest ? (
         <div className={cn("truncate text-[12px] text-muted-foreground", TURN_CARD_ROW_INSET)}>
-          <span className="text-muted-foreground/70">{running ? "Now" : "Last"}</span> {latest}
+          <span className="text-muted-foreground/70">{running ? t("Now") : t("Last")}</span> {latest}
         </div>
       ) : running ? (
-        <div className={cn("text-[12px] text-muted-foreground/70", TURN_CARD_ROW_INSET)}>No steps yet</div>
+        <div className={cn("text-[12px] text-muted-foreground/70", TURN_CARD_ROW_INSET)}>{t("No steps yet")}</div>
       ) : null}
       {canJump ? (
         <TurnCardMetaRow className="mt-1">
-          <span>Click to show in chat</span>
+          <span>{t("Click to show in chat")}</span>
         </TurnCardMetaRow>
       ) : null}
     </>
@@ -201,6 +209,7 @@ function AgentHoverCardBody(props: Omit<Parameters<typeof AgentHoverCardContent>
  * run has got; its agents are on its own card.
  */
 export function TaskHoverCardContent({ task, now, canJump }: { task: SubagentActivity; now: number; canJump: boolean }) {
+  const t = useT()
   const title = taskTitle(task, undefined)
   const workflow = task.type === "workflow" ? summarizeWorkflow(task.workflow) : null
   const phases = task.workflow?.phases ?? []
@@ -210,9 +219,9 @@ export function TaskHoverCardContent({ task, now, canJump }: { task: SubagentAct
   return (
     <>
       <TurnCardMetaRow>
-        <span className="truncate">{taskKindName(task.type)}</span>
+        <span className="truncate">{t(taskKindName(task.type))}</span>
         <TurnCardMetaSeparator />
-        <span className="shrink-0">{status.label}</span>
+        <span className="shrink-0">{t(status.label)}</span>
         <span className="ml-auto shrink-0 pl-2 tabular-nums">
           {formatPromptTimestamp(new Date(task.startedAt).toISOString())} · {formatElapsed((task.endedAt ?? now) - task.startedAt)}
         </span>
@@ -229,27 +238,27 @@ export function TaskHoverCardContent({ task, now, canJump }: { task: SubagentAct
           <div className="-mx-1.5 mt-2 border-t border-border/60" aria-hidden />
           <TurnCardMetaRow className="mt-1.5">
             {workflow && workflow.total > 0 ? (
-              <span>{workflow.done} of {countLabel(workflow.total, "agent")} done</span>
+              <span>{t("{done} of {total} agents done", { done: workflow.done, total: countLabel(workflow.total, "{count} agent", "{count} agents", t) })}</span>
             ) : task.usage ? (
-              <span>{countLabel(task.usage.toolUses, "tool call")}</span>
+              <span>{countLabel(task.usage.toolUses, "{count} tool call", "{count} tool calls", t)}</span>
             ) : null}
             {tokens ? (
               <>
                 <TurnCardMetaSeparator />
-                <span>{formatTokens(tokens)} tokens</span>
+                <span>{t("{count} tokens", { count: formatTokens(tokens) })}</span>
               </>
             ) : null}
           </TurnCardMetaRow>
           {workflow?.currentPhase ? (
             <div className={cn("truncate text-[12px] text-muted-foreground", TURN_CARD_ROW_INSET)}>
-              <span className="text-muted-foreground/70">Phase {phaseNumber} of {phases.length}</span> {workflow.currentPhase.title}
+              <span className="text-muted-foreground/70">{t("Phase {number} of {total}", { number: phaseNumber, total: phases.length })}</span> {workflow.currentPhase.title}
             </div>
           ) : null}
         </>
       ) : null}
       {canJump ? (
         <TurnCardMetaRow className="mt-1">
-          <span>Click to show in chat</span>
+          <span>{t("Click to show in chat")}</span>
         </TurnCardMetaRow>
       ) : null}
     </>
@@ -284,12 +293,13 @@ function TaskRowMenuItems({ actions, stopLabel, onJump, onStop }: {
   onJump?: () => void
   onStop: () => void
 }) {
+  const t = useT()
   return (
     <>
       {actions.showInChat && onJump ? (
         <ContextMenuItem onSelect={onJump}>
           <MessageSquare className="size-3.5" />
-          <span>Show in Chat</span>
+          <span>{t("Show in Chat")}</span>
         </ContextMenuItem>
       ) : null}
       {actions.stop ? (
@@ -320,6 +330,7 @@ function ChatTaskRow({ task, now, isStopping, onStop, onJump, className }: {
   onJump?: () => void
   className?: string
 }) {
+  const t = useT()
   const thread = useSidebarThread(task.chatId)
   const actions = useChatReferenceActions()
   const { Icon, className: iconClassName, label } = statusIcon(task, isStopping)
@@ -327,7 +338,7 @@ function ChatTaskRow({ task, now, isStopping, onStop, onJump, className }: {
   const chatId = task.chatId
   const rowActions = taskRowActions(task, { canJump: Boolean(onJump), isStopping })
   const hasItems = hasTaskRowActions(rowActions)
-  const items = <TaskRowMenuItems actions={rowActions} stopLabel="Stop Chat" onJump={onJump} onStop={onStop} />
+  const items = <TaskRowMenuItems actions={rowActions} stopLabel={t("Stop Chat")} onJump={onJump} onStop={onStop} />
   const openItems = thread && actions ? chatOpenMenuItems(thread, actions) : null
   return (
     <WidgetRow
@@ -335,14 +346,14 @@ function ChatTaskRow({ task, now, isStopping, onStop, onJump, className }: {
       className={className}
       icon={(
         <SwapIn swapKey={isStopping ? "stopping" : task.status}>
-          <Icon role="img" className={iconClassName} aria-label={label} />
+          <Icon role="img" className={iconClassName} aria-label={t(label)} />
         </SwapIn>
       )}
       title={thread?.title ?? task.label}
       subtitle={[harness, task.summary].filter(Boolean).join(" · ") || undefined}
-      meta={isStopping ? "Stopping…" : formatElapsed((task.endedAt ?? now) - task.startedAt)}
+      meta={isStopping ? t("Stopping…") : formatElapsed((task.endedAt ?? now) - task.startedAt)}
       onActivate={actions && chatId ? () => actions.onOpenChat(chatId) : undefined}
-      menuLabel="Chat actions"
+      menuLabel={t("Chat actions")}
       // The chat's own menu when the chat is known; without it, only what
       // this row can do by itself.
       wrapMenu={thread && actions ? (row) => (
@@ -385,6 +396,7 @@ export function TasksWidget({
   stopControl: StopTaskControl
   onJumpToToolCall: (toolId: string) => void
 }) {
+  const t = useT()
   const now = useNow(tasks.some((task) => task.status === "running"))
   const details = useMemo(() => deriveSubagentDetails(entries, toolIds), [entries, toolIds])
   const listRef = useRef<HTMLDivElement | null>(null)
@@ -399,8 +411,8 @@ export function TasksWidget({
       // Static: the rows already spin for what is running, and a spinning
       // header too read as the main agent being busy.
       icon={<Network />}
-      title="Tasks"
-      count={formatTasksCount(tasks)}
+      title={t("Tasks")}
+      count={formatTasksCount(tasks, t)}
     >
       <WidgetList listRef={listRef}>
         {error ? <WidgetError>{error}</WidgetError> : null}
@@ -434,20 +446,20 @@ export function TasksWidget({
               className={index >= collapsedCount ? WIDGET_ROW_REVEAL_CLASS : undefined}
               icon={(
                 <SwapIn swapKey={isStopping ? "stopping" : task.status}>
-                  <Icon role="img" className={className} aria-label={label} />
+                  <Icon role="img" className={className} aria-label={t(label)} />
                 </SwapIn>
               )}
               title={title}
-              subtitle={taskSubtitle(task)}
-              meta={isStopping ? "Stopping…" : formatElapsed((task.endedAt ?? now) - task.startedAt)}
+              subtitle={taskSubtitle(task, t)}
+              meta={isStopping ? t("Stopping…") : formatElapsed((task.endedAt ?? now) - task.startedAt)}
               // Opens the chat at the call that started it: a list of labels
               // with timers otherwise leaves "where is that?" open.
               onActivate={jump}
               // Every row has a card, which says it all; a native tooltip on
               // top would be a second popover.
-              menuLabel={`${kind} actions`}
+              menuLabel={t("{kind} actions", { kind: t(kind) })}
               menu={hasTaskRowActions(rowActions) ? (
-                <TaskRowMenuItems actions={rowActions} stopLabel={`Stop ${kind}`} onJump={jump} onStop={() => stop(task.id)} />
+                <TaskRowMenuItems actions={rowActions} stopLabel={t("Stop {kind}", { kind: t(kind) })} onJump={jump} onStop={() => stop(task.id)} />
               ) : undefined}
             />
           )

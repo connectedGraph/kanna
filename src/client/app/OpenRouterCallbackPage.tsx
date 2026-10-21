@@ -4,6 +4,7 @@ import { Check, Loader2 } from "lucide-react"
 import { OpenRouterIcon } from "../components/provider-icons"
 import { Button } from "../components/ui/button"
 import { createStandaloneKannaSocket } from "./useKannaState"
+import { useT } from "../i18n/useT"
 
 export const OPENROUTER_AUTH_CHANNEL = "kanna-openrouter-auth"
 
@@ -20,6 +21,7 @@ type CallbackState =
  * (browser blocked the new tab, so this IS the app tab) navigates back instead.
  */
 export function OpenRouterCallbackPage() {
+  const t = useT()
   const [state, setState] = useState<CallbackState>({ status: "exchanging" })
   const navigate = useNavigate()
   const startedRef = useRef(false)
@@ -73,32 +75,32 @@ export function OpenRouterCallbackPage() {
           <>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Connecting OpenRouter…
+              {t("Connecting OpenRouter…")}
             </div>
           </>
         ) : state.status === "done" ? (
           <>
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Check className="h-4 w-4 text-emerald-500" />
-              OpenRouter connected
+              {t("OpenRouter connected")}
             </div>
             {isSelfFlow ? (
               <>
-                <p className="text-sm text-muted-foreground">Your API key was saved.</p>
+                <p className="text-sm text-muted-foreground">{t("Your API key was saved.")}</p>
                 <Button variant="outline" size="sm" onClick={() => navigate("/settings/providers")}>
-                  Back to Kanna
+                  {t("Back to Kanna")}
                 </Button>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">You can close this tab.</p>
+              <p className="text-sm text-muted-foreground">{t("You can close this tab.")}</p>
             )}
           </>
         ) : (
           <>
-            <div className="text-sm font-medium text-destructive">OpenRouter sign-in failed</div>
+            <div className="text-sm font-medium text-destructive">{t("OpenRouter sign-in failed")}</div>
             <p className="text-sm text-muted-foreground">{state.message}</p>
             <Button variant="outline" size="sm" onClick={() => navigate("/settings/providers")}>
-              Back to Settings
+              {t("Back to Settings")}
             </Button>
           </>
         )}

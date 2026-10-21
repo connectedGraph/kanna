@@ -18,6 +18,7 @@ import {
 } from "../shared/provider-preferences"
 import {
   DEFAULT_NEW_PROJECTS_DIRECTORY,
+  type AppLocale,
   type AppSettingsPatch,
   type AppSettingsSnapshot,
   type AppThemePreference,
@@ -36,6 +37,7 @@ interface AppSettingsFile {
   analyticsUserId?: unknown
   browserSettingsMigrated?: unknown
   theme?: unknown
+  locale?: unknown
   chatSoundPreference?: unknown
   chatSoundId?: unknown
   chatBrowserNotificationPreference?: unknown
@@ -124,6 +126,11 @@ function normalizeTheme(value: unknown): AppThemePreference {
   return value === "light" || value === "dark" || value === "system" ? value : "system"
 }
 
+/** Mirrors shared/i18n normalizeLocale; inlined so this file needs no i18n import. */
+function normalizeLocaleSetting(value: unknown): AppLocale {
+  return value === "zh-CN" ? "zh-CN" : "en"
+}
+
 function normalizeChatSoundPreference(value: unknown): ChatSoundPreference {
   return value === "never" || value === "unfocused" || value === "always" ? value : DEFAULT_CHAT_SOUND_PREFERENCE
 }
@@ -182,6 +189,7 @@ function toFilePayload(state: AppSettingsState) {
     analyticsUserId: state.analyticsUserId,
     browserSettingsMigrated: state.browserSettingsMigrated,
     theme: state.theme,
+    ...(state.locale === "zh-CN" ? { locale: "zh-CN" as const } : {}),
     chatSoundPreference: state.chatSoundPreference,
     chatSoundId: state.chatSoundId,
     chatBrowserNotificationPreference: state.chatBrowserNotificationPreference,
@@ -217,6 +225,7 @@ function toSnapshot(
     analyticsEnabled: state.analyticsEnabled,
     browserSettingsMigrated: state.browserSettingsMigrated,
     theme: state.theme,
+    ...(state.locale === "zh-CN" ? { locale: "zh-CN" as const } : {}),
     chatSoundPreference: state.chatSoundPreference,
     chatSoundId: state.chatSoundId,
     chatBrowserNotificationPreference: state.chatBrowserNotificationPreference,
@@ -292,6 +301,9 @@ function normalizeAppSettings(
     analyticsUserId,
     browserSettingsMigrated: source?.browserSettingsMigrated === true,
     theme: normalizeTheme(source?.theme),
+    // English is the default and the source language, so it stays absent
+    // from the file and from the snapshot; only a non-default is persisted.
+    ...(normalizeLocaleSetting(source?.locale) === "zh-CN" ? { locale: "zh-CN" as const } : {}),
     chatSoundPreference: normalizeChatSoundPreference(source?.chatSoundPreference),
     chatSoundId: normalizeChatSoundId(source?.chatSoundId),
     chatBrowserNotificationPreference: normalizeChatBrowserNotificationPreference(source?.chatBrowserNotificationPreference),
@@ -354,6 +366,7 @@ function toComparablePayload(source: AppSettingsFile) {
     analyticsUserId: typeof source.analyticsUserId === "string" ? source.analyticsUserId.trim() : source.analyticsUserId,
     browserSettingsMigrated: source.browserSettingsMigrated,
     theme: source.theme,
+    locale: source.locale,
     chatSoundPreference: source.chatSoundPreference,
     chatSoundId: source.chatSoundId,
     chatBrowserNotificationPreference: source.chatBrowserNotificationPreference,

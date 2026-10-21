@@ -1,6 +1,7 @@
 import { AlertTriangle, Building2, Check, FileText, Globe, LoaderCircle, Lock, PencilLine, UserRound } from "lucide-react"
 import { useEffect, useState } from "react"
 import type { GitHubPublishInfo, GitHubRepoAvailabilityResult } from "../../../../shared/types"
+import { useT } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { Button } from "../../ui/button"
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "../../ui/dialog"
@@ -22,6 +23,7 @@ export function GitHubPublishModal({
   onCheckGitHubRepoAvailability: (args: { owner: string; name: string }) => Promise<GitHubRepoAvailabilityResult>
   onPublish: (args: { owner: string; name: string; visibility: "public" | "private"; description: string }) => Promise<unknown>
 }) {
+  const t = useT()
   const [info, setInfo] = useState<GitHubPublishInfo | null>(null)
   const [isLoadingInfo, setIsLoadingInfo] = useState(false)
   const [owner, setOwner] = useState("")
@@ -118,28 +120,28 @@ export function GitHubPublishModal({
       <DialogContent size="sm" className="max-w-[min(92vw,475px)]">
         <DialogBody className="space-y-2 px-4 pb-4 pt-4">
           <div className="space-y-1">
-            <DialogTitle>Push to GitHub</DialogTitle>
-            <DialogDescription>Create a GitHub repository from this local project using GitHub CLI.</DialogDescription>
+            <DialogTitle>{t("Push to GitHub")}</DialogTitle>
+            <DialogDescription>{t("Create a GitHub repository from this local project using GitHub CLI.")}</DialogDescription>
           </div>
           {isLoadingInfo ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <LoaderCircle className="size-4 animate-spin" />
-              <span>Checking GitHub CLI…</span>
+              <span>{t("Checking GitHub CLI…")}</span>
             </div>
           ) : info && !info.ghInstalled ? (
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p>GitHub CLI is not installed.</p>
+              <p>{t("GitHub CLI is not installed.")}</p>
               <div className="rounded-lg border border-border px-3 py-2 font-mono text-xs text-foreground">
                 brew install gh
               </div>
-              <p>Then run:</p>
+              <p>{t("Then run:")}</p>
               <div className="rounded-lg border border-border px-3 py-2 font-mono text-xs text-foreground">
                 gh auth login
               </div>
             </div>
           ) : info && !info.authenticated ? (
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p>GitHub CLI is installed but not signed in.</p>
+              <p>{t("GitHub CLI is installed but not signed in.")}</p>
               <div className="rounded-lg border border-border px-3 py-2 font-mono text-xs text-foreground">
                 gh auth login
               </div>
@@ -149,7 +151,7 @@ export function GitHubPublishModal({
               <div className="space-y-2">
                 <Select value={owner} onValueChange={setOwner}>
                   <SelectTrigger className="pl-[11px] [&>span]:flex [&>span]:items-center [&>span]:gap-2">
-                    <SelectValue placeholder="Select owner" />
+                    <SelectValue placeholder={t("Select owner")} />
                   </SelectTrigger>
                   <SelectContent>
                     {(info?.owners ?? []).map((candidate) => (
@@ -211,7 +213,7 @@ export function GitHubPublishModal({
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     rows={3}
-                    placeholder="Optional description"
+                    placeholder={t("Optional description")}
                     className="pl-9 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
                   />
                 </div>
@@ -219,19 +221,19 @@ export function GitHubPublishModal({
               <div className="space-y-2">
                 <Select value={visibility} onValueChange={(value) => setVisibility(value as "public" | "private")}>
                   <SelectTrigger className="pl-[11px] [&>span]:flex [&>span]:items-center [&>span]:gap-2">
-                    <SelectValue placeholder="Select visibility" />
+                    <SelectValue placeholder={t("Select visibility")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="private">
                       <span className="flex items-center gap-2">
                         <Lock className="size-4 text-muted-foreground" />
-                        <span className="pl-[1px]">Private</span>
+                        <span className="pl-[1px]">{t("Private")}</span>
                       </span>
                     </SelectItem>
                     <SelectItem value="public">
                       <span className="flex items-center gap-2">
                         <Globe className="size-4 text-muted-foreground" />
-                        <span className="pl-[1px]">Public</span>
+                        <span className="pl-[1px]">{t("Public")}</span>
                       </span>
                     </SelectItem>
                   </SelectContent>
@@ -242,16 +244,16 @@ export function GitHubPublishModal({
         </DialogBody>
         <DialogFooter>
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button size="sm" disabled={!canPublish} onClick={() => void handlePublish()}>
             {isPublishing ? (
               <>
                 <LoaderCircle className="mr-1.5 size-3.5 animate-spin" />
-                Publishing…
+                {t("Publishing…")}
               </>
             ) : (
-              "Push to GitHub"
+              t("Push to GitHub")
             )}
           </Button>
         </DialogFooter>

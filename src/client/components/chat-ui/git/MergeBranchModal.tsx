@@ -6,6 +6,7 @@ import type {
   ChatMergeBranchResult,
   ChatMergePreviewResult,
 } from "../../../../shared/types"
+import { useT } from "../../../i18n/useT"
 import { Button } from "../../ui/button"
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "../../ui/dialog"
 import { Skeleton } from "../../ui/skeleton"
@@ -87,6 +88,7 @@ export function MergeBranchModal({
   onPreviewMergeBranch: (branch: ChatBranchListEntry) => Promise<ChatMergePreviewResult>
   onMergeBranch: (branch: ChatBranchListEntry) => Promise<ChatMergeBranchResult | null>
 }) {
+  const t = useT()
   const [query, setQuery] = useState("")
   const [selectedName, setSelectedName] = useState<string | null>(null)
   const [preview, setPreview] = useState<ChatMergePreviewResult | null>(null)
@@ -188,15 +190,15 @@ export function MergeBranchModal({
       <DialogContent size="sm" className="max-w-[min(92vw,475px)]">
         <DialogBody className="flex min-h-0 flex-col gap-3 px-4 pb-4 pt-4">
           <div className="space-y-1">
-            <DialogTitle>Merge into {currentBranchName ?? "current branch"}</DialogTitle>
+            <DialogTitle>{t("Merge into {branch}", { branch: currentBranchName ?? t("current branch") })}</DialogTitle>
             <DialogDescription>
-              Choose a branch to continue.
+              {t("Choose a branch to continue.")}
             </DialogDescription>
           </div>
           <BranchSearchInput
             value={query}
             onChange={setQuery}
-            placeholder="Search branches"
+            placeholder={t("Search branches")}
           />
           <div className="max-h-[375px] overflow-y-auto pr-1">
             {/* Until the list arrives, its shape rather than three sections
@@ -204,23 +206,23 @@ export function MergeBranchModal({
             {!branchList ? <BranchListSkeleton /> : (
               <>
                 <BranchListSection
-                  title="Default Branch"
+                  title={t("Default Branch")}
                   entries={visibleDefaultBranch ? [visibleDefaultBranch] : []}
-                  emptyLabel="No default branch available."
+                  emptyLabel={t("No default branch available.")}
                   selectedName={selectedName}
                   onSelect={(entry) => setSelectedName(entry.name)}
                 />
                 <BranchListSection
-                  title="Recent Branches"
+                  title={t("Recent Branches")}
                   entries={visibleRecent}
-                  emptyLabel="No recent branches."
+                  emptyLabel={t("No recent branches.")}
                   selectedName={selectedName}
                   onSelect={(entry) => setSelectedName(entry.name)}
                 />
                 <BranchListSection
-                  title="Other Branches"
+                  title={t("Other Branches")}
                   entries={visibleOther}
-                  emptyLabel="No other branches match this search."
+                  emptyLabel={t("No other branches match this search.")}
                   selectedName={selectedName}
                   onSelect={(entry) => setSelectedName(entry.name)}
                 />
@@ -230,11 +232,11 @@ export function MergeBranchModal({
           <div className="px-2">
             {!selectedEntry ? (
               <div className="text-sm text-muted-foreground">
-                Select a branch to preview the merge.
+                {t("Select a branch to preview the merge.")}
               </div>
             ) : isPreviewLoading ? (
               // The preview's own shape: a status glyph, a line, a detail line.
-              <div className="flex items-start gap-2" aria-busy aria-label="Checking merge preview">
+              <div className="flex items-start gap-2" aria-busy aria-label={t("Checking merge preview")}>
                 <Skeleton className="mt-1 size-3.5 shrink-0 rounded-full" />
                 <div className="min-w-0 flex-1 space-y-1.5 pt-1">
                   <Skeleton className="h-3 w-3/5" />
@@ -265,7 +267,7 @@ export function MergeBranchModal({
               </div>
             ) : (
               <div className="text-sm text-muted-foreground">
-                Preview unavailable.
+                {t("Preview unavailable.")}
               </div>
             )}
           </div>
@@ -273,16 +275,16 @@ export function MergeBranchModal({
         <DialogFooter>
           <div className="flex min-w-0 w-full items-center justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button className="max-w-full min-w-0" size="sm" disabled={mergeDisabled} onClick={() => void handleMerge()}>
               {isMerging ? (
                 <>
                   <LoaderCircle className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  Merging…
+                  {t("Merging…")}
                 </>
               ) : (
-                <span className="block max-w-full truncate">Merge</span>
+                <span className="block max-w-full truncate">{t("Merge")}</span>
               )}
             </Button>
           </div>

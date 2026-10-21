@@ -2,6 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "reac
 import { useNavigate } from "react-router-dom"
 import { ArrowUpRight, Check, ChevronLeft, Cloud, Flower, LaptopMinimal } from "lucide-react"
 import { AUTH_SERVICE_LABELS, type AuthServiceId } from "../../../shared/types"
+import { useT } from "../../i18n/useT"
 import { cn } from "../../lib/utils"
 import { displayClaimUrl } from "../../lib/pairSession"
 import { useProviderAuthStore, useSetupStatus, selectAuthService } from "../../stores/providerAuthStore"
@@ -66,6 +67,7 @@ function StepFooter({
   hint?: string
   link?: { href: string; label: string }
 }) {
+  const t = useT()
   return (
     <div className="mt-auto space-y-2 pt-10">
       <div className="flex items-center gap-2">
@@ -74,7 +76,7 @@ function StepFooter({
         {onBack ? (
           <Button
             variant="outline"
-            aria-label="Back"
+            aria-label={t("Back")}
             onClick={onBack}
             className={cn(FOOTER_HEIGHT, "w-11 shrink-0 rounded-full p-0", FOOTER_PRESS)}
           >
@@ -109,7 +111,7 @@ function StepFooter({
             disabled={!canContinue}
             onClick={onContinue}
           >
-            Continue
+            {t("Continue")}
           </Button>
         )}
         <div aria-hidden className={cn(FOOTER_HEIGHT, "w-11 shrink-0")} />
@@ -121,7 +123,7 @@ function StepFooter({
           onClick={onSkip}
           className="mx-auto flex h-10 w-auto px-4 text-muted-foreground transition-colors duration-150 hover:bg-transparent dark:hover:bg-transparent hover:border-transparent hover:text-foreground"
         >
-          Skip for now
+          {t("Skip for now")}
         </Button>
       ) : (
         <div aria-hidden={hint ? undefined : true} className="flex h-10 items-center justify-center">
@@ -133,18 +135,19 @@ function StepFooter({
 }
 
 /** A row of the final summary: done, or quietly skipped. */
-function SummaryRow({ icon, title, done, pending = "Skipped" }: {
+function SummaryRow({ icon, title, done, pending }: {
   icon: ReactNode
   title: string
   done: boolean
   pending?: string
 }) {
+  const t = useT()
   return (
     <SetupRow
       icon={icon}
       title={title}
       muted={!done}
-      action={done ? <Done /> : <span className="pr-1 text-xs text-muted-foreground/70">{pending}</span>}
+      action={done ? <Done /> : <span className="pr-1 text-xs text-muted-foreground/70">{pending ?? t("Skipped")}</span>}
     />
   )
 }
@@ -161,6 +164,7 @@ function SummaryRow({ icon, title, done, pending = "Skipped" }: {
 // re-renders - which is every streamed transcript entry. Its zustand
 // subscriptions still drive it normally.
 export const SetupWizard = memo(function SetupWizard() {
+  const t = useT()
   const open = useProviderAuthStore((store) => store.setupWizardOpen)
   const socket = useProviderAuthStore((store) => store.socket)
   const snapshot = useProviderAuthStore((store) => store.snapshot)
@@ -342,8 +346,8 @@ export const SetupWizard = memo(function SetupWizard() {
           {current === "mac" ? (
             <>
               <StepHeading
-                title="Set up this Mac"
-                description="Keep your agents running while you're away."
+                title={t("Set up this Mac")}
+                description={t("Keep your agents running while you're away.")}
               />
               <div className="mt-8">
                 <MacSetupCards state={macState} />
@@ -355,8 +359,8 @@ export const SetupWizard = memo(function SetupWizard() {
           {current === "github" ? (
             <>
               <StepHeading
-                title="Connect GitHub"
-                description="Clone repos and open pull requests."
+                title={t("Connect GitHub")}
+                description={t("Clone repos and open pull requests.")}
               />
               <SetupList className="mt-8">
                 {services.gh ? <AuthCard row service={services.gh} socket={socket} /> : null}
@@ -373,8 +377,8 @@ export const SetupWizard = memo(function SetupWizard() {
           {current === "agents" ? (
             <>
               <StepHeading
-                title="Connect your agents"
-                description="At least one to start."
+                title={t("Connect your agents")}
+                description={t("At least one to start.")}
               />
               <SetupList className="mt-8">
                 {services.agents.map((service) => (
@@ -392,8 +396,8 @@ export const SetupWizard = memo(function SetupWizard() {
           {current === "openrouter" ? (
             <>
               <StepHeading
-                title="Connect OpenRouter"
-                description="Powers Pi, chat names and commit messages."
+                title={t("Connect OpenRouter")}
+                description={t("Powers Pi, chat names and commit messages.")}
               />
               <SetupList className="mt-8">
                 {services.openrouter ? <AuthCard row service={services.openrouter} socket={socket} /> : null}
@@ -410,8 +414,8 @@ export const SetupWizard = memo(function SetupWizard() {
           {current === "cloud" ? (
             <>
               <StepHeading
-                title="Use this machine anywhere"
-                description="A free URL for it, in any browser."
+                title={t("Use this machine anywhere")}
+                description={t("A free URL for it, in any browser.")}
               />
               <div className="mt-8">
                 <CloudPairPanel
@@ -427,7 +431,7 @@ export const SetupWizard = memo(function SetupWizard() {
                 onBack={goBack}
                 onSkip={!machinePaired ? goNext : undefined}
                 link={cloud.session.status === "waiting" && cloud.session.claimUrl
-                  ? { href: cloud.session.claimUrl, label: "Open link & sign in" }
+                  ? { href: cloud.session.claimUrl, label: t("Open link & sign in") }
                   : undefined}
               />
             </>
@@ -439,7 +443,7 @@ export const SetupWizard = memo(function SetupWizard() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
                   <Check className="h-6 w-6 text-emerald-500" />
                 </div>
-                <StepHeading title="You're all set" />
+                <StepHeading title={t("You're all set")} />
               </div>
               <SetupList className="mt-8">
                 {(["claude", "codex", "cursor", "gh", "openrouter"] as AuthServiceId[]).map((id) => {
@@ -457,9 +461,9 @@ export const SetupWizard = memo(function SetupWizard() {
                 {macStepEnabled ? (
                   <SummaryRow
                     icon={<LaptopMinimal className="size-4" />}
-                    title="This Mac"
+                    title={t("This Mac")}
                     done={macSetupSatisfied(macState)}
-                    pending="Partly"
+                    pending={t("Partly")}
                   />
                 ) : null}
                 {cloudStepEnabled ? (
@@ -472,7 +476,7 @@ export const SetupWizard = memo(function SetupWizard() {
               </SetupList>
               <div className="mt-auto pt-10">
                 <Button className={cn(FOOTER_HEIGHT, "w-full", FOOTER_PRESS)} onClick={handleComplete}>
-                  Start Building
+                  {t("Start Building")}
                 </Button>
               </div>
             </>
@@ -488,7 +492,7 @@ export const SetupWizard = memo(function SetupWizard() {
         onClick={dismissSetupWizard}
         className="absolute right-4 top-4 z-10 rounded-full px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
       >
-        Set up later
+        {t("Set up later")}
       </button>
 
       <div className="mx-auto flex min-h-full w-full max-w-md flex-col px-6 pb-10 pt-14 sm:pt-20">

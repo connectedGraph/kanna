@@ -7,6 +7,7 @@ import { Button } from "../ui/button"
 import { openViewer } from "../../stores/viewerStore"
 import { ViewerIconButton, ViewerSurface } from "../viewer/ViewerSurface"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "../ui/select"
+import { useT } from "../../i18n/useT"
 import "./chart-tool.css"
 
 export function csvCell(value: unknown): string {
@@ -174,11 +175,12 @@ function AggregateMenu({ value, onChange }: {
   onChange: (value: AggregateMode) => void
   align?: "start" | "end"
 }) {
+  const t = useT()
   return (
     <Select value={value} onValueChange={(next) => onChange(next as AggregateMode)}>
-      <SelectTrigger aria-label="Aggregation" className="h-7 w-auto"><SelectValue /></SelectTrigger>
+      <SelectTrigger aria-label={t("Aggregation")} className="h-7 w-auto"><SelectValue /></SelectTrigger>
       <SelectContent><SelectGroup>
-        {AGGREGATE_OPTIONS.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+        {AGGREGATE_OPTIONS.map(option => <SelectItem key={option.value} value={option.value}>{t(option.label)}</SelectItem>)}
       </SelectGroup></SelectContent>
     </Select>
   )
@@ -203,6 +205,7 @@ function ChartDataTable({
   onToggleKey: (key: string) => void
   onHoverKey: (key: string | null) => void
 }) {
+  const t = useT()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [firstColumnWidth, setFirstColumnWidth] = useState(176)
   const [scrollViewportWidth, setScrollViewportWidth] = useState(0)
@@ -286,7 +289,7 @@ function ChartDataTable({
               className="chart-column-resizer"
               role="separator"
               aria-orientation="vertical"
-              aria-label="Resize first column"
+              aria-label={t("Resize first column")}
               onPointerDown={startFirstColumnResize}
             />
           </div>
@@ -331,6 +334,7 @@ function ChartDataTable({
  * in the other), but they draw from this one definition.
  */
 function useChartModel(payload: ChartToolPayload) {
+  const t = useT()
   const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(() => new Set())
   const [activeLegendKey, setActiveLegendKey] = useState<string | null>(null)
   const [rowAggregateMode, setRowAggregateMode] = useState<AggregateMode>("avg")
@@ -348,17 +352,17 @@ function useChartModel(payload: ChartToolPayload) {
     if (payload.type === "pie") {
       const valueKey = keys[0] ?? Object.keys(firstRow).find((key) => typeof firstRow[key] === "number") ?? "value"
       return {
-        headers: ["Series", "Value"],
+        headers: [t("Series"), t("Value")],
         rows: data.map((row, index) => ({
-          key: String(row[xKey] ?? `Segment ${index + 1}`),
+          key: String(row[xKey] ?? t("Segment {number}", { number: index + 1 })),
           color: CHART_SERIES_COLORS[index % CHART_SERIES_COLORS.length],
-          cells: [String(row[xKey] ?? `Segment ${index + 1}`), formatChartCell(row[valueKey])],
+          cells: [String(row[xKey] ?? t("Segment {number}", { number: index + 1 })), formatChartCell(row[valueKey])],
           values: [toNumericValue(row[valueKey])],
         })),
       }
     }
     return {
-      headers: ["Series", ...data.map((row, index) => String(row[xKey] ?? `Point ${index + 1}`))],
+      headers: [t("Series"), ...data.map((row, index) => String(row[xKey] ?? t("Point {number}", { number: index + 1 })))],
       rows: keys.map((key) => {
         const values = data.map((row) => row[key])
         return {
@@ -372,7 +376,7 @@ function useChartModel(payload: ChartToolPayload) {
         }
       }),
     }
-  }, [config, data, firstRow, keys, payload.type, xKey])
+  }, [config, data, firstRow, keys, payload.type, xKey, t])
 
   function toggleLegendKey(key: string) {
     setHiddenKeys((current) => {
@@ -441,7 +445,7 @@ function useChartModel(payload: ChartToolPayload) {
     : keys.map(key => ({ key, label: config[key].label, color: config[key].color }))
   const chartFigure = (className = "") => (
     <div className={className}>
-      <div className="chart-render-area">{data.length ? renderChart() : <div className="chart-empty">Generating chart...</div>}</div>
+      <div className="chart-render-area">{data.length ? renderChart() : <div className="chart-empty">{t("Generating chart...")}</div>}</div>
       {keys.length > 0 ? (
         <div className="chart-legend">
           {legendItems.map(({ key, label, color }) => (
@@ -480,6 +484,7 @@ function useChartModel(payload: ChartToolPayload) {
 }
 
 export function ChartTool({ payload }: { payload: ChartToolPayload }) {
+  const t = useT()
   const { chartFigure, downloadCsv } = useChartModel(payload)
   return (
     <div className="chart-card">
@@ -494,7 +499,7 @@ export function ChartTool({ payload }: { payload: ChartToolPayload }) {
             size="icon-sm"
             type="button"
             onClick={downloadCsv}
-            title="Download CSV"
+            title={t("Download CSV")}
             className="text-muted-foreground hover:text-muted-foreground"
           >
             <Download size={14} />
@@ -506,7 +511,7 @@ export function ChartTool({ payload }: { payload: ChartToolPayload }) {
             // Full size opens in the viewer, the same surface as a diff or an
             // attachment, rather than a modal of the chart's own.
             onClick={() => openViewer({ kind: "chart", payload })}
-            title="Expand chart"
+            title={t("Expand chart")}
             className="text-muted-foreground hover:text-muted-foreground"
           >
             <Maximize2 size={14} />
@@ -520,15 +525,16 @@ export function ChartTool({ payload }: { payload: ChartToolPayload }) {
 
 /** A chart at full size in the viewer: the chart, its legend, and the data table under it. */
 export function ChartFullView({ payload, onClose }: { payload: ChartToolPayload; onClose: () => void }) {
+  const t = useT()
   const model = useChartModel(payload)
   return (
     <ViewerSurface
-      label={`Chart: ${payload.title || "Chart"}`}
+      label={t("Chart: {title}", { title: payload.title || t("Chart") })}
       icon={<ChartColumn />}
-      title={payload.title || "Chart"}
+      title={payload.title || t("Chart")}
       subtitle={payload.description}
       onClose={onClose}
-      toolbar={<ViewerIconButton label="Download table as CSV" onClick={model.downloadTableCsv}><Download /></ViewerIconButton>}
+      toolbar={<ViewerIconButton label={t("Download table as CSV")} onClick={model.downloadTableCsv}><Download /></ViewerIconButton>}
     >
       <div className="flex min-h-full flex-col gap-4 p-4">
         {/* Full width, but not full proportion: at the inline card's 3:2 a

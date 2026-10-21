@@ -1,3 +1,6 @@
+import { translate } from "../../shared/i18n"
+import type { TFunction } from "../i18n/catalogs"
+
 export function toTitleCase(value: string): string {
   return value
     .split(/[\s_-]+/)
@@ -46,6 +49,11 @@ const YEAR_MS = 365 * DAY_MS
 
 export const SIDEBAR_RECENT_WINDOW_MS = DAY_MS
 
+/**
+ * A relative age's wording, as keys to translate. The units are separate
+ * strings ("m", "hr") because Chinese wants its own ("分钟", "小时"), and the
+ * whole reads `{value}{unit} {suffix}`: "3hr ago" / "3小时前".
+ */
 interface RelativeAgeStyle {
   nowLabel: string
   suffix: string
@@ -53,15 +61,26 @@ interface RelativeAgeStyle {
   units: Array<{ ms: number; label: string }>
 }
 
-function formatRelativeAge(deltaMs: number, style: RelativeAgeStyle): string {
+/** No translator: the English literal, filled in. For callers with no locale. */
+const englishAge: TFunction = (key, vars) => translate(undefined, key, vars)
+
+function formatRelativeAge(deltaMs: number, style: RelativeAgeStyle, t: TFunction = englishAge): string {
   const { units } = style
   for (let index = units.length - 1; index >= 0; index -= 1) {
     const unit = units[index]
     if (deltaMs >= unit.ms) {
-      return `${style.round(deltaMs / unit.ms)}${unit.label}${style.suffix}`
+      // Composed rather than a whole sentence: the units and the suffix are
+      // what change between languages, and "{value}{unit}{suffix}" is the same
+      // key in every language that writes an age this way.
+      const value = style.round(deltaMs / unit.ms)
+      const unitLabel = t(unit.label)
+      const suffix = style.suffix ? t(style.suffix) : ""
+      // No space inserted here: the English suffix key is " ago" with its own
+      // leading space, and the Chinese value is "前" without one.
+      return `${value}${unitLabel}${suffix}`
     }
   }
-  return style.nowLabel
+  return t(style.nowLabel)
 }
 
 const SIDEBAR_AGE_STYLE: RelativeAgeStyle = {
@@ -105,21 +124,21 @@ const COMPACT_AGE_STYLE: RelativeAgeStyle = {
 }
 
 /** "3h", "2d", "4mo": an age for tight spaces, where "3hr ago" won't fit. */
-export function formatCompactAge(isoTimestamp: string): string {
+export function formatCompactAge(isoTimestamp: string, t: TFunction = englishAge): string {
   const timestamp = Date.parse(isoTimestamp)
   if (!Number.isFinite(timestamp)) return ""
-  return formatRelativeAge(Math.max(0, Date.now() - timestamp), COMPACT_AGE_STYLE)
+  return formatRelativeAge(Math.max(0, Date.now() - timestamp), COMPACT_AGE_STYLE, t)
 }
 
-export function formatSidebarAgeLabel(lastMessageAt: number | undefined, nowMs: number): string | null {
+export function formatSidebarAgeLabel(lastMessageAt: number | undefined, nowMs: number, t: TFunction = englishAge): string | null {
   if (lastMessageAt === undefined) return null
-  return formatRelativeAge(Math.max(0, nowMs - lastMessageAt), SIDEBAR_AGE_STYLE)
+  return formatRelativeAge(Math.max(0, nowMs - lastMessageAt), SIDEBAR_AGE_STYLE, t)
 }
 
-export function formatRelativeTime(isoTimestamp: string): string {
+export function formatRelativeTime(isoTimestamp: string, t: TFunction = englishAge): string {
   const timestamp = Date.parse(isoTimestamp)
   if (!Number.isFinite(timestamp)) {
     return ""
   }
-  return formatRelativeAge(Date.now() - timestamp, TIMESTAMP_AGE_STYLE)
+  return formatRelativeAge(Date.now() - timestamp, TIMESTAMP_AGE_STYLE, t)
 }

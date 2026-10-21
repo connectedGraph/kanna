@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { DEFAULT_KEYBINDINGS, type KeybindingAction } from "../../../shared/types"
 import { Input } from "../../components/ui/input"
 import { KEYBINDING_ACTION_LABELS, formatKeybindingInput, getResolvedKeybindings, parseKeybindingInput } from "../../lib/keybindings"
+import { useT } from "../../i18n/useT"
 import type { KannaState } from "../useKannaState"
 import { cn } from "../../lib/utils"
 import {
@@ -36,6 +37,7 @@ export function KeybindingsSection({
 }: {
   state: Pick<KannaState, "keybindings" | "socket">
 }) {
+  const t = useT()
   const resolvedKeybindings = useMemo(() => getResolvedKeybindings(state.keybindings), [state.keybindings])
   const [keybindingDrafts, setKeybindingDrafts] = useState<Record<string, string>>({})
   const [keybindingsError, setKeybindingsError] = useState<string | null>(null)
@@ -57,7 +59,7 @@ export function KeybindingsSection({
         bindings: buildKeybindingPayload(keybindingDrafts),
       })
     } catch (error) {
-      setKeybindingsError(error instanceof Error ? error.message : "Unable to save keybindings.")
+      setKeybindingsError(error instanceof Error ? error.message : t("Unable to save keybindings."))
     }
   }
 
@@ -75,7 +77,7 @@ export function KeybindingsSection({
         bindings: buildKeybindingPayload(nextDrafts),
       })
     } catch (error) {
-      setKeybindingsError(error instanceof Error ? error.message : "Unable to save keybindings.")
+      setKeybindingsError(error instanceof Error ? error.message : t("Unable to save keybindings."))
     }
   }
 
@@ -95,10 +97,10 @@ export function KeybindingsSection({
             <SettingsRow
               key={action}
               wideControl
-              title={KEYBINDING_ACTION_LABELS[action]}
+              title={t(KEYBINDING_ACTION_LABELS[action])}
               description={(
                 <>
-                  <span>Comma-separated shortcuts.</span>
+                  <span>{t("Comma-separated shortcuts.")}</span>
                   {showRestore ? (
                     <>
                       {" "}
@@ -109,7 +111,7 @@ export function KeybindingsSection({
                         }}
                         className={SETTINGS_INLINE_ACTION_CLASS}
                       >
-                        Reset to {defaultValue}
+                        {t("Reset to {shortcut}", { shortcut: defaultValue })}
                       </button>
                     </>
                   ) : null}

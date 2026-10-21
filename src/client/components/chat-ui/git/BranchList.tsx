@@ -1,6 +1,8 @@
 import { GitBranch, GitPullRequest, Search } from "lucide-react"
 import type { KeyboardEvent, ReactNode, Ref } from "react"
 import type { ChatBranchListEntry } from "../../../../shared/types"
+import { useT } from "../../../i18n/useT"
+import type { TFunction } from "../../../i18n/catalogs"
 import { formatRelativeTime } from "../../../lib/formatters"
 import { cn } from "../../../lib/utils"
 import { Input } from "../../ui/input"
@@ -84,7 +86,7 @@ export function BranchSearchRow({
  * its title, then "#number · author" under it, its age on the right (and its
  * checks under that, from the picker). A branch row is its name and age.
  */
-export function branchRowContent(entry: ChatBranchListEntry) {
+export function branchRowContent(entry: ChatBranchListEntry, t: TFunction) {
   if (entry.kind === "pull_request") {
     return {
       icon: <GitPullRequest />,
@@ -92,7 +94,7 @@ export function branchRowContent(entry: ChatBranchListEntry) {
       // The author's full name, as History's commit rows show theirs; the
       // login when GitHub has no name for them.
       subtitle: [entry.prNumber ? `#${entry.prNumber}` : null, entry.authorName ?? entry.authorLogin].filter(Boolean).join(" · ") || undefined,
-      meta: entry.updatedAt ? formatRelativeTime(entry.updatedAt) : undefined,
+      meta: entry.updatedAt ? formatRelativeTime(entry.updatedAt, t) : undefined,
     }
   }
   return {
@@ -150,6 +152,7 @@ export function BranchListSection({
   iconFor?: (entry: ChatBranchListEntry) => ReactNode
   onSelect: (entry: ChatBranchListEntry) => void
 }) {
+  const t = useT()
   if (entries.length === 0 && !emptyLabel) {
     return null
   }
@@ -168,7 +171,7 @@ export function BranchListSection({
           return (
             <WidgetRow
               key={entry.id}
-              {...branchRowContent(entry)}
+              {...branchRowContent(entry, t)}
               {...(iconFor?.(entry) ? { icon: iconFor(entry) } : {})}
               id={id}
               // For the picker's hover card, which finds the row by it.
@@ -201,8 +204,9 @@ const SKELETON_NAME_WIDTHS = ["58%", "42%", "70%", "36%", "52%"]
  * (icon column, name, trailing age), so the list lands in place.
  */
 export function BranchListSkeleton({ rows = 5 }: { rows?: number }) {
+  const t = useT()
   return (
-    <div aria-busy aria-label="Loading branches" className="flex flex-col gap-px">
+    <div aria-busy aria-label={t("Loading branches")} className="flex flex-col gap-px">
       {/* The header's text-sm line, not a label bar: it lands where the real
           "Recent" header will. */}
       <div className="flex h-5 items-center px-1.5 pb-1 pt-1 box-content">

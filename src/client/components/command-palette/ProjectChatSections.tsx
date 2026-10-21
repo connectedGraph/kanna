@@ -1,6 +1,8 @@
+import { translatorFor, type TFunction } from "../../i18n/catalogs"
 import { useChatHasDraft } from "../../stores/chatInputStore"
 import { computeSidebarThreadSections, type SidebarThread } from "../../lib/thread-sections"
 import { getThreadDetailLabel, type ThreadDetailScope } from "../../lib/thread-detail-label"
+import { useT } from "../../i18n/useT"
 import { ThreadRowContent } from "../chat-ui/ThreadRowContent"
 import { CommandGroup, CommandItem } from "../ui/command"
 
@@ -58,20 +60,24 @@ export interface ProjectChatGroup {
 export function getProjectChatGroups(threads: SidebarThread[], nowMs: number, {
   includeArchived = true,
   limit,
+  t,
 }: {
   includeArchived?: boolean
   /** Rows to show at most, taken in heading order. */
   limit?: number
+  /** Translator for the headings and the date buckets; English when omitted. */
+  t?: TFunction
 } = {}): ProjectChatGroup[] {
   const sections = computeSidebarThreadSections(threads, nowMs)
+  const translate = t ?? translatorFor("en")
   let remaining = limit ?? Number.POSITIVE_INFINITY
   return [
-    { key: "pinned", label: "Pinned", threads: sections.pinned },
-    { key: "in-progress", label: "In Progress", threads: sections.inProgress },
-    { key: "review", label: "Review", threads: sections.review },
-    { key: "relevant", label: "Relevant", threads: sections.relevant },
-    ...sections.buckets.map((bucket) => ({ key: bucket.key, label: bucket.label, threads: bucket.threads })),
-    ...(includeArchived ? [{ key: "archived", label: "Archived", threads: sections.archived }] : []),
+    { key: "pinned", label: translate("Pinned"), threads: sections.pinned },
+    { key: "in-progress", label: translate("In Progress"), threads: sections.inProgress },
+    { key: "review", label: translate("Review"), threads: sections.review },
+    { key: "relevant", label: translate("Relevant"), threads: sections.relevant },
+    ...sections.buckets.map((bucket) => ({ key: bucket.key, label: translate(bucket.label), threads: bucket.threads })),
+    ...(includeArchived ? [{ key: "archived", label: translate("Archived"), threads: sections.archived }] : []),
   ].map((group) => {
     const shown = group.threads.slice(0, Math.max(0, remaining))
     remaining -= shown.length
@@ -90,7 +96,8 @@ export function ProjectChatSections({
   nowMs: number
   onSelect: (thread: SidebarThread) => void
 }) {
-  return getProjectChatGroups(threads, nowMs).map((group) => (
+  const t = useT()
+  return getProjectChatGroups(threads, nowMs, { t }).map((group) => (
     <CommandGroup key={group.key} heading={group.label}>
       {group.threads.map((thread) => (
         <ThreadItem

@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/too
 import { PROVIDER_ICONS } from "../../components/chat-ui/ChatPreferenceControls"
 import type { KannaState } from "../useKannaState"
 import { cn } from "../../lib/utils"
+import { useT, type TFunction } from "../../i18n/useT"
 import { SETTINGS_LIST_CARD_CLASS, SettingsActionButton, SettingsNotice } from "./shared"
 
 const PROVIDER_LABELS: Record<AgentProvider, string> = {
@@ -24,15 +25,16 @@ const PROVIDER_LABELS: Record<AgentProvider, string> = {
   pi: "Pi",
 }
 
-function formatInstallCount(count: number) {
-  if (!count || count <= 0) return "0 installs"
-  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1).replace(/\.0$/, "")}M installs`
-  if (count >= 1_000) return `${(count / 1_000).toFixed(1).replace(/\.0$/, "")}K installs`
-  return `${count} install${count === 1 ? "" : "s"}`
+function formatInstallCount(count: number, t: TFunction) {
+  if (!count || count <= 0) return t("0 installs")
+  if (count >= 1_000_000) return t("{count}M installs", { count: (count / 1_000_000).toFixed(1).replace(/\.0$/, "") })
+  if (count >= 1_000) return t("{count}K installs", { count: (count / 1_000).toFixed(1).replace(/\.0$/, "") })
+  return t(count === 1 ? "{count} install" : "{count} installs", { count })
 }
 
 /** Raw harness icons for the providers that can invoke this skill (root-attributed). */
 function SkillProviderIcons({ skillName, providers }: { skillName: string; providers: AgentProvider[] }) {
+  const t = useT()
   return (
     <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
       {providers.map((provider) => {
@@ -41,7 +43,7 @@ function SkillProviderIcons({ skillName, providers }: { skillName: string; provi
           <Tooltip key={provider}>
             <TooltipTrigger asChild>
               <span
-                aria-label={`${skillName} is available in ${PROVIDER_LABELS[provider]}`}
+                aria-label={t("{skill} is available in {provider}", { skill: skillName, provider: PROVIDER_LABELS[provider] })}
                 className="inline-flex"
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -75,6 +77,7 @@ function GlobalSkillCard({
   onUninstall: () => void
   onRevealInFinder: (skillPath: string) => void
 }) {
+  const t = useT()
   const cardRef = useRef<HTMLDivElement>(null)
   const href = skill.source ? `https://skills.sh/${skill.source}/${skill.name}` : null
   const description = skill.description || skill.source || skill.paths[0] || ""
@@ -108,7 +111,7 @@ function GlobalSkillCard({
         <SkillProviderIcons skillName={skill.name} providers={skill.providers} />
         <button
           type="button"
-          aria-label={`Open actions for ${skill.name}`}
+          aria-label={t("Open actions for {skill}", { skill: skill.name })}
           onClick={openContextMenuFromButton}
           className="touch-manipulation flex h-7 w-7 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
         >
@@ -123,7 +126,7 @@ function GlobalSkillCard({
       <ContextMenuTrigger asChild>{card}</ContextMenuTrigger>
       <ContextMenuContent>
         <div className="px-3 pb-1 pt-1.5 text-[11px] font-medium text-muted-foreground">
-          {skill.source ? "Added via npx skills" : "Added by you"}
+          {skill.source ? t("Added via npx skills") : t("Added by you")}
         </div>
         <ContextMenuSeparator />
         {skill.paths.map((skillPath) => (
@@ -133,7 +136,9 @@ function GlobalSkillCard({
           >
             <FolderOpen className="h-3.5 w-3.5" />
             <span className="text-xs font-medium">
-              {skill.paths.length > 1 ? `Open ${formatSkillLocation(skillPath)}` : "Open in Finder"}
+              {skill.paths.length > 1
+                ? t("Open {path}", { path: formatSkillLocation(skillPath) })
+                : t("Open in Finder")}
             </span>
           </ContextMenuItem>
         ))}
@@ -144,7 +149,7 @@ function GlobalSkillCard({
             }}
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">View on skills.sh</span>
+            <span className="text-xs font-medium">{t("View on skills.sh")}</span>
           </ContextMenuItem>
         ) : null}
         {skill.source ? (
@@ -154,7 +159,7 @@ function GlobalSkillCard({
             className="text-destructive dark:text-red-400 hover:bg-destructive/10 focus:bg-destructive/10 dark:hover:bg-red-500/20 dark:focus:bg-red-500/20"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Uninstall</span>
+            <span className="text-xs font-medium">{t("Uninstall")}</span>
           </ContextMenuItem>
         ) : null}
       </ContextMenuContent>
@@ -175,11 +180,12 @@ function SkillResultCard({
   message?: string
   onInstall: () => void
 }) {
+  const t = useT()
   return (
     <div className="flex min-w-0 items-center justify-between gap-4 px-4 py-2.5">
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium text-foreground">{skill.name}</div>
-        <div className="mt-0.5 truncate text-[13px] leading-5 text-muted-foreground">{skill.source} · {formatInstallCount(skill.installs)}</div>
+        <div className="mt-0.5 truncate text-[13px] leading-5 text-muted-foreground">{skill.source} · {formatInstallCount(skill.installs, t)}</div>
         {installed && message ? <div className="mt-0.5 truncate text-xs text-emerald-500">{message}</div> : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -187,7 +193,7 @@ function SkillResultCard({
           href={`https://skills.sh/${skill.id}`}
           target="_blank"
           rel="noreferrer"
-          aria-label={`View ${skill.name} on skills.sh`}
+          aria-label={t("View {skill} on skills.sh", { skill: skill.name })}
           className="touch-manipulation inline-flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
         >
           <ExternalLink className="h-4 w-4" />
@@ -197,7 +203,7 @@ function SkillResultCard({
           onClick={onInstall}
           icon={installing ? <Loader2 className="animate-spin" /> : null}
         >
-          {installed ? "Installed" : installing ? "Installing" : "Get"}
+          {installed ? t("Installed") : installing ? t("Installing") : t("Get")}
         </SettingsActionButton>
       </div>
     </div>
@@ -222,6 +228,7 @@ export function SkillsSection({
 }: {
   state: Pick<KannaState, "connectionStatus" | "socket">
 }) {
+  const t = useT()
   const socket = state.socket
   const connectionStatus = state.connectionStatus
   const [query, setQuery] = useState("")
@@ -264,7 +271,7 @@ export function SkillsSection({
     } catch (error) {
       setInstalledSkills([])
       setInstalledSkillIds(new Set())
-      setInstalledError(error instanceof Error ? error.message : "Unable to read installed skills.")
+      setInstalledError(error instanceof Error ? error.message : t("Unable to read installed skills."))
     } finally {
       setInstalledLoading(false)
     }
@@ -286,7 +293,7 @@ export function SkillsSection({
     if (connectionStatus !== "connected") {
       setResults([])
       setSearchLoading(false)
-      setSearchError("Backend connection required.")
+      setSearchError(t("Backend connection required."))
       return
     }
 
@@ -307,7 +314,7 @@ export function SkillsSection({
         .catch((error) => {
           if (cancelled) return
           setResults([])
-          setSearchError(error instanceof Error ? error.message : "Unable to search skills.")
+          setSearchError(error instanceof Error ? error.message : t("Unable to search skills."))
         })
         .finally(() => {
           if (cancelled) return
@@ -323,7 +330,7 @@ export function SkillsSection({
 
   async function installSkill(skill: SkillSearchResult) {
     if (connectionStatus !== "connected") {
-      setOperationError("Backend connection required.")
+      setOperationError(t("Backend connection required."))
       return
     }
 
@@ -343,11 +350,11 @@ export function SkillsSection({
       setInstalledSkillIds((current) => new Set(current).add(skill.skillId))
       setInstallMessages((current) => ({
         ...current,
-        [skill.id]: "Installed globally",
+        [skill.id]: t("Installed globally"),
       }))
       void loadInstalledSkills()
     } catch (error) {
-      setOperationError(error instanceof Error ? error.message : "Install failed.")
+      setOperationError(error instanceof Error ? error.message : t("Install failed."))
     } finally {
       setInstallingSkillId(null)
     }
@@ -355,7 +362,7 @@ export function SkillsSection({
 
   function revealSkillInFinder(skillPath: string) {
     if (connectionStatus !== "connected") {
-      setOperationError("Backend connection required.")
+      setOperationError(t("Backend connection required."))
       return
     }
     // Reveal the skill's directory rather than the SKILL.md file itself.
@@ -365,13 +372,13 @@ export function SkillsSection({
       action: "open_finder",
       localPath: directory,
     }).catch((error) => {
-      setOperationError(error instanceof Error ? error.message : "Unable to open in Finder.")
+      setOperationError(error instanceof Error ? error.message : t("Unable to open in Finder."))
     })
   }
 
   async function uninstallSkill(skill: GlobalSkillSummary) {
     if (connectionStatus !== "connected") {
-      setOperationError("Backend connection required.")
+      setOperationError(t("Backend connection required."))
       return
     }
 
@@ -399,7 +406,7 @@ export function SkillsSection({
       })
       void loadInstalledSkills()
     } catch (error) {
-      setOperationError(error instanceof Error ? error.message : "Uninstall failed.")
+      setOperationError(error instanceof Error ? error.message : t("Uninstall failed."))
     } finally {
       setUninstallingSkillId(null)
     }
@@ -416,15 +423,15 @@ export function SkillsSection({
           <input
             type="text"
             role="searchbox"
-            aria-label="Filter installed skills or search skills.sh"
+            aria-label={t("Filter installed skills or search skills.sh")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Escape") setQuery("")
             }}
             placeholder={installedSkills.length > 0
-              ? `Filter ${installedSkills.length} installed, or add from skills.sh`
-              : "Add skills from skills.sh"}
+              ? t("Filter {count} installed, or add from skills.sh", { count: installedSkills.length })
+              : t("Add skills from skills.sh")}
             spellCheck={false}
             autoComplete="off"
             className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
@@ -433,7 +440,7 @@ export function SkillsSection({
           {query ? (
             <button
               type="button"
-              aria-label="Clear skills search"
+              aria-label={t("Clear skills search")}
               onClick={() => setQuery("")}
               className="touch-manipulation inline-flex h-6 w-6 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
             >
@@ -444,7 +451,7 @@ export function SkillsSection({
 
         {installedError ? <SkillsMessageRow tone="error">{installedError}</SkillsMessageRow> : null}
 
-        {searchingRegistry ? <SkillsSubheader>Installed</SkillsSubheader> : null}
+        {searchingRegistry ? <SkillsSubheader>{t("Installed")}</SkillsSubheader> : null}
         {filteredInstalledSkills.map((skill) => (
           <GlobalSkillCard
             key={skill.name}
@@ -457,14 +464,14 @@ export function SkillsSection({
         {!installedLoading && !installedError && filteredInstalledSkills.length === 0 ? (
           <SkillsMessageRow>
             {installedSkills.length === 0
-              ? "No global skills installed yet. Search above to add one."
-              : `No installed skills match “${query.trim()}”.`}
+              ? t("No global skills installed yet. Search above to add one.")
+              : t("No installed skills match “{query}”.", { query: query.trim() })}
           </SkillsMessageRow>
         ) : null}
 
         {searchingRegistry ? (
           <>
-            <SkillsSubheader>From skills.sh</SkillsSubheader>
+            <SkillsSubheader>{t("From skills.sh")}</SkillsSubheader>
             {searchError ? <SkillsMessageRow tone="error">{searchError}</SkillsMessageRow> : null}
             {results.map((skill) => (
               <SkillResultCard
@@ -477,7 +484,7 @@ export function SkillsSection({
               />
             ))}
             {!searchLoading && !searchError && results.length === 0 ? (
-              <SkillsMessageRow>No skills found on skills.sh.</SkillsMessageRow>
+              <SkillsMessageRow>{t("No skills found on skills.sh.")}</SkillsMessageRow>
             ) : null}
           </>
         ) : null}

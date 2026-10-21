@@ -1,6 +1,7 @@
 import { ArrowUpRight, ChevronDown, ChevronRight, Ellipsis } from "lucide-react"
 import type { FormHTMLAttributes, KeyboardEvent, PointerEvent, ReactNode, Ref } from "react"
 import { cn } from "../../../lib/utils"
+import { useT } from "../../../i18n/useT"
 import { openContextMenuFromButton } from "../../open-external-menu"
 import { Button } from "../../ui/button"
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "../../ui/context-menu"
@@ -480,9 +481,10 @@ export function WidgetMoreRow({
   suppressHover?: boolean
   tabIndex?: number
 }) {
+  const t = useT()
   const label = href
-    ? `All ${(total ?? count).toLocaleString()} on GitHub`
-    : shown ? "Show less" : `Show ${count.toLocaleString()} more`
+    ? t("All {total} on GitHub", { total: (total ?? count).toLocaleString() })
+    : shown ? t("Show less") : t("Show {count} more", { count: count.toLocaleString() })
   return (
     <button
       type="button"

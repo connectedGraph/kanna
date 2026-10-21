@@ -2,6 +2,7 @@ import { useState } from "react"
 import { ArrowUpRight, Check, Loader2 } from "lucide-react"
 import type { AuthServiceSnapshot } from "../../../shared/types"
 import type { KannaSocket } from "../../app/socket"
+import { useT } from "../../i18n/useT"
 import { cn } from "../../lib/utils"
 import { AUTH_SERVICE_ICONS } from "../provider-icons"
 import { Button } from "../ui/button"
@@ -106,6 +107,7 @@ export function LoginFlowPanel({
   socket: KannaSocket
   textActions?: boolean
 }) {
+  const t = useT()
   const login = service.login
   const [code, setCode] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -133,7 +135,7 @@ export function LoginFlowPanel({
     return (
       <div className="mt-3 flex items-center gap-2 border-t border-border pt-3 text-sm text-muted-foreground">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        <span className="flex-1">{login.phase === "starting" ? "Starting sign-in…" : "Finishing sign-in…"}</span>
+        <span className="flex-1">{login.phase === "starting" ? t("Starting sign-in…") : t("Finishing sign-in…")}</span>
       </div>
     )
   }
@@ -144,7 +146,7 @@ export function LoginFlowPanel({
         {login.userCode ? (
           <>
             <div className="text-sm text-muted-foreground">
-              Enter this code at{" "}
+              {t("Enter this code at")}{" "}
               <a
                 href={login.verificationUrl}
                 target="_blank"
@@ -158,14 +160,14 @@ export function LoginFlowPanel({
               <span className="rounded-lg border border-border bg-muted px-3 py-1.5 font-mono text-base font-semibold tracking-widest text-foreground">
                 {login.userCode}
               </span>
-              <CopyButton text={login.userCode} title="Copy code" className="h-7 w-7" />
+              <CopyButton text={login.userCode} title={t("Copy code")} className="h-7 w-7" />
               <a
                 href={login.verificationUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-sm font-medium text-foreground underline-offset-2 hover:underline"
               >
-                Open <ArrowUpRight className="h-3.5 w-3.5" />
+                {t("Open")} <ArrowUpRight className="h-3.5 w-3.5" />
               </a>
             </div>
           </>
@@ -177,14 +179,14 @@ export function LoginFlowPanel({
               rel="noreferrer"
               className="inline-flex items-center gap-1 font-medium text-foreground underline underline-offset-2"
             >
-              Open {hostOf(login.verificationUrl)} <ArrowUpRight className="h-3.5 w-3.5" />
+              {t("Open")} {hostOf(login.verificationUrl)} <ArrowUpRight className="h-3.5 w-3.5" />
             </a>{" "}
-            and approve the sign-in.
+            {t("and approve the sign-in.")}
           </div>
         )}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
-          <span className="flex-1">Waiting for approval…</span>
+          <span className="flex-1">{t("Waiting for approval…")}</span>
         </div>
       </div>
     )
@@ -200,9 +202,9 @@ export function LoginFlowPanel({
             rel="noreferrer"
             className="inline-flex items-center gap-1 font-medium text-foreground underline underline-offset-2"
           >
-            Open the sign-in page <ArrowUpRight className="h-3.5 w-3.5" />
+            {t("Open the sign-in page")} <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
-          , authorize, then paste the code you receive below.
+          {t(", authorize, then paste the code you receive below.")}
         </div>
         <div className="flex items-center gap-2">
           <Input
@@ -211,7 +213,7 @@ export function LoginFlowPanel({
             onKeyDown={(event) => {
               if (event.key === "Enter") void submitCode()
             }}
-            placeholder="Paste code"
+            placeholder={t("Paste code")}
             spellCheck={false}
             autoCapitalize="off"
             autoCorrect="off"
@@ -221,7 +223,7 @@ export function LoginFlowPanel({
             )}
           />
           <ActionButton text={textActions} onClick={() => void submitCode()} busy={submitting}>
-            Submit
+            {t("Submit")}
           </ActionButton>
         </div>
       </div>
@@ -234,7 +236,7 @@ export function LoginFlowPanel({
       <div className="text-sm text-destructive">{login.message}</div>
       {login.hint ? <div className="text-xs text-muted-foreground">{login.hint}</div> : null}
       <div className="flex items-center gap-3">
-        <ActionButton text={textActions} onClick={retry}>Try Again</ActionButton>
+        <ActionButton text={textActions} onClick={retry}>{t("Try Again")}</ActionButton>
       </div>
     </div>
   )
@@ -263,6 +265,7 @@ export function AuthCard({
   row?: boolean
   textActions?: boolean
 }) {
+  const t = useT()
   const Icon = AUTH_SERVICE_ICONS[service.service]
   const version = displayVersion(service.version)
   const installing = service.installState === "installing"
@@ -292,24 +295,24 @@ export function AuthCard({
         onClick={cancelLogin}
         className="shrink-0 text-xs text-muted-foreground transition-colors hover:text-foreground"
       >
-        Cancel
+        {t("Cancel")}
       </button>
     )
   } else if (installing) {
-    action = <ActionButton text={textActions} onClick={() => {}} busy>Installing…</ActionButton>
+    action = <ActionButton text={textActions} onClick={() => {}} busy>{t("Installing…")}</ActionButton>
   } else if (!service.installed || service.authStatus === "not_installed") {
-    action = <ActionButton text={textActions} onClick={install}>Install</ActionButton>
+    action = <ActionButton text={textActions} onClick={install}>{t("Install")}</ActionButton>
   } else if (service.authStatus === "signed_out" && !loginActive) {
     action = (
       <ActionButton text={textActions} onClick={startLogin}>
-        {service.service === "openrouter" ? "Authenticate" : "Log In"}
+        {service.service === "openrouter" ? t("Authenticate") : t("Log In")}
       </ActionButton>
     )
   } else if (service.authStatus === "signed_in" && service.updateAvailable && service.latestVersion) {
-    action = <ActionButton text={textActions} onClick={install}>Update to {displayVersion(service.latestVersion)}</ActionButton>
+    action = <ActionButton text={textActions} onClick={install}>{t("Update to {version}", { version: displayVersion(service.latestVersion) ?? "" })}</ActionButton>
   } else if (service.authStatus === "signed_in") {
     action = (
-      <span className="flex shrink-0 items-center pr-2" title={service.account ?? "Connected"}>
+      <span className="flex shrink-0 items-center pr-2" title={service.account ?? t("Connected")}>
         <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500 animate-in fade-in zoom-in-90 duration-200 ease-out" />
       </span>
     )
@@ -318,15 +321,15 @@ export function AuthCard({
     // the only way forward, so it's the card's sole action (no Log In).
     action = (
       <ActionButton text={textActions} onClick={install}>
-        {service.latestVersion ? `Update to ${displayVersion(service.latestVersion)}` : "Update"}
+        {service.latestVersion ? t("Update to {version}", { version: displayVersion(service.latestVersion) ?? "" }) : t("Update")}
       </ActionButton>
     )
   } else if (service.authStatus === "error" && service.installed) {
     // A probe error usually means the CLI is too old or broken — offer the
     // installer as the escape hatch instead of dead-ending on the message.
-    action = <ActionButton text={textActions} onClick={install}>Update</ActionButton>
+    action = <ActionButton text={textActions} onClick={install}>{t("Update")}</ActionButton>
   } else if (service.authStatus === "unknown") {
-    action = <span className="shrink-0 text-xs text-muted-foreground">Checking…</span>
+    action = <span className="shrink-0 text-xs text-muted-foreground">{t("Checking…")}</span>
   }
 
   return (

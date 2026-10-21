@@ -3,6 +3,7 @@ import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type D
 import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
 import { CSS as DndCSS } from "@dnd-kit/utilities"
 import { PencilLine, X } from "lucide-react"
+import { useT } from "../../i18n/useT"
 import { getAdjacentChatTab, getChatTabAfterClose, type ChatTab } from "../../lib/chat-tabs"
 import { isMacApp } from "../../lib/macApp"
 import { flattenSidebarThreads, type SidebarThread } from "../../lib/thread-sections"
@@ -58,12 +59,13 @@ interface TabProps {
  * that the bar scrolls.
  */
 const Tab = memo(function Tab({ tab, thread, active, isNew, editorLabel, actions, onSelect, onClose, onCloseOthers, onCloseToRight, hasOthers, hasTabsToRight, onRename }: TabProps) {
+  const t = useT()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tab.chatId,
     transition: TAB_MOVE_TRANSITION,
   })
-  const title = thread?.title ?? "New Chat"
-  const statusMark = thread ? renderChatStatusDot(thread.row) : null
+  const title = thread?.title ?? t("New Chat")
+  const statusMark = thread ? renderChatStatusDot(thread.row, t) : null
   // An unsent draft takes the icon's place, as on the chat's sidebar row
   // (`ThreadRowContent`): the same pencil, in the same red, yielding only to
   // a status that is about what the agent needs.
@@ -99,8 +101,8 @@ const Tab = memo(function Tab({ tab, thread, active, isNew, editorLabel, actions
         // nothing is laid out for either.
         <button
           type="button"
-          title="Chat actions"
-          aria-label="Chat actions"
+          title={t("Chat actions")}
+          aria-label={t("Chat actions")}
           onClick={openContextMenuFromButton}
           onPointerDown={(event) => event.stopPropagation()}
           className="relative flex shrink-0 rounded-[4px] outline-none transition-transform duration-150 ease-snappy before:absolute before:-inset-1 before:rounded-md before:bg-foreground/10 before:opacity-0 before:transition-opacity before:duration-150 hover:before:opacity-100 focus-visible:before:opacity-100 active:scale-[0.94] motion-reduce:transition-none"
@@ -125,8 +127,8 @@ const Tab = memo(function Tab({ tab, thread, active, isNew, editorLabel, actions
       >
         <button
           type="button"
-          title="Close tab"
-          aria-label={`Close ${title}`}
+          title={t("Close tab")}
+          aria-label={t("Close {title}", { title })}
           // Pressing it is not the start of a drag, nor a press on the tab.
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => {
@@ -201,13 +203,13 @@ const Tab = memo(function Tab({ tab, thread, active, isNew, editorLabel, actions
           leadingItems={(
             <>
               <ContextMenuItem onSelect={() => onClose(tab.chatId)}>
-                <span className="text-xs font-medium">Close</span>
+                <span className="text-xs font-medium">{t("Close")}</span>
               </ContextMenuItem>
               <ContextMenuItem disabled={!hasOthers} onSelect={() => onCloseOthers(tab.chatId)}>
-                <span className="text-xs font-medium">Close Others</span>
+                <span className="text-xs font-medium">{t("Close Others")}</span>
               </ContextMenuItem>
               <ContextMenuItem disabled={!hasTabsToRight} onSelect={() => onCloseToRight(tab.chatId)}>
-                <span className="text-xs font-medium">Close to the Right</span>
+                <span className="text-xs font-medium">{t("Close to the Right")}</span>
               </ContextMenuItem>
             </>
           )}
@@ -265,6 +267,7 @@ export const ChatTabs = memo(function ChatTabs({
    */
   renderHoverCard: (containerRef: RefObject<HTMLDivElement | null>, threads: SidebarThread[]) => ReactNode
 }) {
+  const t = useT()
   const tabs = useChatTabsStore((state) => state.tabs)
   const { open, close, closeOthers, closeToRight, reorder, prune, visit } = useChatTabsStore.getState()
   const data = useSidebarData()
@@ -436,7 +439,7 @@ export const ChatTabs = memo(function ChatTabs({
           <div
             ref={listRef}
             role="tablist"
-            aria-label="Open chats"
+            aria-label={t("Open chats")}
             // No gap: the tabs space themselves (see `Tab`). Pulled 1px left,
             // so the first tab's box still starts where the bar does.
             className="-ml-px flex w-[calc(100%+1px)] min-w-0 items-center overflow-x-auto scrollbar-hide"

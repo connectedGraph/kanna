@@ -34,6 +34,7 @@ import { ChatTranscriptViewport, type TranscriptScrollHandle } from "./ChatTrans
 import { createToolPayloadStore } from "./toolPayloadStore"
 import type { TranscriptJumpRequest } from "./transcriptScrollAnchors"
 import { useTranscriptPaddingBottom } from "./useTranscriptPaddingBottom"
+import { useT } from "../../i18n/useT"
 import { hasFileDragTypes, sameContextWindowSnapshot } from "./utils"
 import { countCascadingSubchats } from "../../../shared/stop-turn"
 
@@ -80,6 +81,7 @@ export const ChatPreview = memo(function ChatPreview({ item, context, onClose }:
   context: ChatPreviewContext
   onClose: () => void
 }) {
+  const t = useT()
   const { chatId } = item
   const thread = useSidebarThread(chatId)
   const parentThread = useSidebarThread(thread?.row.parentChatId)
@@ -137,13 +139,13 @@ export const ChatPreview = memo(function ChatPreview({ item, context, onClose }:
   const backLabel = below === "closed"
     ? null
     : below.item.kind === "chat"
-      ? (backThread ? `Back to ${backThread.title}` : "Back")
-      : "Back to delegated chats"
+      ? (backThread ? t("Back to {title}", { title: backThread.title }) : t("Back"))
+      : t("Back to delegated chats")
   const handleBack = useViewerStore((store) => store.stepBack)
   const handleOpenInTab = useCallback(() => openChat(chatId, { target: "tab" }), [chatId, openChat])
 
-  const title = thread?.title ?? "Chat"
-  const statusDot = thread && !thread.archived ? renderChatStatusDot(thread.row) : null
+  const title = thread?.title ?? t("Chat")
+  const statusDot = thread && !thread.archived ? renderChatStatusDot(thread.row, t) : null
   const body = (
     <ChatPreviewSession
       // Per chat: a chat stepped to inside the previewer is a new session.

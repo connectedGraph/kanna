@@ -13,6 +13,7 @@ import { VisualizationSaveDialog } from "./VisualizationSaveDialog"
 import { type VisualizationArtifact, VISUALIZATION_EXPAND_BUTTON, visualizationHeight, visualizationLink, visualizationDownload, visualizationWidthBucket } from "../../../shared/visualization"
 import { prepareVisualizationDocument, type VisualizationTheme } from "../../../shared/visualization-host"
 import { cssColorAlpha, isPngSignature } from "../../../shared/visualization-capture"
+import { useT } from "../../i18n/useT"
 
 /** Read actual host tokens, rather than deriving dark mode from the OS. This also
  * covers custom transcript backgrounds and theme changes while a widget is live. */
@@ -77,6 +78,7 @@ function VisualizationFrame({ artifact, onLoaded, onEscape, captureRef }: {
   /** Escape was pressed in the frame and the visualization had no use for it. */
   onEscape?: (repeat: boolean) => void
 }) {
+  const t = useT()
   const frame = useRef<HTMLIFrameElement>(null)
   const onEscapeRef = useRef(onEscape)
   onEscapeRef.current = onEscape
@@ -225,7 +227,7 @@ function VisualizationFrame({ artifact, onLoaded, onEscape, captureRef }: {
     }
   }, [captureRef])
 
-  if (failed) return <p role="alert" className="text-sm text-muted-foreground">This visualization could not be loaded.</p>
+  if (failed) return <p role="alert" className="text-sm text-muted-foreground">{t("This visualization could not be loaded.")}</p>
   return (
     <div ref={box} className="min-w-0" style={{ height }}>
       {document ? (
@@ -243,7 +245,7 @@ function VisualizationFrame({ artifact, onLoaded, onEscape, captureRef }: {
             onLoaded?.()
           }}
         />
-      ) : <p className="text-sm text-muted-foreground">Loading visualization...</p>}
+      ) : <p className="text-sm text-muted-foreground">{t("Loading visualization...")}</p>}
     </div>
   )
 }
@@ -269,13 +271,14 @@ export function Visualization({ artifact }: { artifact: VisualizationArtifact })
  * arrows point at the corners, which a circle does not have.
  */
 export function VisualizationExpandButton({ onClick }: { onClick: () => void }) {
+  const t = useT()
   const { size, inset } = VISUALIZATION_EXPAND_BUTTON
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild>
         <button
           type="button"
-          aria-label="Expand"
+          aria-label={t("Expand")}
           onClick={onClick}
           style={{ top: inset, right: inset, width: size, height: size }}
           className="visualization-expand absolute flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-xs hover:bg-muted hover:text-foreground [&_svg]:size-3.5"
@@ -283,7 +286,7 @@ export function VisualizationExpandButton({ onClick }: { onClick: () => void }) 
           <Maximize2 />
         </button>
       </TooltipTrigger>
-      <TooltipContent>Expand</TooltipContent>
+      <TooltipContent>{t("Expand")}</TooltipContent>
     </Tooltip>
   )
 }
@@ -300,6 +303,7 @@ export function VisualizationExpandButton({ onClick }: { onClick: () => void }) 
  * to its own height, not the viewport's.
  */
 export function VisualizationFullView({ artifact, onClose }: { artifact: VisualizationArtifact; onClose: () => void }) {
+  const t = useT()
   const capture = useRef<VisualizationCapture | null>(null)
   // Only the app has a composer to add a marked-up image to; the export viewer has neither it nor this provider.
   const hasComposer = useOptionalAppDialog() !== null
@@ -317,14 +321,14 @@ export function VisualizationFullView({ artifact, onClose }: { artifact: Visuali
 
   return (
     <ViewerSurface
-      label={`Visualization: ${artifact.title}`}
+      label={t("Visualization: {title}", { title: artifact.title })}
       icon={<Shapes />}
       title={artifact.title}
       onClose={onClose}
       toolbar={(
         <>
-          {hasComposer ? <ViewerIconButton label="Mark up and add to prompt" onClick={() => start("markup")}><PenLine /></ViewerIconButton> : null}
-          <ViewerIconButton label="Download image" onClick={() => start("save")}><Download /></ViewerIconButton>
+          {hasComposer ? <ViewerIconButton label={t("Mark up and add to prompt")} onClick={() => start("markup")}><PenLine /></ViewerIconButton> : null}
+          <ViewerIconButton label={t("Download image")} onClick={() => start("save")}><Download /></ViewerIconButton>
         </>
       )}
     >

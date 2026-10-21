@@ -1,5 +1,6 @@
 import { Flower, PanelLeft } from "lucide-react"
 import { Button } from "../components/ui/button"
+import { useT } from "../i18n/useT"
 import { cn } from "../lib/utils"
 
 /**
@@ -9,6 +10,7 @@ import { cn } from "../lib/utils"
  * traffic lights (KannaSidebar).
  */
 export function SidebarExpandControls({ onExpand, className }: { onExpand: () => void; className?: string }) {
+  const t = useT()
   return (
     <div className={cn("flex items-center gap-1 mac-app:hidden transition-opacity duration-200 ease-out starting:opacity-0", className)}>
       <Flower className="size-6 text-logo" />
@@ -16,7 +18,7 @@ export function SidebarExpandControls({ onExpand, className }: { onExpand: () =>
         variant="ghost"
         size="icon"
         onClick={onExpand}
-        title="Expand sidebar"
+        title={t("Expand sidebar")}
         className="hover:!border-border/0 hover:!bg-transparent"
       >
         <PanelLeft className="h-5 w-5" />

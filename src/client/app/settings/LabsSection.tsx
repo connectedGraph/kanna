@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { isNightlyVersion } from "../../../shared/types"
 import { Switch } from "../../components/ui/switch"
+import { useT } from "../../i18n/useT"
 import type { KannaState } from "../useKannaState"
 import { SETTINGS_ROWS } from "./registry"
 import { SettingsActionButton, SettingsErrorBanner, SettingsGroup, SettingsRow } from "./shared"
@@ -20,6 +21,7 @@ export function LabsSection({
   >
   appVersion: string
 }) {
+  const t = useT()
   const { appSettings, handleWriteAppSettings, updateSnapshot } = state
   const [error, setError] = useState<string | null>(null)
 
@@ -28,7 +30,7 @@ export function LabsSection({
       setError(null)
       await handleWriteAppSettings({ newSidebarEnabled: enabled })
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to save Labs settings.")
+      setError(caught instanceof Error ? caught.message : t("Unable to save Labs settings."))
     }
   }
 
@@ -37,7 +39,7 @@ export function LabsSection({
       setError(null)
       await handleWriteAppSettings({ terminal: { webglRenderer: enabled } })
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to save Labs settings.")
+      setError(caught instanceof Error ? caught.message : t("Unable to save Labs settings."))
     }
   }
 
@@ -50,16 +52,16 @@ export function LabsSection({
   const nightly = updateSnapshot?.nightly
   const checkForUpdates = state.handleCheckForUpdates
   const nightlyStatusLabel = isUpdating
-    ? "Update in progress…"
+    ? t("Update in progress…")
     : nightly?.status === "up_to_date"
-      ? "Latest nightly installed"
+      ? t("Latest nightly installed")
       : nightly?.status === "available"
-        ? "New nightly available"
+        ? t("New nightly available")
         : nightly?.status === "checking"
-          ? "Checking latest nightly…"
+          ? t("Checking latest nightly…")
           : nightly?.status === "error"
-            ? "Could not check latest nightly"
-            : "Latest nightly not checked yet"
+            ? t("Could not check latest nightly")
+            : t("Latest nightly not checked yet")
 
   useEffect(() => {
     if (onNightly) void checkForUpdates()
@@ -72,7 +74,7 @@ export function LabsSection({
         <SettingsRow
           def={SETTINGS_ROWS.nightlyBuilds}
           wideControl
-          title={onNightly ? `Nightly Build ${currentVersionLabel}` : undefined}
+          title={onNightly ? t("Nightly Build {version}", { version: currentVersionLabel }) : undefined}
           description={
             onNightly
               ? (
@@ -80,10 +82,10 @@ export function LabsSection({
                   <p role="status" className="font-medium text-foreground">{nightlyStatusLabel}</p>
                   {nightly?.latestCommitSha ? (
                     <p className="whitespace-nowrap">
-                      Latest: <code>{nightly.latestCommitSha.slice(0, 7)}</code>
-                      {nightly.lastCheckedAt ? ` as of ${new Date(nightly.lastCheckedAt).toLocaleTimeString()}` : null}
+                      {t("Latest:")} <code>{nightly.latestCommitSha.slice(0, 7)}</code>
+                      {nightly.lastCheckedAt ? ` ${t("as of {time}", { time: new Date(nightly.lastCheckedAt).toLocaleTimeString() })}` : null}
                     </p>
-                  ) : nightly?.lastCheckedAt ? <p>Last checked {new Date(nightly.lastCheckedAt).toLocaleTimeString()}</p> : null}
+                  ) : nightly?.lastCheckedAt ? <p>{t("Last checked")} {new Date(nightly.lastCheckedAt).toLocaleTimeString()}</p> : null}
                   {nightly?.error ? <p>{nightly.error}</p> : null}
                 </div>
               )
@@ -96,7 +98,7 @@ export function LabsSection({
                 onClick={() => { void checkForUpdates({ force: true }) }}
                 disabled={isUpdating || nightly?.status === "checking"}
               >
-                Check again
+                {t("Check again")}
               </SettingsActionButton>
             ) : null}
             {onNightly ? (
@@ -106,7 +108,7 @@ export function LabsSection({
                 }}
                 disabled={isUpdating}
               >
-                Back to stable
+                {t("Back to stable")}
               </SettingsActionButton>
             ) : null}
             {!onNightly || nightly?.status !== "up_to_date" ? (
@@ -116,7 +118,7 @@ export function LabsSection({
                 }}
                 disabled={isUpdating}
               >
-                {isUpdating ? "Updating…" : "Build latest"}
+                {isUpdating ? t("Updating…") : t("Build latest")}
               </SettingsActionButton>
             ) : null}
           </div>

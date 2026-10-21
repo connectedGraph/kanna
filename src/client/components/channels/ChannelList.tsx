@@ -15,6 +15,7 @@ import { ProjectSectionMenu } from "../chat-ui/sidebar/Menus"
 import { SectionHeader } from "../chat-ui/sidebar/ThreadSections"
 import { LIST_HOVER_CARD_ROOM_BELOW, ListHoverCard } from "../ui/list-hover-card"
 import { ProjectIcon } from "../ui/project-icon"
+import { useT } from "../../i18n/useT"
 
 /** What a channel row carries its project id in, for the list's hover card. */
 const CHANNEL_ROW_ATTRIBUTE = "data-channel-id"
@@ -247,6 +248,7 @@ export function ChannelRowTrailing({ attentionCount }: { attentionCount: number 
  * and finds the row under the pointer by `CHANNEL_ROW_ATTRIBUTE`.
  */
 const ChannelRow = memo(function ChannelRow({ group, active, menuPinned, pinned, actions, onSelect }: ChannelRowProps) {
+  const t = useT()
   // The mark of a chat still working is not counted, which the window's
   // title and the notifications leave out for the same reason
   // (`isUnreadForUser`). A hidden sub-chat that stops to ask you something is.
@@ -261,7 +263,7 @@ const ChannelRow = memo(function ChannelRow({ group, active, menuPinned, pinned,
     ?? group.chats.find((chat) => chat.status === "waiting_for_user")
     ?? group.chats.find((chat) => chat.status === "waiting_on_subagent" && !chat.hidden)
     ?? group.chats.find(isUnreadForUser)
-  const statusMark = leadChat ? renderChatStatusDot(leadChat) : null
+  const statusMark = leadChat ? renderChatStatusDot(leadChat, t) : null
 
   return (
     // The Projects view's own project menu (`ProjectSectionMenu`), plus Pin.

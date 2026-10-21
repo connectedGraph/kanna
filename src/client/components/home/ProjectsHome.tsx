@@ -4,9 +4,11 @@ import type { LocalProjectSummary } from "../../../shared/types"
 import type { KannaSocket } from "../../app/socket"
 import type { ProjectRequest } from "../../app/kannaStateHelpers"
 import { formatRelativeTime } from "../../lib/formatters"
+import type { TFunction } from "../../i18n/catalogs"
 import { formatPathWithTilde } from "../../lib/pathUtils"
 import { parseRepoRef, resolveCloneDestination } from "../../lib/project-fs"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import { openCommandPalette } from "../command-palette/CommandPalette"
 import { SettingsGroupHeading } from "../../app/settings/shared"
 import { PopoverMenuItem } from "../chat-ui/ChatPreferenceControls"
@@ -35,8 +37,8 @@ function parentFolder(localPath: string) {
   return formatPathWithTilde(parent)
 }
 
-function relativeTime(timeMs: number | undefined) {
-  return timeMs === undefined ? null : formatRelativeTime(new Date(timeMs).toISOString())
+function relativeTime(timeMs: number | undefined, t: TFunction) {
+  return timeMs === undefined ? null : formatRelativeTime(new Date(timeMs).toISOString(), t)
 }
 
 /**
@@ -174,12 +176,13 @@ function HomeFilterPopover({ source, account, accounts, login, onChange }: {
   login: string | undefined
   onChange: (next: { source: HomeSource; account: string }) => void
 }) {
+  const t = useT()
   const filtered = source !== "all"
   const shownAccount = source === "github" ? account : null
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <AccessoryButton label="Filter projects" active={filtered}>
+        <AccessoryButton label={t("Filter projects")} active={filtered}>
           <ListFilter className="size-4" />
           {/* The filter lives out of sight, so the icon says when it's on. */}
           {filtered ? <span aria-hidden className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary" /> : null}
@@ -191,14 +194,14 @@ function HomeFilterPopover({ source, account, accounts, login, onChange }: {
         className="w-60 overflow-hidden p-0"
       >
         <div className="max-h-96 overflow-y-auto divide-y divide-border/60">
-          <FilterSubheader>Show</FilterSubheader>
-          <FilterOption label="Everything" icon={<Layers className="size-4" />} selected={source === "all"} onSelect={() => onChange({ source: "all", account: "all" })} />
-          <FilterOption label="This Mac" icon={<LaptopMinimal className="size-4" />} selected={source === "local"} onSelect={() => onChange({ source: "local", account: "all" })} />
+          <FilterSubheader>{t("Show")}</FilterSubheader>
+          <FilterOption label={t("Everything")} icon={<Layers className="size-4" />} selected={source === "all"} onSelect={() => onChange({ source: "all", account: "all" })} />
+          <FilterOption label={t("This Mac")} icon={<LaptopMinimal className="size-4" />} selected={source === "local"} onSelect={() => onChange({ source: "local", account: "all" })} />
           <FilterOption label="GitHub" icon={<GitHubIcon className="size-4" />} selected={source === "github"} onSelect={() => onChange({ source: "github", account })} />
           {accounts.length > 1 ? (
             <>
-              <FilterSubheader>GitHub account</FilterSubheader>
-              <FilterOption label="Everyone" icon={<Users className="size-4" />} selected={shownAccount === "all"} onSelect={() => onChange({ source: "github", account: "all" })} />
+              <FilterSubheader>{t("GitHub account")}</FilterSubheader>
+              <FilterOption label={t("Everyone")} icon={<Users className="size-4" />} selected={shownAccount === "all"} onSelect={() => onChange({ source: "github", account: "all" })} />
               {accounts.map((owner) => (
                 <FilterOption
                   key={owner}
@@ -216,10 +219,10 @@ function HomeFilterPopover({ source, account, accounts, login, onChange }: {
   )
 }
 
-function searchPlaceholder(hasRepos: boolean, source: HomeSource, account: string) {
-  if (!hasRepos || source === "local") return "Search projects…"
-  if (source === "github") return account === "all" ? "Search GitHub repos…" : `Search ${account}’s repos…`
-  return "Search projects and repos…"
+function searchPlaceholder(t: (key: string, vars?: Record<string, string | number>) => string, hasRepos: boolean, source: HomeSource, account: string) {
+  if (!hasRepos || source === "local") return t("Search projects…")
+  if (source === "github") return account === "all" ? t("Search GitHub repos…") : t("Search {account}’s repos…", { account })
+  return t("Search projects and repos…")
 }
 
 export function ProjectsHome({
@@ -250,6 +253,7 @@ export function ProjectsHome({
   /** Kanna's create-project flow; navigates to the new chat on success. */
   onCloneRepo: (project: ProjectRequest) => Promise<void>
 }) {
+  const t = useT()
   const [query, setQuery] = useState("")
   const [source, setSource] = useState<HomeSource>("all")
   const [account, setAccount] = useState("all")
@@ -308,8 +312,8 @@ export function ProjectsHome({
           icon={Folder}
           title={item.title}
           context={parentFolder(project.localPath)}
-          fact={project.chatCount > 0 ? `${project.chatCount} ${project.chatCount === 1 ? "chat" : "chats"}` : null}
-          time={relativeTime(item.timeMs)}
+          fact={project.chatCount > 0 ? t("{count} chats", { count: project.chatCount }) : null}
+          time={relativeTime(item.timeMs, t)}
           action={SquarePen}
           loading={startingLocalPath === project.localPath}
           tooltip={<p>{project.localPath}</p>}
@@ -327,18 +331,18 @@ export function ProjectsHome({
         key={item.key}
         icon={GitHubIcon}
         title={item.title}
-        badge={repo.isPrivate ? <Lock aria-label="Private" className="size-3 shrink-0 self-center text-muted-foreground" /> : null}
+        badge={repo.isPrivate ? <Lock aria-label={t("Private")} className="size-3 shrink-0 self-center text-muted-foreground" /> : null}
         context={repo.owner}
-        time={relativeTime(item.timeMs)}
+        time={relativeTime(item.timeMs, t)}
         action={Download}
         loading={cloningRepo === repo.nameWithOwner}
         disabled={cloningRepo !== null && cloningRepo !== repo.nameWithOwner}
         arrived={reposJustArrived}
         tooltip={(
           <>
-            <p>{repo.nameWithOwner}{repo.isPrivate ? " · private" : ""}</p>
+            <p>{repo.nameWithOwner}{repo.isPrivate ? ` · ${t("private")}` : ""}</p>
             {repo.description ? <p className="max-w-72 text-muted-foreground">{repo.description}</p> : null}
-            {destination ? <p className="text-muted-foreground">Clone to {destination}</p> : null}
+            {destination ? <p className="text-muted-foreground">{t("Clone to {path}", { path: destination })}</p> : null}
           </>
         )}
         onClick={() => {
@@ -360,14 +364,14 @@ export function ProjectsHome({
       className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors duration-150 hover:bg-muted/40 hover:text-foreground active:bg-muted/70"
     >
       <Search className="size-4 shrink-0" />
-      Search all of GitHub
+      {t("Search all of GitHub")}
     </button>
   ) : null
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 pb-10 pt-16">
       <div className="mb-6 flex items-end justify-between gap-4">
-        <h1 className="text-2xl font-semibold text-foreground">Projects</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("Projects")}</h1>
         <span className="flex min-w-0 items-center gap-1.5 pb-1 text-sm text-muted-foreground">
           <LaptopMinimal className="size-4 shrink-0" />
           <span className="truncate">{machineName}</span>
@@ -382,8 +386,8 @@ export function ProjectsHome({
           <input
             type="text"
             role="searchbox"
-            aria-label="Search projects"
-            placeholder={searchPlaceholder(hasRepos, source, account)}
+            aria-label={t("Search projects")}
+            placeholder={searchPlaceholder(t, hasRepos, source, account)}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
@@ -394,7 +398,7 @@ export function ProjectsHome({
             className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           {query ? (
-            <AccessoryButton label="Clear search" onClick={() => setQuery("")}>
+            <AccessoryButton label={t("Clear search")} onClick={() => setQuery("")}>
               <X className="size-3.5" />
             </AccessoryButton>
           ) : null}
@@ -410,14 +414,14 @@ export function ProjectsHome({
               }}
             />
           ) : null}
-          <AccessoryButton label="Add project" onClick={() => openCommandPalette("add-project")}>
+          <AccessoryButton label={t("Add project")} onClick={() => openCommandPalette("add-project")}>
             <Plus className="size-4" />
           </AccessoryButton>
         </div>
 
         {groups.map((group, index) => (
-          <section key={group.key} aria-label={group.title}>
-            <SettingsGroupHeading>{group.title}</SettingsGroupHeading>
+          <section key={group.key} aria-label={t(group.title)}>
+            <SettingsGroupHeading>{t(group.title)}</SettingsGroupHeading>
             <div className={LIST_CLASS}>
               {group.items.map(renderItem)}
               {index === groups.length - 1 ? githubSearchRow : null}
@@ -428,7 +432,7 @@ export function ProjectsHome({
         {groups.length === 0 ? (
           <div className={LIST_CLASS}>
             <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-              {nothingYet ? "No projects yet. Add a folder or clone a repo to start." : "Nothing matches."}
+              {nothingYet ? t("No projects yet. Add a folder or clone a repo to start.") : t("Nothing matches.")}
             </div>
             {githubSearchRow}
           </div>

@@ -17,11 +17,12 @@ import { LabsSection } from "./settings/LabsSection"
 import { MacSection } from "./settings/MacSection"
 import { ProvidersSection } from "./settings/ProvidersSection"
 import { SETTINGS_SECTIONS, visibleSettingsSections } from "./settings/registry"
+import { useT } from "../i18n/useT"
 import { SkillsSection } from "./settings/SkillsSection"
 import { SecretsSection } from "./settings/SecretsSection"
 import { UsageSection } from "./settings/UsageSection"
 import { SidebarExpandControls } from "./SidebarExpandControls"
-import { getKeybindingsSubtitle, SETTINGS_INSET_X_CLASS, SettingsActionButton, SettingsNotice, SettingsPlaceholder } from "./settings/shared"
+import { SETTINGS_INSET_X_CLASS, SettingsActionButton, SettingsNotice, SettingsPlaceholder } from "./settings/shared"
 import type { KannaState } from "./useKannaState"
 
 // Sections live under ./settings/; these re-exports keep the historical
@@ -70,11 +71,12 @@ export function SettingsSidebarHeading({
   sidebarCollapsed: boolean
   onExpandSidebar: () => void
 }) {
+  const t = useT()
   return (
     <>
       {sidebarCollapsed ? <SidebarExpandControls onExpand={onExpandSidebar} className="-mt-[17.5px] -ml-1" /> : null}
       <div className="px-3 pb-5 text-[22px] font-extrabold tracking-[-0.5px] text-foreground">
-        Settings
+        {t("Settings")}
       </div>
     </>
   )
@@ -126,13 +128,14 @@ export function SettingsPage() {
   const location = useLocation()
   const { sectionId } = useParams<{ sectionId: string }>()
   const state = useOutletContext<KannaState>()
+  const t = useT()
   const [signingOut, setSigningOut] = useState(false)
   const [authEnabled, setAuthEnabled] = useState(false)
   const selectedPage = resolveSettingsSectionId(sectionId) ?? "general"
   const isConnecting = state.connectionStatus === "connecting" || !state.localProjectsReady
-  const machineName = state.localProjects?.machine.displayName ?? "Unavailable"
+  const machineName = state.localProjects?.machine.displayName ?? t("Unavailable")
   const projectCount = state.localProjects?.projects.length ?? 0
-  const appVersion = SDK_CLIENT_APP.split("/")[1] ?? "unknown"
+  const appVersion = SDK_CLIENT_APP.split("/")[1] ?? t("unknown")
   const changelog = useChangelog(selectedPage === "changelog" && !isConnecting)
   const resolvedKeybindings = useMemo(() => getResolvedKeybindings(state.keybindings), [state.keybindings])
   const keybindingsFilePathDisplay = resolvedKeybindings.filePathDisplay || getKeybindingsFilePathDisplay()
@@ -176,8 +179,8 @@ export function SettingsPage() {
   const selectedSection = sidebarItems.find((item) => item.id === selectedPage) ?? sidebarItems[0]
   const selectedSectionSubtitle =
     selectedPage === "keybindings"
-      ? getKeybindingsSubtitle(keybindingsFilePathDisplay)
-      : selectedSection.subtitle
+      ? t("Edit global app shortcuts stored in {path}.", { path: keybindingsFilePathDisplay })
+      : t(selectedSection.subtitle)
   const showFooter = !isConnecting
 
   // Picking another section fades its content in, so the swap reads as one
@@ -233,7 +236,7 @@ export function SettingsPage() {
               >
                 <div className="flex items-center gap-2.5">
                   <item.icon className="h-4 w-4 shrink-0" />
-                  <span>{item.label}</span>
+                  <span>{t(item.label)}</span>
                 </div>
               </button>
             ))}
@@ -248,7 +251,7 @@ export function SettingsPage() {
               >
                 <div className="flex items-center gap-2.5">
                   <LogOut className="h-4 w-4 shrink-0" />
-                  <span>{signingOut ? "Signing out..." : "Sign out"}</span>
+                  <span>{signingOut ? t("Signing out...") : t("Sign out")}</span>
                 </div>
               </button>
             ) : null}
@@ -264,8 +267,8 @@ export function SettingsPage() {
                   type="button"
                   onClick={state.openSidebar}
                   className="flex shrink-0 items-center p-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                  aria-label="Back"
-                  title="Back"
+                  aria-label={t("Back")}
+                  title={t("Back")}
                 >
                   <ArrowLeft className="h-[20px] w-[20px] shrink-0" />
                 </button>
@@ -283,7 +286,7 @@ export function SettingsPage() {
                     )}
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
-                    <span className="whitespace-nowrap">{item.label}</span>
+                    <span className="whitespace-nowrap">{t(item.label)}</span>
                   </button>
                 ))}
                 {authEnabled ? (
@@ -300,7 +303,7 @@ export function SettingsPage() {
                     )}
                   >
                     <LogOut className="h-4 w-4 shrink-0" />
-                    <span className="whitespace-nowrap">{signingOut ? "Signing out..." : "Sign out"}</span>
+                    <span className="whitespace-nowrap">{signingOut ? t("Signing out...") : t("Sign out")}</span>
                   </button>
                 ) : null}
               </div>
@@ -309,7 +312,7 @@ export function SettingsPage() {
 
           <div className="w-full px-4 pb-32 pt-8 md:px-6 md:pt-16">
             {isConnecting ? (
-              <SettingsPlaceholder loading className="mx-auto max-w-4xl">Loading machine settings…</SettingsPlaceholder>
+              <SettingsPlaceholder loading className="mx-auto max-w-4xl">{t("Loading machine settings…")}</SettingsPlaceholder>
             ) : (
               <div
                 key={selectedPage}
@@ -321,7 +324,7 @@ export function SettingsPage() {
                 <div className={cn("pb-6", SETTINGS_INSET_X_CLASS)}>
                   <div className="flex items-center justify-between gap-4 min-h-[34px]">
                     <div className="text-lg font-semibold tracking-[-0.2px] text-foreground">
-                      {selectedSection.label}
+                      {t(selectedSection.label)}
                     </div>
                     {selectedPage === "keybindings" ? (
                       <SettingsActionButton
@@ -330,7 +333,7 @@ export function SettingsPage() {
                         }}
                         icon={<Code />}
                       >
-                        Open in {state.editorLabel}
+                        {t("Open in {editor}", { editor: state.editorLabel })}
                       </SettingsActionButton>
                     ) : null}
                   </div>
@@ -392,19 +395,23 @@ export function SettingsPage() {
           <div className="px-6 py-[14.25px]">
             <div className="grid gap-3 text-xs text-muted-foreground grid-cols-2 lg:grid-cols-4">
               <div>
-                <div className="mb-1 uppercase tracking-wide text-[11px] text-muted-foreground/80">Machine</div>
+                <div className="mb-1 uppercase tracking-wide text-[11px] text-muted-foreground/80">{t("Machine")}</div>
                 <div className="text-foreground/80">{machineName}</div>
               </div>
               <div className="hidden md:block">
-                <div className="mb-1 uppercase tracking-wide text-[11px] text-muted-foreground/80">Connection</div>
-                <div className="text-foreground/80">{state.connectionStatus}</div>
+                <div className="mb-1 uppercase tracking-wide text-[11px] text-muted-foreground/80">{t("Connection")}</div>
+                <div className="text-foreground/80">
+                  {t(state.connectionStatus === "connected"
+                    ? "Connected"
+                    : state.connectionStatus === "connecting" ? "Connecting…" : "Disconnected")}
+                </div>
               </div>
               <div className="hidden md:block">
-                <div className="mb-1 uppercase tracking-wide text-[11px] text-muted-foreground/80">Projects Indexed</div>
+                <div className="mb-1 uppercase tracking-wide text-[11px] text-muted-foreground/80">{t("Projects Indexed")}</div>
                 <div className="text-foreground/80">{projectCount}</div>
               </div>
               <div>
-                <div className="mb-1 uppercase tracking-wide text-[11px] text-muted-foreground/80">App Version</div>
+                <div className="mb-1 uppercase tracking-wide text-[11px] text-muted-foreground/80">{t("App Version")}</div>
                 <div className="text-foreground/80">{appVersion}</div>
               </div>
             </div>

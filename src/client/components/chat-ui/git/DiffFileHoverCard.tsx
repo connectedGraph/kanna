@@ -1,9 +1,11 @@
 import type { RefObject } from "react"
 import { FileText } from "lucide-react"
+import { useT } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { TURN_CARD_ROW_INSET, TurnCardMetaRow, TurnCardMetaSeparator } from "../../ui/turn-card"
 import { useCardDetails, WidgetHoverCard } from "../widgets/WidgetHoverCard"
 import { diffHold, diffStatus, getDiffPreviewAttachment, type DiffFile } from "./shared"
+import { diffStatusLabel } from "./DiffFileRow"
 
 // Keyed by path and patch digest: an edit to the file reads it again.
 const patchCache = new Map<string, string>()
@@ -55,6 +57,7 @@ export function DiffFileCardContent({
   /** Why there's no peek (a binary, a lockfile, a huge diff), said instead of one. */
   note?: string
 }) {
+  const t = useT()
   const status = diffStatus(file)
   const peek = patch ? peekPatch(patch) : null
   const kind = file.size !== undefined && file.mimeType && !file.mimeType.startsWith("text/") ? file.mimeType : undefined
@@ -65,7 +68,7 @@ export function DiffFileCardContent({
           what kind of file a binary is. */}
       {file.isUntracked || kind ? (
         <TurnCardMetaRow>
-          <span className="shrink-0">{file.isUntracked ? "Untracked" : status.label}</span>
+          <span className="shrink-0">{file.isUntracked ? t("Untracked") : diffStatusLabel(status, t)}</span>
           {kind ? (
             <>
               <TurnCardMetaSeparator />
@@ -105,7 +108,9 @@ export function DiffFileCardContent({
           </div>
           {peek.moreChanges > 0 ? (
             <div className={cn("mt-1 text-[12px] text-muted-foreground/70", TURN_CARD_ROW_INSET)}>
-              {peek.moreChanges} more changed line{peek.moreChanges === 1 ? "" : "s"}
+              {peek.moreChanges === 1
+                ? t("{count} more changed line", { count: peek.moreChanges })
+                : t("{count} more changed lines", { count: peek.moreChanges })}
             </div>
           ) : null}
         </>
@@ -117,13 +122,13 @@ export function DiffFileCardContent({
       ) : patch !== null ? (
         <TurnCardMetaRow className="mt-1">
           <FileText className="size-2.5 shrink-0" strokeWidth={2.5} />
-          <span>No text changes to show</span>
+          <span>{t("No text changes to show")}</span>
         </TurnCardMetaRow>
       ) : null}
       {/* The card's footer, in the footer's slot and spacing (mt-1), like
           every other card's who-and-when line. */}
       <TurnCardMetaRow className="mt-1">
-        <span>Click to review</span>
+        <span>{t("Click to review")}</span>
       </TurnCardMetaRow>
     </>
   )

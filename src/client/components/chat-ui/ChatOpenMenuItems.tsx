@@ -4,6 +4,7 @@ import type { SidebarThread } from "../../lib/thread-sections"
 import { isChatInMainView } from "../../app/useOpenChat"
 import { useAppSettingsStore } from "../../stores/appSettingsStore"
 import { useViewerStore } from "../../stores/viewerStore"
+import { useT } from "../../i18n/useT"
 import { ContextMenuItem } from "../ui/context-menu"
 import type { ChatReferenceActions } from "./chat-reference"
 
@@ -27,17 +28,18 @@ function ChatOpenMenuItems({ chatId, actions }: { chatId: string; actions: ChatR
   const chatTabsEnabled = useAppSettingsStore((store) => store.settings?.chatTabsEnabled === true)
   // The page's own chat has no preview to offer: only the way to its transcript.
   const isPageChat = useViewerStore((store) => store.chatKey === chatId)
+  const t = useT()
   return (
     <>
       {isPageChat ? null : (
         <ContextMenuItem onSelect={() => actions.onOpenChat(chatId)}>
           <PanelRight className="size-3.5" />
-          <span className="text-xs font-medium">Open in Preview</span>
+          <span className="text-xs font-medium">{t("Open in Preview")}</span>
         </ContextMenuItem>
       )}
       <ContextMenuItem onSelect={() => actions.onOpenChatInTab(chatId)}>
         <SquareArrowOutUpRight className="size-3.5" />
-        <span className="text-xs font-medium">{chatTabsEnabled ? "Open in Tab" : "Open Chat"}</span>
+        <span className="text-xs font-medium">{chatTabsEnabled ? t("Open in Tab") : t("Open Chat")}</span>
       </ContextMenuItem>
     </>
   )

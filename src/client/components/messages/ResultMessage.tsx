@@ -3,6 +3,8 @@ import type { MessageSource } from "../../../shared/types"
 import { cn } from "../../lib/utils"
 import type { ProcessedResultMessage } from "./types"
 import { MetaRow, MetaLabel } from "./shared"
+import { useT, type TFunction } from "../../i18n/useT"
+import { translate } from "../../../shared/i18n"
 
 interface Props {
   message: ProcessedResultMessage
@@ -18,11 +20,14 @@ interface Props {
  * Who a prompt came from when the user did not type it, as the time boundary
  * above it says: "3:42 PM from an automation". Undefined for the user's own.
  */
-export function promptOriginLabel(source: MessageSource | undefined): string | undefined {
+export function promptOriginLabel(
+  source: MessageSource | undefined,
+  t: TFunction = (key) => translate(undefined, key),
+): string | undefined {
   if (!source) return undefined
-  if (source.kind === "schedule") return "from an automation"
-  if (source.kind === "report") return "from a sub-chat"
-  return "from another agent"
+  if (source.kind === "schedule") return t("from an automation")
+  if (source.kind === "report") return t("from a sub-chat")
+  return t("from another agent")
 }
 
 /** "3:42 PM", or "3:42 PM from another agent". */
@@ -52,7 +57,11 @@ function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
 }
 
-export function formatPromptTimestamp(timestamp: string, now: Date = new Date()): string {
+export function formatPromptTimestamp(
+  timestamp: string,
+  now: Date = new Date(),
+  t: TFunction = (key, vars) => translate(undefined, key, vars),
+): string {
   const date = new Date(timestamp)
   const time = date.toLocaleTimeString(undefined, {
     hour: "numeric",
@@ -63,7 +72,7 @@ export function formatPromptTimestamp(timestamp: string, now: Date = new Date())
 
   // Today (or anything not in the past): just the time.
   if (dayDelta <= 0) return time
-  if (dayDelta === 1) return `Yesterday ${time}`
+  if (dayDelta === 1) return t("Yesterday {time}", { time })
   // Within the past week: weekday + time (e.g. "Mon 3:33 PM").
   if (dayDelta < 7) {
     const weekday = date.toLocaleDateString(undefined, { weekday: "short" })
@@ -75,7 +84,7 @@ export function formatPromptTimestamp(timestamp: string, now: Date = new Date())
     month: "short",
     day: "numeric",
   })
-  return `${fullDate} at ${time}`
+  return t("{date} at {time}", { date: fullDate, time })
 }
 
 /** Compact turn duration, e.g. "820ms", "12s", "3m 4s", "1h 20m". */
@@ -101,10 +110,11 @@ export function formatDuration(ms: number): string {
 }
 
 export function ResultMessage({ message, nextPromptTimestamp, nextPromptOrigin, endsFold }: Props) {
+  const t = useT()
   if (!message.success) {
     return (
       <div className="px-4 py-3 mx-2 my-1 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-        {message.result || "An unknown error occurred."}
+        {message.result || t("An unknown error occurred.")}
       </div>
     )
   }
@@ -113,7 +123,7 @@ export function ResultMessage({ message, nextPromptTimestamp, nextPromptOrigin, 
     ? formatPromptBoundary(nextPromptTimestamp, nextPromptOrigin)
     : endsFold
       ? formatPromptTimestamp(message.timestamp)
-      : `${formatPromptTimestamp(message.timestamp)} · Worked for ${formatDuration(message.durationMs)}`
+      : `${formatPromptTimestamp(message.timestamp, undefined, t)} · ${t("Worked for {duration}", { duration: formatDuration(message.durationMs) })}`
 
   return <TimeBoundary label={label} />
 }

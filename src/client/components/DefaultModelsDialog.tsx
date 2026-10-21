@@ -2,6 +2,7 @@ import { useState } from "react"
 import type { FaveModel } from "../../shared/types"
 import { Button } from "./ui/button"
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogTitle } from "./ui/dialog"
+import { useT } from "../i18n/useT"
 
 /**
  * Edits the Default Models list (pi's model picker) — opened from Settings and
@@ -25,6 +26,7 @@ export function DefaultModelsDialog({
   faveModels: FaveModel[]
   onSave: (faveModels: FaveModel[]) => void
 }) {
+  const t = useT()
   const [draft, setDraft] = useState<FaveModel[]>([])
 
   // Re-seed the draft from the saved list whenever the dialog opens (parents
@@ -68,9 +70,9 @@ export function DefaultModelsDialog({
     >
       <DialogContent size="lg">
         <DialogBody className="space-y-4">
-          <DialogTitle>Default Models</DialogTitle>
+          <DialogTitle>{t("Default Models")}</DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Shown in Pi's model picker. Each entry has a display label and the model id sent to the Model Registry endpoint.
+            {t("Shown in Pi's model picker. Each entry has a display label and the model id sent to the Model Registry endpoint.")}
           </p>
           <div className="max-h-[55vh] divide-y divide-border/60 overflow-y-auto rounded-lg border border-border bg-background">
             {[...draft, { label: "", id: "" }].map((fave, index) => {
@@ -80,14 +82,14 @@ export function DefaultModelsDialog({
                   <input
                     value={fave.label}
                     onChange={(event) => setFaveModelField(index, "label", event.target.value)}
-                    placeholder="Name"
+                    placeholder={t("Name")}
                     spellCheck={false}
                     className="w-[160px] shrink-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/60"
                   />
                   <input
                     value={fave.id}
                     onChange={(event) => setFaveModelField(index, "id", event.target.value)}
-                    placeholder="Model id"
+                    placeholder={t("Model id")}
                     spellCheck={false}
                     autoCapitalize="off"
                     autoCorrect="off"
@@ -98,7 +100,7 @@ export function DefaultModelsDialog({
                   ) : (
                     <button
                       type="button"
-                      aria-label="Remove default model"
+                      aria-label={t("Remove default model")}
                       onClick={() => {
                         setDraft((faves) => faves.filter((_, entryIndex) => entryIndex !== index))
                       }}
@@ -114,7 +116,7 @@ export function DefaultModelsDialog({
         </DialogBody>
         <DialogFooter>
           <Button variant="secondary" size="sm" onClick={closeDialog}>
-            Done
+            {t("Done")}
           </Button>
         </DialogFooter>
       </DialogContent>

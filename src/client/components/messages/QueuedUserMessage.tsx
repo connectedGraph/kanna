@@ -9,6 +9,7 @@ import { CLAMP_LINES, ClampedMessageText, FOLD_SURFACE_ATTRIBUTE } from "./Clamp
 import { AdoptionNotice, isAdoptionNotice, ReplyQuoteRow, ReportMarker, SourceQuote, sourcedSections } from "./SourcedMessage"
 import { UserMessageAttachments } from "./UserMessage"
 import { ArrowUp, X } from "lucide-react"
+import { useT } from "../../i18n/useT"
 
 interface QueuedUserMessageProps {
   message: QueuedChatMessage
@@ -38,13 +39,14 @@ const QUEUED_BUBBLE_CLASS = "rounded-2xl border border-dashed border-border bg-t
 const QUEUED_CONTROL_CLASS = "transition-[color,background-color,scale] duration-150 ease-snappy active:scale-[0.95] motion-reduce:transition-none motion-reduce:active:scale-100"
 
 function SendNowButton({ onSendNow, disabled, first }: { onSendNow: () => void; disabled: boolean; first?: boolean }) {
+  const t = useT()
   return (
     <Button
       type="button"
       variant="default"
       size="none"
-      aria-label="Send now"
-      title={first ? `Send now (${SEND_QUEUED_SHORTCUT_LABEL})` : "Send now"}
+      aria-label={t("Send now")}
+      title={first ? t("Send now ({shortcut})", { shortcut: SEND_QUEUED_SHORTCUT_LABEL }) : t("Send now")}
       disabled={disabled}
       className={cn(
         QUEUED_CONTROL_CLASS,
@@ -68,12 +70,13 @@ function SendNowButton({ onSendNow, disabled, first }: { onSendNow: () => void; 
  * before it can be used.
  */
 function RemoveButton({ corner, onRemove, disabled }: { corner: "start" | "end"; onRemove: () => void; disabled: boolean }) {
+  const t = useT()
   return (
     <Button
       type="button"
       variant="none"
       size="none"
-      aria-label="Remove from queue"
+      aria-label={t("Remove from queue")}
       disabled={disabled}
       className={cn(
         QUEUED_CONTROL_CLASS,
@@ -123,6 +126,7 @@ export function QueuedUserMessage({ message, onRemove, onSendNow, first }: Queue
 }
 
 function QueuedTypedMessage({ message, busy, onRemove, onSendNow, first }: QueuedFormProps) {
+  const t = useT()
   // What the sent message will show: without the parts meant for the agent.
   const content = stripSystemMessages(message.content)
   return (
@@ -142,7 +146,7 @@ function QueuedTypedMessage({ message, busy, onRemove, onSendNow, first }: Queue
               {content ? (
                 <ClampedMessageText text={content} lines={CLAMP_LINES.typed} />
               ) : (
-                <p className="text-muted-foreground">Queued</p>
+                <p className="text-muted-foreground">{t("Queued")}</p>
               )}
             </div>
             <SendNowButton onSendNow={onSendNow} disabled={busy} first={first} />
@@ -163,6 +167,7 @@ function QueuedTypedMessage({ message, busy, onRemove, onSendNow, first }: Queue
  * sub-chats it covers, so there is one of each control.
  */
 function QueuedReport({ message, source, busy, onRemove, onSendNow, first }: QueuedFormProps & { source: Extract<MessageSource, { kind: "report" }> }) {
+  const t = useT()
   const sections = useMemo(() => sourcedSections(message.content, source), [message.content, source])
   // Nothing to read: a report on sub-chats that were stopped before they
   // said anything. Delivered, it draws no line, as there is no reply to
@@ -182,7 +187,7 @@ function QueuedReport({ message, source, busy, onRemove, onSendNow, first }: Que
           <div className="flex min-w-0 flex-col items-start gap-1">
             {lines.map((section, index) => isAdoptionNotice(section)
               ? <AdoptionNotice key={index} section={section} />
-              : <ReportMarker key={index} section={section} outcome={silent ? "reported" : undefined} />)}
+              : <ReportMarker key={index} section={section} outcome={silent ? t("reported") : undefined} />)}
           </div>
         </div>
         <RemoveButton corner="end" onRemove={onRemove} disabled={busy} />
@@ -205,6 +210,7 @@ function QueuedReport({ message, source, busy, onRemove, onSendNow, first }: Que
  * well clear of Remove and of the 6px around it that also takes a press.
  */
 function QueuedSourcedMessage({ message, source, busy, onRemove, onSendNow, first }: QueuedFormProps & { source: MessageSource }) {
+  const t = useT()
   // All of it for the agent leaves nothing to read. It still waits its
   // turn, and still says who it is from.
   const body = useMemo(() => sourcedSections(message.content, source)[0]?.body ?? "", [message.content, source])
@@ -222,7 +228,7 @@ function QueuedSourcedMessage({ message, source, busy, onRemove, onSendNow, firs
             <div className="min-w-0">
               {body
                 ? <ClampedMessageText text={body} lines={CLAMP_LINES.sent} />
-                : <p className="text-muted-foreground">Queued</p>}
+                : <p className="text-muted-foreground">{t("Queued")}</p>}
             </div>
           </div>
           <RemoveButton corner="end" onRemove={onRemove} disabled={busy} />

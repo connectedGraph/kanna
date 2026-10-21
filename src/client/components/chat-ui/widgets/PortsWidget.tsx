@@ -9,6 +9,7 @@ import {
   setCachedLocalHttpServerPublicUrl,
 } from "../../../lib/localServersCache"
 import { formatPathWithTilde } from "../../../lib/pathUtils"
+import { useT } from "../../../i18n/useT"
 import { cn } from "../../../lib/utils"
 import { ContextMenuItem } from "../../ui/context-menu"
 import { InputPopover, PopoverMenuItem } from "../ChatPreferenceControls"
@@ -48,6 +49,7 @@ export function PortsWidget({
    */
   refreshRequest: number
 }) {
+  const t = useT()
   const [servers, setServers] = useState<LocalHttpServerInfo[]>(() => getCachedLocalHttpServers() ?? [])
   const [loaded, setLoaded] = useState(() => getCachedLocalHttpServers() !== null)
   const [error, setError] = useState<string | null>(null)
@@ -154,10 +156,10 @@ export function PortsWidget({
           or the header would look broken. */}
       <WidgetCard
         icon={<RadioTower />}
-        title="Ports"
+        title={t("Ports")}
         count={visibleServers.length > 0
           ? visibleServers.length
-          : scope === "project" && otherServerCount > 0 ? `${otherServerCount} elsewhere` : undefined}
+          : scope === "project" && otherServerCount > 0 ? t("{count} elsewhere", { count: otherServerCount }) : undefined}
         expanded={(visibleServers.length > 0 && expanded) || error !== null}
         // With nothing here but servers elsewhere, the header is the way to
         // them: it widens the filter to all projects and opens the list,
@@ -178,7 +180,7 @@ export function PortsWidget({
               "size-6 justify-center rounded-md p-0 hover:text-foreground",
               scope === "all" && "text-foreground",
             )}
-            trigger={<ListFilter className="size-4 shrink-0" aria-label="Filter ports" />}
+            trigger={<ListFilter className="size-4 shrink-0" aria-label={t("Filter ports")} />}
           >
             {(close) => (
               <>
@@ -189,8 +191,8 @@ export function PortsWidget({
                   }}
                   selected={scope === "project"}
                   icon={<Folder className="h-4 w-4" />}
-                  label="This project"
-                  description={`${projectServers.length} running`}
+                  label={t("This project")}
+                  description={t("{count} running", { count: projectServers.length })}
                 />
                 <PopoverMenuItem
                   onClick={() => {
@@ -199,8 +201,8 @@ export function PortsWidget({
                   }}
                   selected={scope === "all"}
                   icon={<Layers className="h-4 w-4" />}
-                  label="All projects"
-                  description={`${servers.length} running`}
+                  label={t("All projects")}
+                  description={t("{count} running", { count: servers.length })}
                 />
               </>
             )}
@@ -227,47 +229,47 @@ export function PortsWidget({
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="min-w-0 truncate">{server.title}</span>
             {isExposing
-              ? <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" aria-label="Exposing" />
-              : server.publicUrl ? <Globe className="size-3 shrink-0 text-info" aria-label="Exposed to the internet" /> : null}
+              ? <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" aria-label={t("Exposing")} />
+              : server.publicUrl ? <Globe className="size-3 shrink-0 text-info" aria-label={t("Exposed to the internet")} /> : null}
           </span>
         )}
         subtitle={(
           <>
-            {isExposing ? "Exposing…" : server.publicUrl ?? server.address}
+            {isExposing ? t("Exposing…") : server.publicUrl ?? server.address}
             {!server.sameProject && server.ownerPath ? ` · ${formatPathWithTilde(server.ownerPath)}` : ""}
           </>
         )}
         onActivate={() => openServer(server)}
         aria-busy={isExposing}
-        menuLabel="Port actions"
+        menuLabel={t("Port actions")}
         menu={(
           <>
             {/* The row's own open, so a remote viewer exposes first rather
                 than opening a localhost this browser can't reach. */}
             <ContextMenuItem onSelect={() => openServer(server)}>
               <SquareArrowOutUpRight className="size-3.5" />
-              <span>Open in New Tab</span>
+              <span>{t("Open in New Tab")}</span>
             </ContextMenuItem>
             {server.publicUrl ? (
               <>
                 <ContextMenuItem onSelect={() => void navigator.clipboard?.writeText(server.publicUrl ?? "")}>
                   <Copy className="size-3.5" />
-                  <span>Copy Public URL</span>
+                  <span>{t("Copy Public URL")}</span>
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => unexposeServer(server)}>
                   <GlobeLock className="size-3.5" />
-                  <span>Stop Exposing</span>
+                  <span>{t("Stop Exposing")}</span>
                 </ContextMenuItem>
               </>
             ) : (
               <ContextMenuItem disabled={isExposing} onSelect={() => void exposeServer(server)}>
                 <Globe className="size-3.5" />
-                <span>Expose to Internet</span>
+                <span>{t("Expose to Internet")}</span>
               </ContextMenuItem>
             )}
             <ContextMenuItem onSelect={() => killServer(server)} className="text-destructive focus:text-destructive">
               <Trash2 className="size-3.5" />
-              <span>Kill Process</span>
+              <span>{t("Kill Process")}</span>
             </ContextMenuItem>
           </>
         )}

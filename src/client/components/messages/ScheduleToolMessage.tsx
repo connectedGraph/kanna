@@ -16,6 +16,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { ListHoverCard } from "../ui/list-hover-card"
 import { text, TOOL_CARD_CAPTION_CLASS, TOOL_CARD_CLASS, TOOL_CARD_MARK_SLOT_CLASS, TOOL_CARD_WIDTH_CLASS, toolCardClasses, toolCardErrorText, useToolCardPayload } from "./tool-card"
 import type { ProcessedToolCall } from "./types"
+import { useT } from "../../i18n/useT"
 
 /**
  * The card for a schedule an agent set, changed or deleted (`set_schedule`,
@@ -53,6 +54,7 @@ function requestedTrigger(input: Record<string, unknown>): ScheduleTrigger | nul
 }
 
 export function ScheduleToolMessage({ message }: { message: ScheduleToolCall }) {
+  const t = useT()
   const context = useChatSchedules()
   const { input, rawResult, result } = useToolCardPayload(message)
   const deleted = message.toolName === "delete_schedule"
@@ -60,17 +62,17 @@ export function ScheduleToolMessage({ message }: { message: ScheduleToolCall }) 
   const schedule = !deleted && scheduleId ? context?.schedules.find((candidate) => candidate.id === scheduleId) ?? null : null
 
   if (message.isError) {
-    return <p role="alert" className="text-sm text-destructive">{toolCardErrorText(rawResult, "The schedule could not be changed.")}</p>
+    return <p role="alert" className="text-sm text-destructive">{toolCardErrorText(rawResult, t("The schedule could not be changed."))}</p>
   }
 
   // An id going in means a schedule that already existed.
-  const verb = deleted ? "Deleted" : text(input.scheduleId) ? "Updated" : "Scheduled"
+  const verb = deleted ? t("Deleted") : text(input.scheduleId) ? t("Updated") : t("Scheduled")
 
   if (!schedule || !context) {
     const pending = !message.resultEntryId
     const sent = text(result?.message) ?? text(input.message)
     const trigger = requestedTrigger(input)
-    const title = text(result?.name) ?? text(input.name) ?? (sent ? toMessagePreview(sent) : "Schedule")
+    const title = text(result?.name) ?? text(input.name) ?? (sent ? toMessagePreview(sent) : t("Schedule"))
     const caption = [verb, trigger ? formatScheduleTrigger(trigger) : null, sent ? toMessagePreview(sent) : null].filter(Boolean).join(" · ")
     const Icon = trigger ? TRIGGER_ICON[trigger.kind] : CalendarClock
     return (
@@ -101,6 +103,7 @@ export function ScheduleCardBox({ schedule, context, caption, quote = false }: {
   caption: string
   quote?: boolean
 }) {
+  const t = useT()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const on = schedule.enabled && schedule.nextRunAt != null
   const now = useMinuteClock(on)
@@ -135,7 +138,7 @@ export function ScheduleCardBox({ schedule, context, caption, quote = false }: {
         <ContextMenuContent>
           <ContextMenuItem onSelect={edit}>
             <Pencil className="size-3.5" />
-            <span>Edit Schedule…</span>
+            <span>{t("Edit Schedule…")}</span>
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>

@@ -8,6 +8,7 @@ import { MetaRow, MetaLabel, MetaText, MetaPill, ExpandableRow, VerticalLineCont
 import { toTitleCase } from "../../lib/formatters"
 import { cn } from "../../lib/utils"
 import { useTranscriptRenderOptions } from "./render-context"
+import { useT } from "../../i18n/useT"
 
 export interface SessionHandoff {
   fromProvider: AgentProvider
@@ -108,6 +109,7 @@ function statusLabel(status: string): string {
 }
 
 function ExpandableMcpServer({ server }: { server: McpServerWithTools }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const isConnected = server.status === "connected"
 
@@ -126,9 +128,9 @@ function ExpandableMcpServer({ server }: { server: McpServerWithTools }) {
         <StatusDot status={server.status} />
         <span className="text-muted-foreground font-medium">{toTitleCase(server.name)}</span>
         {isConnected ? (
-          <span className="text-muted-foreground/50">{server.tools.length} tools</span>
+          <span className="text-muted-foreground/50">{t(server.tools.length === 1 ? "{count} tool" : "{count} tools", { count: server.tools.length })}</span>
         ) : (
-          <span className="text-muted-foreground/50">{statusLabel(server.status)}</span>
+          <span className="text-muted-foreground/50">{t(statusLabel(server.status))}</span>
         )}
       </button>
       {!isConnected && server.error && (
@@ -146,6 +148,7 @@ function ExpandableMcpServer({ server }: { server: McpServerWithTools }) {
 }
 
 function McpServerSection({ servers }: { servers: McpServerWithTools[] }) {
+  const t = useT()
   if (servers.length === 0) return null
 
   const connected = servers.filter((s) => s.status === "connected")
@@ -154,12 +157,12 @@ function McpServerSection({ servers }: { servers: McpServerWithTools[] }) {
   const badge = disconnected.length > 0 ? (
     <span className="flex items-center gap-1 ml-1">
       <StatusDot status="failed" />
-      <span className="text-muted-foreground/60">{disconnected.length} disconnected</span>
+      <span className="text-muted-foreground/60">{t("{count} disconnected", { count: disconnected.length })}</span>
     </span>
   ) : null
 
   return (
-    <CollapsibleSection title="MCP Servers" count={servers.length} badge={badge}>
+    <CollapsibleSection title={t("MCP Servers")} count={servers.length} badge={badge}>
       <div className="flex flex-col gap-2">
         {connected.map((server) => (
           <ExpandableMcpServer key={server.name} server={server} />
@@ -178,6 +181,7 @@ function McpServerSection({ servers }: { servers: McpServerWithTools[] }) {
  * `debugRaw`.
  */
 function RawMessageSection({ rawJson, entryId }: { rawJson?: string; entryId: string }) {
+  const t = useT()
   const { loadEntryDebugRaw } = useTranscriptRenderOptions()
   const [open, setOpen] = useState(false)
   const [loaded, setLoaded] = useState<string | null>(null)
@@ -208,12 +212,12 @@ function RawMessageSection({ rawJson, entryId }: { rawJson?: string; entryId: st
     <div className="flex flex-col gap-1.5">
       <button onClick={() => setOpen(!open)} className="flex items-center gap-1 cursor-pointer group/section hover:opacity-60 transition-opacity">
         <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform duration-200", open && "rotate-90")} />
-        <span className="text-muted-foreground font-medium">Raw Message</span>
+        <span className="text-muted-foreground font-medium">{t("Raw Message")}</span>
       </button>
       {open && (
         <pre className="ml-5 text-xs whitespace-pre-wrap break-all border border-border rounded-md p-3 overflow-x-auto max-h-96 overflow-y-auto">
-          {state === "loading" && body === null ? "Loading…" : null}
-          {state === "error" ? "Failed to load raw message." : null}
+          {state === "loading" && body === null ? t("Loading…") : null}
+          {state === "error" ? t("Failed to load raw message.") : null}
           {state !== "error" ? body : null}
         </pre>
       )}
@@ -222,6 +226,7 @@ function RawMessageSection({ rawJson, entryId }: { rawJson?: string; entryId: st
 }
 
 export function SystemMessage({ message, rawJson, modelChanged, handoff, restored }: Props) {
+  const t = useT()
   const iconProvider = handoff?.toProvider ?? message.provider
   const ProviderIcon = PROVIDER_ICONS[iconProvider]
   const { loadEntryDebugRaw } = useTranscriptRenderOptions()
@@ -258,13 +263,13 @@ export function SystemMessage({ message, rawJson, modelChanged, handoff, restore
             <div className="flex flex-col gap-3">
               {restored && (
                 <MetaText>
-                  {providerLabel(restored.provider)}'s saved session for this conversation was no longer available — coding-agent CLIs clean up old session files. Kanna repaired it by starting a fresh session and restoring the conversation from its own saved transcript.
+                  {t("{provider}'s saved session for this conversation was no longer available — coding-agent CLIs clean up old session files. Kanna repaired it by starting a fresh session and restoring the conversation from its own saved transcript.", { provider: providerLabel(restored.provider) })}
                 </MetaText>
               )}
               <MetaText>{message.model}</MetaText>
-              <PillSection title="Tools" items={coreTools} getIcon={(tool) => toolIcons[tool] ?? defaultToolIcon} />
-              <PillSection title="Agents" items={message.agents} icon={UserRound} />
-              <PillSection title="Commands" items={message.slashCommands} icon={Slash} />
+              <PillSection title={t("Tools")} items={coreTools} getIcon={(tool) => toolIcons[tool] ?? defaultToolIcon} />
+              <PillSection title={t("Agents")} items={message.agents} icon={UserRound} />
+              <PillSection title={t("Commands")} items={message.slashCommands} icon={Slash} />
               <McpServerSection servers={mcpServersWithTools} />
               {/* Inline payload (export bundles) or a loader (live snapshots,
                   which omit debugRaw); nothing to show without either. */}
@@ -284,8 +289,8 @@ export function SystemMessage({ message, rawJson, modelChanged, handoff, restore
           {handoff
             ? providerLabel(handoff.toProvider)
             : restored
-              ? "Session Repaired"
-              : modelChanged ? "Model Changed" : providerLabel(message.provider)}
+              ? t("Session Repaired")
+              : modelChanged ? t("Model Changed") : providerLabel(message.provider)}
           <span className="ml-1.5 opacity-50 tracking-normal">
             {resolveModelLabel(PROVIDERS.find((provider) => provider.id === message.provider)?.models, message.model)}
           </span>

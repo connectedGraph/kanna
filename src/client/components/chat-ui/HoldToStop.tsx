@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react"
+import { useT } from "../../i18n/useT"
 import { createHoldToConfirm, type HoldClock } from "../../lib/hold-to-confirm"
 
 /**
@@ -264,15 +265,16 @@ export function HoldToStopRing({ arcRef, shown }: {
  * always in the tree, so that filling it in is announced.
  */
 export function HoldToStopHint({ shown }: { shown: boolean }) {
+  const t = useT()
   return (
     <>
-      <span role="status" className="sr-only">{shown ? "Hold Escape to stop" : ""}</span>
+      <span role="status" className="sr-only">{shown ? t("Hold Escape to stop") : ""}</span>
       {shown ? (
         <span
           aria-hidden
           className="pointer-events-none absolute bottom-full right-0 z-30 mb-2.5 whitespace-nowrap rounded-md border border-border bg-card px-2.5 py-1 text-xs text-card-foreground"
         >
-          Hold <kbd className="font-sans font-medium">Esc</kbd> to stop
+          {t("Hold")} <kbd className="font-sans font-medium">Esc</kbd> {t("to stop")}
         </span>
       ) : null}
     </>
