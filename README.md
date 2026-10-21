@@ -12,6 +12,16 @@
   <a href="https://www.npmjs.com/package/kanna-code"><img src="https://img.shields.io/npm/v/kanna-code.svg?style=flat&colorA=18181b&colorB=f472b6" alt="npm version" /></a>
 </p>
 
+<p align="center">
+  <strong>简体中文汉化版 / Simplified Chinese localization</strong>
+</p>
+
+> **这是 [jakemor/kanna](https://github.com/jakemor/kanna) 的个人 fork，加了完整的简体中文界面。**
+> 上游尚无 i18n（见 [#151](https://github.com/jakemor/kanna/issues/151)），
+> 本分支的改动都在 `i18n-zh-cn` 分支上，随时可以跟上游同步。
+>
+> 界面语言在 **设置 → 通用 → 界面语言** 切换，中英实时切换、无需重启。
+
 <br />
 
 <p align="center">
@@ -23,6 +33,86 @@
 </p>
 
 <br />
+
+## 中文界面 / Chinese UI
+
+设置页、项目首页、新建会话、命令面板，全部取自本 fork 的实际运行界面（1440×900 @2x）。
+
+<table>
+  <tr>
+    <td width="50%"><img src="assets/i18n/settings-general.png" alt="设置 · 通用" /></td>
+    <td width="50%"><img src="assets/i18n/settings-providers.png" alt="设置 · 提供方" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>设置 · 通用（含界面语言选择器）</sub></td>
+    <td align="center"><sub>设置 · 提供方</sub></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%"><img src="assets/i18n/projects.png" alt="项目首页" /></td>
+    <td width="50%"><img src="assets/i18n/new-chat.png" alt="新建会话" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>项目首页：分组标题与相对时间「刚刚 / 2小时前 / 3天前」</sub></td>
+    <td align="center"><sub>新建会话：空状态与输入框提示</sub></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%"><img src="assets/i18n/settings-usage.png" alt="设置 · 用量" /></td>
+    <td width="50%"><img src="assets/i18n/command-palette.png" alt="命令面板" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>设置 · 用量（服务端下发的说明也已汉化）</sub></td>
+    <td align="center"><sub>命令面板（⌘K）</sub></td>
+  </tr>
+</table>
+
+<details>
+<summary>更多截图</summary>
+
+<p align="center">
+  <img src="assets/i18n/settings-labs.png" alt="设置 · 实验功能" width="800" />
+</p>
+
+</details>
+
+<br />
+
+## 安装这个 fork / Install this fork
+
+从源码构建（本 fork 没有发布 npm 包）：
+
+```bash
+git clone -b i18n-zh-cn https://github.com/connectedGraph/kanna.git
+cd kanna
+bun install
+bun run build
+bun install -g .
+```
+
+装好后跟原版一样用：
+
+```bash
+kanna                 # 打开 http://localhost:3210
+```
+
+> 想跟上游一起装着不冲突，也可以直接 `bun run dev` 起开发服务，不用全局安装。
+
+### 跟上游同步
+
+```bash
+git remote add upstream https://github.com/jakemor/kanna.git   # 首次
+git fetch upstream
+git rebase upstream/main
+```
+
+汉化的改动集中在 `src/shared/i18n/`、`src/client/i18n/` 和组件的 `t()` 调用上，
+上游改到的文件如果正好有文案，rebase 时按 `docs/I18N.md` 的规则补 `t()` 即可 ——
+**新文案漏翻不会报错，界面上会显示英文**，跑一次 `bun run i18n:coverage` 就能找出来。
 
 ## Quickstart
 
@@ -58,6 +148,56 @@ That's it. Kanna opens in your browser at [`localhost:3210`](http://localhost:32
 - **Auto-generated titles** — chat titles generated in the background via Claude Haiku
 - **Session resumption** — resume agent sessions with full context preservation
 - **WebSocket-driven** — real-time subscription model with reactive state broadcasting
+- **Simplified Chinese UI** _(this fork)_ — every string the client renders, switchable in Settings, with English as a zero-catalog fallback
+
+## 汉化实现 / How the localization works
+
+**英文原文就是 key**，不是 `nav.chats` 这种语义 id：
+
+```tsx
+const t = useT()
+<span>{t("New Chat")}</span>          // 中文表: "New Chat": "新建会话"
+```
+
+这样一来：
+
+- **英文模式零词表依赖** —— 缺 key 时渲染 key 本身，正好是原来硬编码的英文
+- **漏翻的地方退化成可读英文**，界面上不会露出 `settings.general.theme.label`
+- **英文原文改了，key 跟着变** —— 译文显式失效（露出英文），而不是悄悄错位
+
+```
+src/shared/i18n/                 零依赖、无 React、无 Bun/node（src/shared 的规矩）
+├── index.ts                     Locale / LOCALES / translate() / normalizeLocale()
+├── zh-CN.ts                     汇总各分区
+└── catalog/                     10 个分区，便于并行翻译、避免同文件冲突
+    settings · messages · widgets · navigation · palette · git · misc · auth · chat · home
+src/client/i18n/
+├── catalogs.ts                  locale → 词表（React 无关，纯模块用 translatorFor()）
+└── useT.ts                      useT() / useLocale()
+```
+
+**语言设置走现有 settings 通道**（`AppSettingsSnapshot.locale`），持久化、跨设备同步、
+乐观更新全部免费获得。English 是默认值，**不写入配置文件**。
+
+`useT()` 从 app-settings store 读 locale，不新建 React Context —— 组件和测试都不需要额外包 Provider。
+
+### 覆盖范围
+
+- **992 个 `t()` key，1095 条译文，覆盖率 100%**（`scripts/check-coverage.ts` 校验）
+- 包含：设置页全部、侧栏、会话页头、输入框、命令面板、对话记录的消息行与工具卡片、
+  git 面板、widget 列、项目首页、登录与引导向导、相对时间（「2小时前」）、
+  服务端下发的用量说明
+- 不包含：Agent 自己输出的内容（本来就不该翻）、服务端错误诊断信息、RTL 布局
+
+### 加了新的界面文案？
+
+```bash
+bun run i18n:coverage        # 缺译文 / 无人使用的 key / 总数，有缺口退出码 1
+bun test src/shared/i18n     # 词表一致性（跨区重复、值=key、全角标点）
+```
+
+术语表在 [`docs/I18N-GLOSSARY.md`](docs/I18N-GLOSSARY.md)（Chat→会话、Diff→差异、Agent 不译…），
+改文案前先读；改码规范在 [`docs/I18N.md`](docs/I18N.md)。
 
 ## Architecture
 
@@ -214,6 +354,7 @@ bun run dev:server   # http://localhost:5175
 | `bun run dev:server` | Bun backend only             |
 | `bun run start`      | Start production server      |
 | `bun test`           | Unit/integration tests       |
+| `bun run i18n:coverage` | i18n key coverage + stale entries |
 | `bun run test:e2e`   | Playwright browser smoke suite |
 
 ## Project Structure
@@ -248,7 +389,8 @@ src/
     ├── tools.ts     Tool call normalization and hydration
     ├── protocol.ts  WebSocket message protocol
     ├── ports.ts     Port configuration
-    └── branding.ts  App name, data directory paths
+    ├── branding.ts  App name, data directory paths
+    └── i18n/        translate(), locale list, and the zh-CN catalog by area
 
 e2e/                 Playwright smoke suite (boots the real server)
 ```
