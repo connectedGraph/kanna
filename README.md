@@ -17,10 +17,11 @@
 </p>
 
 > **这是 [jakemor/kanna](https://github.com/jakemor/kanna) 的个人 fork，加了完整的简体中文界面。**
-> 上游尚无 i18n（见 [#151](https://github.com/jakemor/kanna/issues/151)），
-> 本分支的改动都在 `i18n-zh-cn` 分支上，随时可以跟上游同步。
+> 上游还没有 i18n（已提 [#151](https://github.com/jakemor/kanna/issues/151) 询问，暂无回复），
+> 汉化改动全部在默认分支 `i18n-zh-cn` 上，跟着上游 `main` 走。
 >
 > 界面语言在 **设置 → 通用 → 界面语言** 切换，中英实时切换、无需重启。
+> 英文仍是默认值 —— 不想要中文的话，这个 fork 跟原版没有区别。
 
 <br />
 
