@@ -141,7 +141,7 @@ function ChannelPeek({
                 nothing to be told apart from, and its name is only a line
                 between New Chat and the chats. */}
             {peekGroups.length > 1 ? (
-              <div className="px-1.5 pb-1 pt-1.5 text-[11px] font-medium text-muted-foreground">{peekGroup.label}</div>
+              <div className="px-1.5 pb-1 pt-1.5 text-[11px] font-medium text-muted-foreground">{t(peekGroup.label)}</div>
             ) : null}
             {peekGroup.threads.map((thread) => (
               <Fragment key={thread.chatId}>{renderChatMenu(thread, (
@@ -356,6 +356,7 @@ export function ChannelList({
   onSelectChat: (chatId: string) => void
   renderChatHoverCard: RenderChatHoverCard
 }) {
+  const t = useT()
   const listRef = useRef<HTMLDivElement>(null)
   // The channel whose menu is pinned open, showing all of its chats. Its
   // menu's "Show more" pins it; a click elsewhere, Escape, picking a chat or
@@ -394,7 +395,7 @@ export function ChannelList({
         return (
           <div key={section.key}>
             <SectionHeader
-              label={section.label}
+              label={t(section.label)}
               isExpanded={isExpanded}
               onToggle={section.collapsible ? () => setSectionExpanded(section.key, !isExpanded) : undefined}
             />

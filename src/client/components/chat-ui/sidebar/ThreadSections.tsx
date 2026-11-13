@@ -287,7 +287,7 @@ function ThreadSectionsImpl({
         return (
           <div key={bucket.key}>
             <SectionHeader
-              label={bucket.label}
+              label={t(bucket.label)}
               isExpanded={isExpanded}
               onToggle={() => toggleBucket(bucket.key, bucket.defaultExpanded)}
               onArchiveAll={() => {
