@@ -93,7 +93,10 @@ git clone -b i18n-zh-cn https://github.com/connectedGraph/kanna.git
 cd kanna
 bun install
 bun run build
-bun install -g .
+# 不要用 `bun install -g .`：仓库 bun.lock 的 workspaces 根是空名字，
+# bun 全局安装目录时会报 "refusing to install dependency with unsafe name"。
+bun pm pack --destination /tmp/kanna-pack
+bun install -g /tmp/kanna-pack/kanna-code-*.tgz
 ```
 
 装好后跟原版一样用：
