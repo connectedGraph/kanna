@@ -4,6 +4,7 @@ import { CloudPairPanel } from "../../components/cloud/CloudPairPanel"
 import { useCloudPairSession } from "../../components/cloud/useCloudPairSession"
 import { displayClaimUrl } from "../../lib/pairSession"
 import { useConnectionStore } from "../../stores/connectionStore"
+import { useT } from "../../i18n/useT"
 import { SETTINGS_ROWS } from "./registry"
 import { SETTINGS_INSET_X_CLASS, SettingsActionButton, SettingsGroup, SettingsPlaceholder, SettingsRow } from "./shared"
 
@@ -14,6 +15,7 @@ import { SETTINGS_INSET_X_CLASS, SettingsActionButton, SettingsGroup, SettingsPl
  * running locally pairs; one already viewed through Kanna Cloud is paired.
  */
 export function CloudSection() {
+  const t = useT()
   const mode = useConnectionStore((store) => store.mode)
   const load = useConnectionStore((store) => store.load)
   const { session, loaded, starting, begin } = useCloudPairSession({ enabled: mode === "local" })
@@ -24,13 +26,13 @@ export function CloudSection() {
   }, [mode, load])
 
   if (mode === "unknown") {
-    return <SettingsPlaceholder loading>Checking Kanna Cloud…</SettingsPlaceholder>
+    return <SettingsPlaceholder loading>{t("Checking Kanna Cloud…")}</SettingsPlaceholder>
   }
 
   if (mode !== "local") {
     return (
       <SettingsPlaceholder>
-        You're viewing this machine through Kanna Cloud. Setting it up happens on the machine itself.
+        {t("You're viewing this machine through Kanna Cloud. Setting it up happens on the machine itself.")}
       </SettingsPlaceholder>
     )
   }
@@ -67,7 +69,7 @@ export function CloudSection() {
                   begin()
                 }}
               >
-                Set up
+                {t("Set up")}
               </SettingsActionButton>
             ) : null}
           </SettingsRow>

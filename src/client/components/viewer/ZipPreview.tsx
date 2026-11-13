@@ -2,6 +2,7 @@ import { ArrowLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Download, File
 import { useEffect, useMemo, useState } from "react"
 import { zipListingUrl, type ZipListing } from "../../../shared/zip-preview"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import type { ViewerAttachment } from "../../stores/viewerStore"
 import { formatAttachmentSize } from "../messages/AttachmentCard"
 import { TEXT_PREVIEW_LIMIT_BYTES } from "../messages/attachmentPreview"
@@ -66,6 +67,7 @@ export function ZipPreview({ attachment, onClose, navigation }: {
    */
   navigation?: ViewerNavigation
 }) {
+  const t = useT()
   const state = useZipListing(attachment.url)
   const listing = state.status === "ready" ? state.listing : null
   const tree = useMemo(() => (listing ? buildZipTree(listing.entries) : null), [listing])
@@ -103,7 +105,7 @@ export function ZipPreview({ attachment, onClose, navigation }: {
 
   return (
     <ViewerSurface
-      label={`Preview ${attachment.name}`}
+      label={t("Preview {name}", { name: attachment.name })}
       icon={openEntry ? <FileText /> : <FileArchive />}
       title={openEntry ? openEntry.path.slice(openEntry.path.lastIndexOf("/") + 1) : attachment.name}
       subtitle={subtitle}
@@ -116,14 +118,14 @@ export function ZipPreview({ attachment, onClose, navigation }: {
         <>
           {!openEntry && folders.length > 0 ? (
             <ViewerIconButton
-              label={allExpanded ? "Collapse all" : "Expand all"}
+              label={allExpanded ? t("Collapse all") : t("Expand all")}
               onClick={() => setExpanded({ tree, paths: allExpanded ? new Set() : new Set(folders) })}
             >
               {allExpanded ? <ChevronsDownUp /> : <ChevronsUpDown />}
             </ViewerIconButton>
           ) : null}
-          <ViewerIconButton label="Copy link" onClick={() => void navigator.clipboard?.writeText(absoluteUrl(attachment.url))}><Link2 /></ViewerIconButton>
-          <ViewerIconButton label="Download" onClick={() => downloadAttachment(attachment)}><Download /></ViewerIconButton>
+          <ViewerIconButton label={t("Copy link")} onClick={() => void navigator.clipboard?.writeText(absoluteUrl(attachment.url))}><Link2 /></ViewerIconButton>
+          <ViewerIconButton label={t("Download")} onClick={() => downloadAttachment(attachment)}><Download /></ViewerIconButton>
         </>
       )}
     >
@@ -174,19 +176,20 @@ function ZipTreeList({ tree, listing, expanded, onToggle, onOpen }: {
   onToggle: (path: string) => void
   onOpen: (path: string) => void
 }) {
+  const t = useT()
   const rows = useMemo(() => visibleZipRows(tree, expanded), [expanded, tree])
   if (rows.length === 0) {
-    return <div className="flex min-h-full items-center justify-center p-6 text-sm text-muted-foreground">This zip is empty.</div>
+    return <div className="flex min-h-full items-center justify-center p-6 text-sm text-muted-foreground">{t("This zip is empty.")}</div>
   }
   return (
     // Rows touch, with their spacing inside them: a gap between hoverable
     // rows is a strip where the pointer is over nothing, and the highlight
     // flickers off crossing it.
-    <div className="py-1 text-sm" role="list" aria-label="Contents">
+    <div className="py-1 text-sm" role="list" aria-label={t("Contents")}>
       {rows.map((row) => <ZipRow key={`${row.node.kind}:${row.node.path}`} row={row} expanded={expanded} onToggle={onToggle} onOpen={onOpen} />)}
       {listing.unsafeEntries > 0 ? (
         <p className="pb-2 pt-3 text-xs text-muted-foreground" style={{ paddingLeft: NAME_INSET, paddingRight: ROW_END_PAD }}>
-          {listing.unsafeEntries.toLocaleString()} {listing.unsafeEntries === 1 ? "entry" : "entries"} with a path outside the zip not shown.
+          {t("{count} entries with a path outside the zip not shown.", { count: listing.unsafeEntries.toLocaleString() })}
         </p>
       ) : null}
     </div>
@@ -269,6 +272,7 @@ function ZipRow({ row, expanded, onToggle, onOpen }: {
     )
   }
 
+  const t = useT()
   const { entry } = node
   const opens = opensInZipViewer(entry)
   const content = (
@@ -278,7 +282,7 @@ function ZipRow({ row, expanded, onToggle, onOpen }: {
       <span aria-hidden className="h-4 w-7 shrink-0" />
       {opens ? <FileText className="size-4 shrink-0 text-muted-foreground" /> : <File className="size-4 shrink-0 text-muted-foreground/70" />}
       <span className={cn("min-w-0 flex-1 truncate", opens ? "text-foreground" : "text-muted-foreground")}>{node.name}</span>
-      {entry.encrypted ? <Lock aria-label="Encrypted" className="size-3.5 shrink-0 text-muted-foreground" /> : null}
+      {entry.encrypted ? <Lock aria-label={t("Encrypted")} className="size-3.5 shrink-0 text-muted-foreground" /> : null}
       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{formatAttachmentSize(entry.size)}</span>
     </>
   )
@@ -304,8 +308,9 @@ function ZipRow({ row, expanded, onToggle, onOpen }: {
 const SKELETON_ROWS: Array<[depth: number, width: string]> = [[0, "34%"], [1, "46%"], [1, "28%"], [2, "52%"], [2, "38%"], [1, "41%"], [0, "30%"], [0, "44%"]]
 
 function TreeSkeleton() {
+  const t = useT()
   return (
-    <div className="space-y-3 py-3" aria-busy aria-label="Loading contents">
+    <div className="space-y-3 py-3" aria-busy aria-label={t("Loading contents")}>
       {SKELETON_ROWS.map(([depth, width], index) => (
         <div key={index} className="flex items-center gap-2" style={{ paddingLeft: NAME_INSET + depth * INDENT, paddingRight: ROW_END_PAD }}>
           <Skeleton className="h-3.5" style={{ width }} />
@@ -316,6 +321,7 @@ function TreeSkeleton() {
 }
 
 function ListingError({ message, attachment }: { message: string; attachment: ViewerAttachment }) {
+  const t = useT()
   return (
     <div className="flex min-h-full flex-col items-center justify-center gap-3 p-6 text-center">
       <p className="max-w-[48ch] text-sm text-muted-foreground">{message}</p>
@@ -324,7 +330,7 @@ function ListingError({ message, attachment }: { message: string; attachment: Vi
         onClick={() => downloadAttachment(attachment)}
         className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted"
       >
-        <Download className="size-3.5" /> Download
+        <Download className="size-3.5" /> {t("Download")}
       </button>
     </div>
   )

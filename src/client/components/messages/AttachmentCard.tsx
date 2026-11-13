@@ -100,6 +100,7 @@ export function AttachmentFileCard({
   /** A click saves the file rather than showing it: the card says so. */
   downloads?: boolean
 }) {
+  const t = useT()
   const Icon = getAttachmentIcon(classifyAttachmentIcon(attachment))
 
   return (
@@ -118,7 +119,7 @@ export function AttachmentFileCard({
             {attachment.mimeType} · {formatAttachmentSize(attachment.size)}
           </div>
         </div>
-        {downloads ? <Download aria-label="Download" className="size-4 shrink-0 text-muted-foreground" /> : null}
+        {downloads ? <Download aria-label={t("Download")} className="size-4 shrink-0 text-muted-foreground" /> : null}
       </button>
       {onRemove ? <RemoveButton displayName={attachment.displayName} onRemove={onRemove} /> : null}
     </div>

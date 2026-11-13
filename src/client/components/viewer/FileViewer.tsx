@@ -2,6 +2,7 @@ import { File as CodeFile, type FileOptions } from "@pierre/diffs/react"
 import { Code, FileCode, FileDiff, WrapText } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTheme } from "../../hooks/useTheme"
+import { useT } from "../../i18n/useT"
 import { cn } from "../../lib/utils"
 import { openViewer } from "../../stores/viewerStore"
 import { OpenFileSelect } from "../open-external-menu"
@@ -58,6 +59,7 @@ export function FileViewer({
   context: DiffViewerContext
   onClose: () => void
 }) {
+  const t = useT()
   const { name, folder } = splitDiffPath(path)
   const changed = context.files.find((file) => file.path === path)
   // A changed file's digest rides along, so the agent's next edit reads
@@ -84,16 +86,16 @@ export function FileViewer({
         <ViewerToggle
           value={view}
           onChange={setView}
-          options={[{ value: "preview", label: "Preview" }, { value: "original", label: "Original" }]}
+          options={[{ value: "preview", label: t("Preview") }, { value: "original", label: t("Original") }]}
         />
       ) : undefined}
       toolbar={(
         <>
           {changed ? (
-            <ViewerIconButton label="Show changes" onClick={() => openViewer({ kind: "diff", projectId, path })}><FileDiff /></ViewerIconButton>
+            <ViewerIconButton label={t("Show changes")} onClick={() => openViewer({ kind: "diff", projectId, path })}><FileDiff /></ViewerIconButton>
           ) : null}
           {showPreview ? null : (
-            <ViewerIconButton label={context.wrapLines ? "Disable word wrap" : "Enable word wrap"} active={context.wrapLines} onClick={() => context.onWrapLinesChange(!context.wrapLines)}><WrapText /></ViewerIconButton>
+            <ViewerIconButton label={context.wrapLines ? t("Disable word wrap") : t("Enable word wrap")} active={context.wrapLines} onClick={() => context.onWrapLinesChange(!context.wrapLines)}><WrapText /></ViewerIconButton>
           )}
           <OpenFileSelect isMac={context.isMac} onOpenExternal={(action, editor) => context.onOpenFile(path, { line, action, editor })} />
         </>
@@ -123,24 +125,25 @@ function FileText({ url, name, line, wrap, editorLabel, onOpenInEditor }: {
   editorLabel: string
   onOpenInEditor: () => void
 }) {
+  const t = useT()
   const text = useFileText(url)
   if (text.status === "loading") return <CodeSkeleton />
   if (text.status === "error") {
     return (
       <div className="flex min-h-full flex-col items-center justify-center gap-3 p-6 text-center">
-        <p className="text-sm text-muted-foreground">Couldn't read this file.</p>
+        <p className="text-sm text-muted-foreground">{t("Couldn't read this file.")}</p>
         <button
           type="button"
           onClick={onOpenInEditor}
           className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted"
         >
-          <Code className="size-3.5" /> Open in {editorLabel}
+          <Code className="size-3.5" /> {t("Open in {editor}", { editor: editorLabel })}
         </button>
       </div>
     )
   }
   if (text.contents.length === 0) {
-    return <div className="flex min-h-full items-center justify-center p-6 text-sm text-muted-foreground">Empty file.</div>
+    return <div className="flex min-h-full items-center justify-center p-6 text-sm text-muted-foreground">{t("Empty file.")}</div>
   }
   return <CodeView name={name} contents={text.contents} line={line} wrap={wrap} />
 }
@@ -157,8 +160,9 @@ const SKELETON_CODE_LINES = [
 ]
 
 function CodeSkeleton() {
+  const t = useT()
   return (
-    <div className="space-y-2 px-4 py-4" aria-busy aria-label="Loading file">
+    <div className="space-y-2 px-4 py-4" aria-busy aria-label={t("Loading file")}>
       {SKELETON_CODE_LINES.map((entry, index) => (
         <div key={index} className="flex items-center gap-3">
           <Skeleton className="h-3 w-5 shrink-0 bg-foreground/[0.05]" />

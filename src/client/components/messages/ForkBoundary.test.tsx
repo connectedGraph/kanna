@@ -107,7 +107,7 @@ describe("the Forked from line", () => {
 
   test("names the source as a link that opens it", () => {
     const html = renderToStaticMarkup(<ForkBoundaryLine source={{ title: "Delegator Tickets: Web UI" }} at={FORKED_AT} onOpen={() => undefined} />)
-    expect(html).toContain("Forked from\u00a0</span><button")
+    expect(html).toContain("Forked from </span><button")
     expect(html).toContain(">Delegator Tickets: Web UI</button>")
     expect(html).toContain(`\u00a0· ${time}`)
     // Where there is nothing to open it in, the title is only words.

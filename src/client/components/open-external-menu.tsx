@@ -10,6 +10,7 @@ import { editorPresetFromOpenAppValue, isEditorInstalled as isPresetInstalled, r
 import { DefaultAppIcon, EDITOR_OPTIONS, EditorIcon, FinderIcon, FolderFallbackIcon, GithubIcon, PreviewIcon, TerminalIcon } from "./editor-icons"
 import { HotkeyTooltip, HotkeyTooltipContent, HotkeyTooltipTrigger, Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 import { Button } from "./ui/button"
+import { useT } from "../i18n/useT"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger } from "./ui/select"
 import { ContextMenuContent, ContextMenuItem } from "./ui/context-menu"
 
@@ -362,6 +363,7 @@ export function OpenExternalSelect({
   repoUrl?: string
   onOpenExternal: (action: OpenExternalAction, editor?: EditorOpenSettings, terminal?: TerminalPreset) => void
 }) {
+  const t = useT()
   const installedEditors = useInstalledEditors()
   const installedTerminals = useInstalledTerminals()
   const items = useMemo(() => getOpenAppItems({
@@ -417,7 +419,7 @@ export function OpenExternalSelect({
       </HotkeyTooltip>
       <Select value={undefined} onValueChange={(value) => handleOpenValue(value as OpenAppValue)}>
         <SelectTrigger
-          aria-label="Choose open destination"
+          aria-label={t("Choose open destination")}
           className="!h-auto !py-0 !pl-0.5 !pr-1 border-0 bg-transparent hover:bg-transparent focus:ring-0 focus:ring-offset-0 [&>svg]:hidden"
         >
           <div className="flex items-center justify-center size-5">
@@ -455,6 +457,7 @@ export function OpenFileSelect({ isMac, onOpenExternal }: {
   isMac: boolean
   onOpenExternal: (action: OpenExternalAction, editor?: EditorOpenSettings) => void
 }) {
+  const t = useT()
   const editorPreset = useTerminalPreferencesStore((store) => store.editorPreset)
   const editorCommandTemplate = useTerminalPreferencesStore((store) => store.editorCommandTemplate)
   const installedEditors = useInstalledEditors()
@@ -497,7 +500,7 @@ export function OpenFileSelect({ isMac, onOpenExternal }: {
       </Tooltip>
       <Select value={undefined} onValueChange={(value) => handleOpenValue(value as OpenAppValue)}>
         <SelectTrigger
-          aria-label="Choose where to open"
+          aria-label={t("Choose where to open")}
           className="!h-full !w-auto !py-0 !pl-0.5 !pr-1 rounded-l-none rounded-r-md border-0 bg-transparent text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:ring-0 focus:ring-offset-0 [&>svg]:hidden"
         >
           {/* Wrapped: `[&>svg]:hidden` hides the trigger's built-in arrow,

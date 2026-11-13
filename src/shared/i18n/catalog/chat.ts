@@ -26,4 +26,11 @@ export const chat: Messages = {
   "What are we building?": "在构建点什么？",
 "Build in {project}...": "在 {project} 中构建…",
 "Build something...": "构建点什么…",
+  "Copy details": "复制详情",
+  "Transcribe and send": "转写并发送",
+  "Transcribing...": "正在转写…",
+  "Record voice message": "录制语音消息",
+  "Send message": "发送消息",
+  "Stop (hold Esc to stop this turn only)": "停止（按住 Esc 只停止本轮）",
+  "Stop (hold Esc)": "停止（按住 Esc）",
 }

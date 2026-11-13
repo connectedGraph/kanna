@@ -4,6 +4,7 @@ import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "../ui/dialog"
 import { SegmentedControl } from "../ui/segmented-control"
 import { ViewerIconButton } from "../viewer/ViewerSurface"
+import { useT } from "../../i18n/useT"
 import { cn } from "../../lib/utils"
 import { canvasToBlob, loadImageBlob } from "../../lib/visualization-image"
 import {
@@ -46,6 +47,7 @@ export function VisualizationMarkup({ title, image, onCancel, onAttach }: {
   /** False when nothing took the file: a page with no composer. */
   onAttach: (file: File) => boolean
 }) {
+  const t = useT()
   const [source, setSource] = useState<{ image: HTMLImageElement; width: number; height: number } | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [tool, setTool] = useState<MarkupTool>("pen")
@@ -235,10 +237,10 @@ export function VisualizationMarkup({ title, image, onCancel, onAttach }: {
       >
         {/* Right padding clears the dialog's close button. */}
         <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border p-3 pr-12">
-          <DialogTitle className="text-base">Mark up</DialogTitle>
-          <DialogDescription className="sr-only">Draw on the visualization, then add the image to your next message.</DialogDescription>
+          <DialogTitle className="text-base">{t("Mark up")}</DialogTitle>
+          <DialogDescription className="sr-only">{t("Draw on the visualization, then add the image to your next message.")}</DialogDescription>
           <SegmentedControl size="sm" value={tool} onValueChange={setTool} options={TOOLS} />
-          <div role="radiogroup" aria-label="Color" className="flex items-center gap-1.5">
+          <div role="radiogroup" aria-label={t("Color")} className="flex items-center gap-1.5">
             {MARKUP_COLORS.map((option) => (
               <button
                 key={option.value}
@@ -256,20 +258,20 @@ export function VisualizationMarkup({ title, image, onCancel, onAttach }: {
             ))}
           </div>
           <div className="flex items-center gap-1">
-            <ViewerIconButton label="Undo" disabled={markup.past.length === 0 && !textDraft} onClick={undo}><Undo2 /></ViewerIconButton>
-            <ViewerIconButton label="Clear" disabled={markup.marks.length === 0 && !textDraft} onClick={clear}><Trash2 /></ViewerIconButton>
+            <ViewerIconButton label={t("Undo")} disabled={markup.past.length === 0 && !textDraft} onClick={undo}><Undo2 /></ViewerIconButton>
+            <ViewerIconButton label={t("Clear")} disabled={markup.marks.length === 0 && !textDraft} onClick={clear}><Trash2 /></ViewerIconButton>
           </div>
         </div>
         <div ref={stageRef} className="relative m-3 flex min-h-0 flex-1 items-center justify-center">
           {loadError ? (
             <p role="alert" className="text-sm text-muted-foreground">{loadError}</p>
           ) : !source ? (
-            <p className="text-sm text-muted-foreground">Drawing the visualization…</p>
+            <p className="text-sm text-muted-foreground">{t("Drawing the visualization…")}</p>
           ) : fit.scale > 0 ? (
             <div className="relative shadow-sm ring-1 ring-border" style={{ width: fit.width, height: fit.height }}>
               <canvas
                 ref={canvasRef}
-                aria-label={`Markup canvas for ${title}`}
+                aria-label={t("Markup canvas for {title}", { title })}
                 className={cn("block size-full", tool === "text" ? "cursor-text" : "cursor-crosshair")}
                 style={{ touchAction: "none" }}
                 onPointerDown={onPointerDown}
@@ -281,7 +283,7 @@ export function VisualizationMarkup({ title, image, onCancel, onAttach }: {
                 <input
                   key={textDraft.id}
                   autoFocus
-                  aria-label="Label"
+                  aria-label={t("Label")}
                   value={textDraft.value}
                   onChange={(event) => {
                     const next = { ...textDraft, value: event.target.value }
@@ -310,9 +312,9 @@ export function VisualizationMarkup({ title, image, onCancel, onAttach }: {
         </div>
         <DialogFooter className="items-center">
           {attachError ? <p role="alert" className="mr-auto px-2 text-sm text-destructive">{attachError}</p> : null}
-          <Button type="button" variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel}>{t("Cancel")}</Button>
           <Button type="button" variant="secondary" size="sm" disabled={!source || attaching} onClick={() => void attach()}>
-            Add to prompt
+            {t("Add to prompt")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState
 import { FOCUS_FALLBACK_IGNORE_ATTRIBUTE } from "../../app/chatFocusPolicy"
 import { isEscapeClaimed, resolveEscapePress, VIEWER_FIELDS_KEEP_ESCAPE_ATTRIBUTE } from "../../lib/escape-key"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import { playEnter, type AttachmentStepMotion } from "./attachmentMotion"
 import { useScrollMemory } from "./scroll-memory"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
@@ -287,6 +288,7 @@ export function ViewerSurface({
   /** Does not take focus from something focused outside the pane when it mounts. See the focus effect. */
   quietFocus?: boolean
 }) {
+  const t = useT()
   const surfaceRef = useRef<HTMLDivElement | null>(null)
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const placement = useContext(ViewerPlacementContext)
@@ -300,7 +302,7 @@ export function ViewerSurface({
   // The view's own Back (a previewed chat names what it goes back to), or
   // the pane's, for a view that has none of its own.
   const back = leading ?? (floor?.onBack ? (
-    <ViewerIconButton label={`${floor.backLabel} (Esc)`} onClick={floor.onBack}><ArrowLeft /></ViewerIconButton>
+    <ViewerIconButton label={`${t(floor.backLabel)} (Esc)`} onClick={floor.onBack}><ArrowLeft /></ViewerIconButton>
   ) : null)
   const docked = placement !== null && !placement.expanded
   const dockedRef = useRef(docked)
@@ -427,19 +429,19 @@ export function ViewerSurface({
           {navigation && navigation.count > 1 ? (
             <>
               <ViewerDivider />
-              <span className="shrink-0 px-1 text-xs tabular-nums text-muted-foreground">{navigation.index + 1} of {navigation.count}</span>
-              <ViewerIconButton label={navigation.previousLabel ?? "Previous (k)"} disabled={navigation.hasPrevious === false} onClick={navigation.onPrevious} onDisabledClick={navigation.onEdge && (() => navigation.onEdge?.("previous"))}>{navigation.horizontal ? <ChevronLeft /> : <ChevronUp />}</ViewerIconButton>
-              <ViewerIconButton label={navigation.nextLabel ?? "Next (j)"} disabled={navigation.hasNext === false} onClick={navigation.onNext} onDisabledClick={navigation.onEdge && (() => navigation.onEdge?.("next"))}>{navigation.horizontal ? <ChevronRight /> : <ChevronDown />}</ViewerIconButton>
+              <span className="shrink-0 px-1 text-xs tabular-nums text-muted-foreground">{t("{index} of {count}", { index: navigation.index + 1, count: navigation.count })}</span>
+              <ViewerIconButton label={t(navigation.previousLabel ?? "Previous (k)")} disabled={navigation.hasPrevious === false} onClick={navigation.onPrevious} onDisabledClick={navigation.onEdge && (() => navigation.onEdge?.("previous"))}>{navigation.horizontal ? <ChevronLeft /> : <ChevronUp />}</ViewerIconButton>
+              <ViewerIconButton label={t(navigation.nextLabel ?? "Next (j)")} disabled={navigation.hasNext === false} onClick={navigation.onNext} onDisabledClick={navigation.onEdge && (() => navigation.onEdge?.("next"))}>{navigation.horizontal ? <ChevronRight /> : <ChevronDown />}</ViewerIconButton>
             </>
           ) : null}
           <ViewerDivider />
           {placement ? (
-            <ViewerIconButton label={placement.expanded ? "Show chat" : "Expand"} onClick={placement.onToggleExpanded}>
+            <ViewerIconButton label={placement.expanded ? t("Show chat") : t("Expand")} onClick={placement.onToggleExpanded}>
               {placement.expanded ? <Minimize2 /> : <Maximize2 />}
             </ViewerIconButton>
           ) : null}
           {/* Esc is Back while there is one, so Close names the key only where it is what the key does. */}
-          <ViewerIconButton label={back && floor ? "Close" : "Close (Esc)"} onClick={floor ? floor.onShut : onClose}><X /></ViewerIconButton>
+          <ViewerIconButton label={back && floor ? t("Close") : t("Close (Esc)")} onClick={floor ? floor.onShut : onClose}><X /></ViewerIconButton>
         </div>
       </header>
       <div ref={bodyRef} data-viewer-body className={cn("min-h-0 flex-1 overflow-auto", bodyEnters && VIEWER_BODY_ENTER_CLASS, bodyClassName)}>{children}</div>

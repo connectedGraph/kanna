@@ -1,6 +1,7 @@
 import { useSidebarReady } from "../../stores/sidebarStore"
 import { useChatReferenceActions, useSidebarThread } from "../chat-ui/chat-reference"
 import { formatPromptTimestamp, TimeBoundary } from "./ResultMessage"
+import { useT } from "../../i18n/useT"
 
 /**
  * The line where a fork's copied history ends and its own begins: "Forked
@@ -31,6 +32,7 @@ export function ForkBoundaryLine({ source, at, onOpen }: {
   /** Absent where there is nothing to open a chat in (the export viewer). */
   onOpen?: () => void
 }) {
+  const t = useT()
   const time = formatPromptTimestamp(new Date(at).toISOString())
   const title = typeof source === "object" ? source.title : null
   return (
@@ -40,7 +42,7 @@ export function ForkBoundaryLine({ source, at, onOpen }: {
       labelClassName="flex min-w-0 max-w-[80%] items-baseline"
       label={(
         <>
-          <span className="shrink-0">{title !== null ? "Forked from " : source === "deleted" ? "Forked from a deleted chat" : "Forked"}</span>
+          <span className="shrink-0">{title !== null ? t("Forked from") + " " : source === "deleted" ? t("Forked from a deleted chat") : t("Forked")}</span>
           {title !== null && onOpen ? (
             <button
               type="button"

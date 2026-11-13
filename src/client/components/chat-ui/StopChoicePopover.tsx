@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
-import { cascadeStopLabel } from "../../../shared/stop-turn"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import { Popover, PopoverAnchor, PopoverContent } from "../ui/popover"
 
 const CHOICE_CLASS = "flex w-full items-center rounded-lg px-3 py-2 text-left text-sm outline-hidden transition-colors duration-100 hover:bg-muted focus-visible:bg-muted motion-reduce:transition-none"
@@ -22,6 +22,7 @@ export function StopChoicePopover({ open, onOpenChange, count, onStop, children 
   /** The stop button, which the popover is placed from. */
   children: ReactNode
 }) {
+  const t = useT()
   const choose = (cascade: boolean) => {
     onOpenChange(false)
     onStop(cascade)
@@ -33,17 +34,17 @@ export function StopChoicePopover({ open, onOpenChange, count, onStop, children 
         side="top"
         align="end"
         sideOffset={8}
-        aria-label="Stop"
+        aria-label={t("Stop")}
         // Opening focuses the first choice (Radix's focus scope does that),
         // and closing hands the focus back to the composer (PopoverContent).
         className="w-auto min-w-56 p-1"
       >
-        <div role="menu" aria-label="Stop" className="flex flex-col">
+        <div role="menu" aria-label={t("Stop")} className="flex flex-col">
           <button type="button" role="menuitem" className={CHOICE_CLASS} onClick={() => choose(false)}>
-            Stop this turn
+            {t("Stop this turn")}
           </button>
           <button type="button" role="menuitem" className={cn(CHOICE_CLASS, "text-destructive")} onClick={() => choose(true)}>
-            {cascadeStopLabel(count)}
+            {count === 1 ? t("Stop this turn and {count} sub-chat", { count }) : t("Stop this turn and {count} sub-chats", { count })}
           </button>
         </div>
       </PopoverContent>

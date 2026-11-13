@@ -116,7 +116,7 @@ function PasswordScreen({
               disabled={submitting || password.length === 0}
               className="h-11 w-full"
             >
-              {submitting ? "Unlocking..." : "Unlock"}
+              {submitting ? t("Unlocking...") : t("Unlock")}
             </Button>
           </form>
         </CardContent>

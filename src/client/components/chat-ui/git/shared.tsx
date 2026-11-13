@@ -1,3 +1,4 @@
+import { useT } from "../../../i18n/useT"
 import { Check, Minus, X } from "lucide-react"
 import type { ReactNode } from "react"
 import type { ChatAttachment, ChatCommitChecks, ChatDiffSnapshot } from "../../../../shared/types"
@@ -47,10 +48,11 @@ export function StageCheckbox({
   className?: string
   onClick: () => void
 }) {
+  const t = useT()
   return (
     <button
       type="button"
-      aria-label={label ?? (checked ? "Exclude file from commit" : "Include file in commit")}
+      aria-label={label ?? t(checked ? "Exclude file from commit" : "Include file in commit")}
       aria-checked={mixed ? "mixed" : checked}
       aria-pressed={mixed ? "mixed" : checked}
       onClick={(event) => {

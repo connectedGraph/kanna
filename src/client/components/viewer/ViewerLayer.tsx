@@ -10,6 +10,7 @@ import { viewerLevelBelow } from "../../lib/viewer-levels"
 import { viewerCardEnters, viewerPaneState, type ViewerPaneState } from "../../lib/viewer-split"
 import { attachmentStepMotion, clearGhosts, isHeldKeyRepeat, leaveAsGhost, playNudge, type AttachmentStepMotion } from "./attachmentMotion"
 import { attachmentNavigation } from "./attachmentSequence"
+import { useT } from "../../i18n/useT"
 import { ViewerCardPlaceholder, ViewerFloorProvider, ViewerMotionProvider, ViewerPlacementProvider, type ViewerFloorState, type ViewerMotion, type ViewerPlacement } from "./ViewerSurface"
 
 // Each view loads with its first use: the diff renderer (shiki grammars),
@@ -77,6 +78,7 @@ export function ViewerLayer({ diff, chat, attachments, className, onOpenLocalLin
   // as Close is Escape's step back a level, and their card draws a Back
   // arrow beside an X that shuts the pane (`ViewerSurface`).
   const floor = useViewerStore((store) => store.floor)
+  const t = useT()
   const viewer = presented ? presented.viewer : live
   const stepBack = useViewerStore((store) => store.stepBack)
   const shut = useViewerStore((store) => store.shut)
@@ -85,7 +87,7 @@ export function ViewerLayer({ diff, chat, attachments, className, onOpenLocalLin
   const backKind = hasBack ? below.item.kind : null
   const floorState = useMemo<ViewerFloorState | null>(() => (floor ? {
     onBack: hasBack ? stepBack : null,
-    backLabel: backKind === "chat" ? "Back to chat" : "Back to delegated chats",
+    backLabel: backKind === "chat" ? t("Back to chat") : t("Back to delegated chats"),
     onShut: shut,
   } : null), [backKind, floor, hasBack, shut, stepBack])
   useEffect(() => (canShowChat ? useViewerStore.getState().registerChatPreviewHost() : undefined), [canShowChat])

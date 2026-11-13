@@ -104,7 +104,7 @@ export function AttachmentsCard({ attachments }: { attachments: DisplayAttachmen
                     >
                       <FileText className="size-5 shrink-0 text-muted-foreground" />
                       <span className="min-w-0 truncate">{attachment.name}</span>
-                      {downloads ? <Download aria-label="Download" className="size-4 shrink-0" /> : <ArrowUpRight className="size-4 shrink-0" />}
+                      {downloads ? <Download aria-label={t("Download")} className="size-4 shrink-0" /> : <ArrowUpRight className="size-4 shrink-0" />}
                     </a>
                   )}
                   {failed && <span className="text-xs text-muted-foreground">{t("Preview unavailable. Open the file to view it.")}</span>}

@@ -51,8 +51,8 @@ describe("Add Secret", () => {
     // Radix renders the chosen title only in the browser; statically, the labelled picker.
     expect(html).toMatch(/role="combobox"[^>]*aria-label="Project"/)
     expect(html).toContain('aria-label="Name"')
-    expect(html).toMatch(/type="password"[^>]*aria-label="value"/)
-    expect(html).toContain('aria-label="Show value" aria-pressed="false"')
+    expect(html).toMatch(/type="password"[^>]*aria-label="Value"/)
+    expect(html).toContain('aria-label="Show Value" aria-pressed="false"')
     expect(html).toContain('autoComplete="new-password"')
     expect(html).toContain(">Save<")
     expect(html).toContain(">Cancel<")

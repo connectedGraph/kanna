@@ -8,6 +8,7 @@ import {
   type SeparatorProps,
 } from "react-resizable-panels"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 
 const ResizablePanelGroup = ({
   className,
@@ -31,6 +32,7 @@ const ResizableHandle = ({
   withHandle?: boolean
   orientation: Orientation
 }) => {
+  const t = useT()
   void withHandle
 
   return (
@@ -54,7 +56,7 @@ const ResizableHandle = ({
       )}
       {...props}
     >
-      <span className="sr-only">{orientation === "vertical" ? "Resize rows" : "Resize columns"}</span>
+      <span className="sr-only">{t(orientation === "vertical" ? "Resize rows" : "Resize columns")}</span>
     </Separator>
   )
 }

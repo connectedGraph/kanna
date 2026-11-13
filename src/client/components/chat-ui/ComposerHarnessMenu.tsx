@@ -12,6 +12,7 @@ import {
 import { CHAT_MODE_LABELS, type ComposerOptionControls } from "../../lib/composer"
 import { formatContextWindowTokens, type ContextWindowSnapshot } from "../../lib/contextWindow"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import type { ComposerController } from "../../hooks/useComposer"
 import { useUnauthenticatedHarnesses } from "../../stores/providerAuthStore"
 import { PROVIDER_ICONS } from "../provider-icons"
@@ -219,13 +220,14 @@ export function HarnessMenuBody({
   onModeChange,
   onEditModels,
 }: HarnessMenuBodyProps) {
+  const t = useT()
   // Keep the catalog's order, but sink signed-out harnesses to the end so the
   // ready ones are the first reach.
   const ordered = useMemo(() => [
     ...providers.filter((provider) => !unauthenticated.has(provider.id)),
     ...providers.filter((provider) => unauthenticated.has(provider.id)),
   ], [providers, unauthenticated])
-  const fastLabel = selectedProvider === "cursor" ? "Fast" : "Fast Mode"
+  const fastLabel = selectedProvider === "cursor" ? t("Fast") : t("Fast Mode")
   const usedPercentage = contextWindow?.usedPercentage ?? null
 
   return (
@@ -280,14 +282,14 @@ export function HarnessMenuBody({
       </div>
       {providerSwitchPending ? (
         <div className="border-b border-border/60 px-3 py-1.5 text-xs text-amber-500 dark:text-amber-400">
-          {providerConfig.label} takes over on your next message
+          {t("{provider} takes over on your next message", { provider: providerConfig.label })}
         </div>
       ) : null}
       {/* Every setting is a row: Model, Effort and Mode open a picker, Fast
           Mode is a switch, last. Rows touch, hairline between. */}
       <div className="divide-y divide-border/60">
         <MenuSelectRow
-          title="Model"
+          title={t("Model")}
           value={model}
           onValueChange={(value) => {
             if (value === ADD_MODELS_VALUE) onEditModels?.()
@@ -297,18 +299,18 @@ export function HarnessMenuBody({
           {providerConfig.models.map((candidate) => (
             <SelectItem key={candidate.id} value={candidate.id}>
               {candidate.id === "gpt-5.6-luna" && (modelOptions as CodexModelOptions).reasoningEffort === "ultra"
-                ? `${candidate.label} (Ultra → Max)`
+                ? `${candidate.label} (${t("Ultra → Max")})`
                 : candidate.label}
             </SelectItem>
           ))}
           {/* Pi's list is the user's Default Models; this edits it. Never
               selected: picking it opens the dialog and the value stays. */}
           {selectedProvider === "pi" && onEditModels ? (
-            <SelectItem value={ADD_MODELS_VALUE}>Add models…</SelectItem>
+            <SelectItem value={ADD_MODELS_VALUE}>{t("Add models…")}</SelectItem>
           ) : null}
         </MenuSelectRow>
         {reasoning ? (
-          <MenuSelectRow title="Effort" value={reasoning.selectedId ?? ""} onValueChange={onReasoningChange}>
+          <MenuSelectRow title={t("Effort")} value={reasoning.selectedId ?? ""} onValueChange={onReasoningChange}>
             {reasoning.options.map((option) => (
               <SelectItem key={option.id} value={option.id} disabled={option.disabled} title={option.description}>
                 {option.label}
@@ -317,10 +319,10 @@ export function HarnessMenuBody({
           </MenuSelectRow>
         ) : null}
         {mode ? (
-          <MenuSelectRow title="Mode" value={mode.selected} onValueChange={(value) => onModeChange(value as ChatMode)}>
+          <MenuSelectRow title={t("Mode")} value={mode.selected} onValueChange={(value) => onModeChange(value as ChatMode)}>
             {mode.options.map((option) => (
-              <SelectItem key={option} value={option} title={CHAT_MODE_LABELS[option].description}>
-                {CHAT_MODE_LABELS[option].label}
+              <SelectItem key={option} value={option} title={t(CHAT_MODE_LABELS[option].description)}>
+                {t(CHAT_MODE_LABELS[option].label)}
               </SelectItem>
             ))}
           </MenuSelectRow>

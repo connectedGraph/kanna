@@ -1367,7 +1367,7 @@ const TranscriptScrollerBody = memo(function TranscriptScrollerBody({
             disabled={isLoadingOlderMessages}
             className="rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
           >
-            {isLoadingOlderMessages ? "Loading…" : "Load More"}
+            {isLoadingOlderMessages ? t("Loading…") : t("Load More")}
           </button>
         </div>
       ) : null}

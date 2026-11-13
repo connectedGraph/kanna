@@ -175,6 +175,7 @@ function replaceTextSelection(args: {
  * can hand it over whole.
  */
 function UploadErrorNotice({ report }: { report: UploadErrorReport }) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
@@ -196,7 +197,7 @@ function UploadErrorNotice({ report }: { report: UploadErrorReport }) {
             className="shrink-0 inline-flex items-center gap-1 rounded-md border border-destructive/40 px-2 py-0.5 text-xs transition-colors hover:bg-destructive/10"
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-            {copied ? "Copied" : "Copy details"}
+            {copied ? t("Copied") : t("Copy details")}
           </button>
         ) : null}
       </div>
@@ -1352,7 +1353,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
                 type="button"
                 variant={recording ? "default" : "ghost"}
                 size="icon"
-                title={recording ? "Transcribe and send" : transcribing ? "Transcribing..." : "Record voice message"}
+                title={recording ? t("Transcribe and send") : transcribing ? t("Transcribing...") : t("Record voice message")}
                 disabled={disabled || transcribing}
                 onPointerDown={(event) => {
                   event.preventDefault()
@@ -1388,8 +1389,8 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
             <span className="relative flex flex-shrink-0">
             <Button
               type="button"
-              aria-label={showStop ? "Stop" : "Send message"}
-              title={showStop ? (cascadingSubchats > 0 ? "Stop (hold Esc to stop this turn only)" : "Stop (hold Esc)") : undefined}
+              aria-label={showStop ? t("Stop") : t("Send message")}
+              title={showStop ? (cascadingSubchats > 0 ? t("Stop (hold Esc to stop this turn only)") : t("Stop (hold Esc)")) : undefined}
               aria-haspopup={showStop && cascadingSubchats > 0 ? "menu" : undefined}
               aria-expanded={showStop && cascadingSubchats > 0 ? stopChoiceOpen : undefined}
               onPointerDown={(event) => {
@@ -1597,7 +1598,7 @@ const ChatInputInner = forwardRef<ChatInputHandle, Props>(function ChatInput({
                   variant="ghost"
                   size="icon"
                   data-slot="mic"
-                  title="Record voice message"
+                  title={t("Record voice message")}
                   disabled={disabled}
                   onPointerDown={(event) => {
                     event.preventDefault()

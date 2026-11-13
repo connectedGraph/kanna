@@ -10,6 +10,7 @@ import { cn } from "../../lib/utils"
 import { useSidebarStore } from "../../stores/sidebarStore"
 import type { KannaState } from "../useKannaState"
 import { SETTINGS_ROWS } from "./registry"
+import { useT } from "../../i18n/useT"
 import { SettingsActionButton, SettingsGroup, SettingsGroups, SettingsNotice, SettingsPlaceholder, SettingsSelect } from "./shared"
 
 /*
@@ -79,6 +80,7 @@ function MaskedValueInput({
   onChange: (value: string) => void
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
 }) {
+  const t = useT()
   const [revealed, setRevealed] = useState(false)
   return (
     <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-xl border border-border bg-background focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-ring/20">
@@ -108,7 +110,7 @@ function MaskedValueInput({
         type="button"
         onClick={() => setRevealed((current) => !current)}
         // A toggle keeps one name; aria-pressed says whether it is on.
-        aria-label={`Show ${label}`}
+        aria-label={t("Show {label}", { label })}
         aria-pressed={revealed}
         aria-controls={id}
         className="mr-1 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-[color,scale] duration-100 ease-out hover:text-foreground active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
@@ -130,6 +132,7 @@ function ReplaceField({
   onSave: (value: string) => Promise<boolean>
   onCancel: () => void
 }) {
+  const t = useT()
   const id = useId()
   const [value, setValue] = useState("")
   const input = useRef<HTMLInputElement>(null)
@@ -158,23 +161,23 @@ function ReplaceField({
     <div className="flex flex-col gap-2 pb-3 transition-opacity duration-150 ease-snappy starting:opacity-0 @2xl:flex-row @2xl:items-center">
       <MaskedValueInput
         id={id}
-        label={`new value for ${name}`}
+        label={t("new value for {name}", { name })}
         value={value}
         disabled={saving}
-        placeholder="New value"
+        placeholder={t("New value")}
         inputRef={input}
         onChange={setValue}
         onKeyDown={handleKeyDown}
       />
       <div className="flex shrink-0 items-center justify-end gap-4">
-        <SettingsActionButton onClick={onCancel} disabled={saving}>Cancel</SettingsActionButton>
+        <SettingsActionButton onClick={onCancel} disabled={saving}>{t("Cancel")}</SettingsActionButton>
         <SettingsActionButton
           prominent
           onClick={() => void save()}
           disabled={saving || !value.trim()}
           icon={saving ? <Loader2 className="animate-spin" aria-hidden /> : undefined}
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("Saving…") : t("Save")}
         </SettingsActionButton>
       </div>
     </div>
@@ -206,6 +209,7 @@ export function AddSecretForm({
   onSave: (draft: NewSecretDraft) => Promise<boolean>
   onCancel: () => void
 }) {
+  const t = useT()
   const formId = useId()
   const [projectId, setProjectId] = useState(initialProjectId ?? projects[0]?.id ?? "")
   const [key, setKey] = useState("")
@@ -239,14 +243,14 @@ export function AddSecretForm({
     }
   }
 
-  const hint = tried && problem ? problem : replaces ? `Replaces the saved ${key}.` : null
+  const hint = tried && problem ? t(problem) : replaces ? t("Replaces the saved {key}.", { key }) : null
 
   return (
-    <SettingsGroup title="New Secret" className="transition-opacity duration-150 ease-snappy starting:opacity-0">
+    <SettingsGroup title={t("New Secret")} className="transition-opacity duration-150 ease-snappy starting:opacity-0">
       <div className="space-y-3 px-4 py-3">
         <div className="flex min-h-9 items-center justify-between gap-4">
-          <span className="text-sm text-foreground">Project</span>
-          <SettingsSelect value={projectId} onValueChange={setProjectId} disabled={saving} aria-label="Project">
+          <span className="text-sm text-foreground">{t("Project")}</span>
+          <SettingsSelect value={projectId} onValueChange={setProjectId} disabled={saving} aria-label={t("Project")}>
             {projects.map((project) => (
               <SelectItem key={project.id} value={project.id}>{project.title}</SelectItem>
             ))}
@@ -260,8 +264,8 @@ export function AddSecretForm({
               onChange={(event) => setKey(normalizeSecretKeyInput(event.target.value))}
               onKeyDown={handleKeyDown(() => valueInput.current?.focus())}
               disabled={saving}
-              placeholder="NAME, e.g. STRIPE_KEY"
-              aria-label="Name"
+              placeholder={t("NAME, e.g. STRIPE_KEY")}
+              aria-label={t("Name")}
               aria-invalid={tried && Boolean(key) && !isSecretKey(key) ? true : undefined}
               autoComplete="off"
               autoCapitalize="characters"
@@ -275,10 +279,10 @@ export function AddSecretForm({
           </div>
           <MaskedValueInput
             id={`${formId}-value`}
-            label="value"
+            label={t("Value")}
             value={value}
             disabled={saving}
-            placeholder="Value"
+            placeholder={t("Value")}
             inputRef={valueInput}
             onChange={setValue}
             onKeyDown={handleKeyDown()}
@@ -292,7 +296,7 @@ export function AddSecretForm({
           >
             {hint}
           </p>
-          <SettingsActionButton onClick={onCancel} disabled={saving}>Cancel</SettingsActionButton>
+          <SettingsActionButton onClick={onCancel} disabled={saving}>{t("Cancel")}</SettingsActionButton>
           <SettingsActionButton
             prominent
             onClick={() => void save()}
@@ -301,7 +305,7 @@ export function AddSecretForm({
             className={cn(problem && !saving && "opacity-50")}
             icon={saving ? <Loader2 className="animate-spin" aria-hidden /> : undefined}
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? t("Saving…") : t("Save")}
           </SettingsActionButton>
         </div>
       </div>
@@ -328,6 +332,7 @@ function SecretRow({
   onSave: (value: string) => Promise<boolean>
   onDelete: () => void
 }) {
+  const t = useT()
   const { when, at } = savedLine(secret)
   return (
     <div className="px-4">
@@ -335,32 +340,32 @@ function SecretRow({
         <div className="min-w-0 flex-1">
           <div className="truncate font-mono text-sm text-foreground">{secret.key}</div>
           <div className="truncate text-xs text-muted-foreground">
-            <time dateTime={new Date(secret.savedAt).toISOString()} title={at}>Saved {when}</time>
+            <time dateTime={new Date(secret.savedAt).toISOString()} title={at}>{t("Saved {when}", { when })}</time>
             {secret.chatId ? (
               <>
-                {" by "}
+                {" "}{t("by")}{" "}
                 {secret.chatTitle ? (
                   <Link to={`/chat/${secret.chatId}`} className="underline-offset-2 hover:text-foreground hover:underline">
                     {secret.chatTitle}
                   </Link>
-                ) : "a deleted chat"}
+                 ) : t("a deleted chat")}
               </>
-            ) : " in Settings"}
+             ) : t(" in Settings")}
           </div>
         </div>
         {replacing ? null : (
           <div className="flex shrink-0 items-center gap-4">
-            <SettingsActionButton onClick={onReplace} disabled={busy !== null} aria-label={`Replace ${secret.key} in ${project.title}`}>
-              Replace
+            <SettingsActionButton onClick={onReplace} disabled={busy !== null} aria-label={t("Replace {key} in {project}", { key: secret.key, project: project.title })}>
+              {t("Replace")}
             </SettingsActionButton>
             <SettingsActionButton
               onClick={onDelete}
               disabled={busy !== null}
-              aria-label={`Delete ${secret.key} from ${project.title}`}
+              aria-label={t("Delete {key} from {project}", { key: secret.key, project: project.title })}
               className="text-destructive hover:text-destructive/70"
               icon={busy === "deleting" ? <Loader2 className="animate-spin" aria-hidden /> : undefined}
             >
-              Delete
+              {t("Delete")}
             </SettingsActionButton>
           </div>
         )}
@@ -373,6 +378,7 @@ function SecretRow({
 }
 
 export function SecretsSection({ state }: { state: Pick<KannaState, "connectionStatus" | "socket" | "activeProjectId"> }) {
+  const t = useT()
   const { socket, connectionStatus } = state
   const dialog = useAppDialog()
   const [list, setList] = useState<SecretsListResult | null>(null)
@@ -415,7 +421,7 @@ export function SecretsSection({ state }: { state: Pick<KannaState, "connectionS
       setReplacing(null)
       return true
     } catch (error) {
-      setActionError(`Couldn't replace ${key}: ${error instanceof Error ? error.message : String(error)}`)
+      setActionError(t("Couldn't replace {key}: {error}", { key, error: error instanceof Error ? error.message : String(error) }))
       return false
     } finally {
       setBusy(null)
@@ -430,7 +436,7 @@ export function SecretsSection({ state }: { state: Pick<KannaState, "connectionS
       setAdding(false)
       return true
     } catch (error) {
-      setActionError(`Couldn't add ${draft.key}: ${error instanceof Error ? error.message : String(error)}`)
+      setActionError(t("Couldn't add {key}: {error}", { key: draft.key, error: error instanceof Error ? error.message : String(error) }))
       return false
     } finally {
       setAddSaving(false)
@@ -439,11 +445,11 @@ export function SecretsSection({ state }: { state: Pick<KannaState, "connectionS
 
   const remove = async (project: ProjectSecrets, key: string) => {
     const confirmed = await dialog.confirm({
-      title: `Delete ${key}?`,
-      description: `Agents in ${project.title} can no longer use it, and an agent that needs it will ask you again. This can't be undone.`,
-      confirmLabel: "Delete",
+      title: t("Delete {key}?", { key }),
+      description: t("Agents in {project} can no longer use it, and an agent that needs it will ask you again. This can't be undone.", { project: project.title }),
+      confirmLabel: t("Delete"),
       confirmVariant: "destructive",
-      cancelLabel: "Cancel",
+      cancelLabel: t("Cancel"),
     })
     if (!confirmed) return
     const row = rowId(project.projectId, key)
@@ -452,14 +458,14 @@ export function SecretsSection({ state }: { state: Pick<KannaState, "connectionS
     try {
       setList(await socket.command<SecretsListResult>({ type: "secrets.delete", projectId: project.projectId, key }))
     } catch (error) {
-      setActionError(`Couldn't delete ${key}: ${error instanceof Error ? error.message : String(error)}`)
+      setActionError(t("Couldn't delete {key}: {error}", { key, error: error instanceof Error ? error.message : String(error) }))
     } finally {
       setBusy(null)
     }
   }
 
-  if (loadError) return <SettingsNotice>{`Couldn't load secrets: ${loadError}`}</SettingsNotice>
-  if (!list) return <SettingsPlaceholder loading>Loading secrets…</SettingsPlaceholder>
+  if (loadError) return <SettingsNotice>{t("Couldn't load secrets: {error}", { error: loadError })}</SettingsNotice>
+  if (!list) return <SettingsPlaceholder loading>{t("Loading secrets…")}</SettingsPlaceholder>
 
   return (
     <div id={SETTINGS_ROWS.savedSecrets.id} data-settings-row="" className="scroll-mt-4">
@@ -486,19 +492,19 @@ export function SecretsSection({ state }: { state: Pick<KannaState, "connectionS
                 setAdding(true)
               }}
             >
-              Add Secret
+              {t("Add Secret")}
             </SettingsActionButton>
           </div>
         )}
         {list.projects.length === 0 ? (
           <SettingsPlaceholder>
-            No secrets yet. When an agent needs an API key or a token, it asks with a form in the chat, and what you save there is listed here.
+            {t("No secrets yet. When an agent needs an API key or a token, it asks with a form in the chat, and what you save there is listed here.")}
           </SettingsPlaceholder>
         ) : list.projects.map((project) => (
           <SettingsGroup
             key={project.projectId}
             title={project.title}
-            trailing={<span className="truncate text-xs text-muted-foreground" title={project.localPath}>{project.secrets.length} {project.secrets.length === 1 ? "secret" : "secrets"}</span>}
+            trailing={<span className="truncate text-xs text-muted-foreground" title={project.localPath}>{t("{count} secret", { count: project.secrets.length })}</span>}
           >
             {project.secrets.map((secret) => {
               const row = rowId(project.projectId, secret.key)
@@ -524,7 +530,7 @@ export function SecretsSection({ state }: { state: Pick<KannaState, "connectionS
         ))}
       </SettingsGroups>
       <p className="mt-6 px-[17px] text-xs text-muted-foreground text-pretty">
-        {secretStorageDescription(list.backend)} Each project's agents reach only that project's secrets.
+        {t(secretStorageDescription(list.backend))} {t("Each project's agents reach only that project's secrets.")}
       </p>
     </div>
   )

@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, ChevronsUpDown, Download, ExternalLink, File, FileImage, FileJson, FileText, FileVideo, Link2, Sheet } from "lucide-react"
 import { memo, startTransition, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { cn } from "../../lib/utils"
+import { useT } from "../../i18n/useT"
 import { formatAttachmentSize } from "../messages/AttachmentCard"
 import {
   classifyAttachmentPreview,
@@ -116,6 +117,7 @@ export function AttachmentViewer({ attachment, onClose, navigation }: {
   onClose: () => void
   navigation?: ViewerNavigation
 }) {
+  const t = useT()
   const kind = previewKind(attachment)
   const content = useTextContent(attachment, kind)
   const [view, setView] = useState<RenderView>("rendered")
@@ -134,7 +136,7 @@ export function AttachmentViewer({ attachment, onClose, navigation }: {
 
   return (
     <ViewerSurface
-      label={`Preview ${attachment.name}`}
+      label={t("Preview {name}", { name: attachment.name })}
       icon={<Icon />}
       title={attachment.name}
       subtitle={subtitle}
@@ -144,17 +146,17 @@ export function AttachmentViewer({ attachment, onClose, navigation }: {
         <ViewerToggle
           value={view}
           onChange={setView}
-          options={[{ value: "rendered", label: "Preview" }, { value: "original", label: "Original" }]}
+          options={[{ value: "rendered", label: t("Preview") }, { value: "original", label: t("Original") }]}
         />
       ) : undefined}
       toolbar={(
         <>
-          <ViewerIconButton label="Copy link" onClick={() => void navigator.clipboard?.writeText(absoluteUrl(attachment.url))}><Link2 /></ViewerIconButton>
+          <ViewerIconButton label={t("Copy link")} onClick={() => void navigator.clipboard?.writeText(absoluteUrl(attachment.url))}><Link2 /></ViewerIconButton>
           {/* No "open" for a file whose tab would only download it. */}
           {opensInBrowser(attachment) ? (
-            <ViewerIconButton label={openInBrowserLabel()} onClick={() => openAttachmentInNewTab(kind === "pdf" ? { url: pdfPreviewUrl(attachment.url) } : attachment)}><ExternalLink /></ViewerIconButton>
+            <ViewerIconButton label={t(openInBrowserLabel())} onClick={() => openAttachmentInNewTab(kind === "pdf" ? { url: pdfPreviewUrl(attachment.url) } : attachment)}><ExternalLink /></ViewerIconButton>
           ) : null}
-          <ViewerIconButton label="Download" onClick={() => downloadAttachment(attachment)}><Download /></ViewerIconButton>
+          <ViewerIconButton label={t("Download")} onClick={() => downloadAttachment(attachment)}><Download /></ViewerIconButton>
         </>
       )}
       bodyClassName={kind === "image" || kind === "video" ? "bg-muted/30" : undefined}
@@ -254,6 +256,7 @@ function AttachmentBody({ attachment, kind, content, view }: {
  * server changed (`pdfPreviewUrl`), and so clears it for the frame.
  */
 function PdfFrame({ attachment }: { attachment: ViewerAttachment }) {
+  const t = useT()
   const url = pdfPreviewUrl(attachment.url)
   const [state, setState] = useState<{ url: string; inline: boolean } | null>(null)
   useEffect(() => {
@@ -272,13 +275,13 @@ function PdfFrame({ attachment }: { attachment: ViewerAttachment }) {
   if (state.inline) return <iframe src={url} title={attachment.name} className="size-full border-0" />
   return (
     <div className="flex min-h-full flex-col items-center justify-center gap-3 p-6 text-center">
-      <p className="text-sm text-muted-foreground">This PDF can't be shown here.</p>
+      <p className="text-sm text-muted-foreground">{t("This PDF can't be shown here.")}</p>
       <button
         type="button"
         onClick={() => downloadAttachment(attachment)}
         className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted"
       >
-        <Download className="size-3.5" /> Download
+        <Download className="size-3.5" /> {t("Download")}
       </button>
     </div>
   )
@@ -288,8 +291,9 @@ function PdfFrame({ attachment }: { attachment: ViewerAttachment }) {
 const SKELETON_LINES = ["62%", "48%", "71%", "40%", "66%", "55%", "30%", "58%"]
 
 function TextSkeleton() {
+  const t = useT()
   return (
-    <div className="mx-auto max-w-[72ch] space-y-3 px-6 py-8" aria-busy aria-label="Loading preview">
+    <div className="mx-auto max-w-[72ch] space-y-3 px-6 py-8" aria-busy aria-label={t("Loading preview")}>
       {SKELETON_LINES.map((width, index) => <Skeleton key={index} className="h-3.5" style={{ width }} />)}
     </div>
   )
@@ -310,8 +314,9 @@ const SKELETON_ROWS = 40
  * motion.
  */
 function TableSkeleton() {
+  const t = useT()
   return (
-    <div className="h-full overflow-hidden" aria-busy aria-label="Loading table">
+    <div className="h-full overflow-hidden" aria-busy aria-label={t("Loading table")}>
       <table className="table-fixed border-collapse text-xs" style={{ width: SKELETON_COLUMN_WIDTHS.reduce((sum, width) => sum + width, 0) }}>
         <colgroup>
           {SKELETON_COLUMN_WIDTHS.map((width, column) => <col key={column} style={{ width }} />)}

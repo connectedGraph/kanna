@@ -418,7 +418,7 @@ export function ProvidersSection({
             </SettingsRow>
           ) : null}
           {/* API Key is on the glossary's do-not-translate list, so it stays as written. */}
-          <SettingsRow nested wideControl title="API Key">
+          <SettingsRow nested wideControl title={t("API Key")}>
             <Input
               type="password"
               value={llmProviderDraft.apiKey}

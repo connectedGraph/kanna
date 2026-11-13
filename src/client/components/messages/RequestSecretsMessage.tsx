@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
 import { secretStorageNote } from "../../lib/secret-storage"
 import { cn } from "../../lib/utils"
 import { useTranscriptRenderOptions } from "./render-context"
+import { useT, type TFunction } from "../../i18n/useT"
 
 interface Props {
   message: HydratedRequestSecretsToolCall
@@ -72,12 +73,12 @@ function EventLine({ reason, icon, animate, children }: { reason: string; icon: 
   )
 }
 
-function outcome(result: RequestSecretsToolResult, keys: string[]): { icon: ReactNode; text: ReactNode } {
-  if (result.discarded) return { icon: <X />, text: <>Stopped. Didn't save <Keys keys={keys} /></> }
-  if (result.cancelled) return { icon: <X />, text: <>Cancelled. Didn't save <Keys keys={keys} /></> }
-  const skipped = result.skipped.length > 0 ? <> · skipped <Keys keys={result.skipped} /></> : null
-  if (result.saved.length === 0) return { icon: <KeyRound />, text: <>Nothing saved{skipped}</> }
-  return { icon: <KeyRound />, text: <>Saved <Keys keys={result.saved} />{skipped}</> }
+function outcome(result: RequestSecretsToolResult, keys: string[], t: TFunction): { icon: ReactNode; text: ReactNode } {
+  if (result.discarded) return { icon: <X />, text: <>{t("Stopped. Didn't save")} <Keys keys={keys} /></> }
+  if (result.cancelled) return { icon: <X />, text: <>{t("Cancelled. Didn't save")} <Keys keys={keys} /></> }
+  const skipped = result.skipped.length > 0 ? <> · {t("skipped")} <Keys keys={result.skipped} /></> : null
+  if (result.saved.length === 0) return { icon: <KeyRound />, text: <>{t("Nothing saved")}{skipped}</> }
+  return { icon: <KeyRound />, text: <>{t("Saved")} <Keys keys={result.saved} />{skipped}</> }
 }
 
 function SecretRow({
@@ -105,6 +106,7 @@ function SecretRow({
   onEnter: () => void
   inputRef: (element: HTMLInputElement | null) => void
 }) {
+  const t = useT()
   const masked = field.secret !== false
   const [revealed, setRevealed] = useState(false)
   const label = fieldLabel(field)
@@ -120,7 +122,7 @@ function SecretRow({
   // The description alone. Whether the field is required is the key's `*`;
   // saying "Optional" here as well doubled up whenever the model's own
   // description already said it.
-  const placeholder = description || (masked ? "Paste or type" : "Enter a value")
+  const placeholder = description || (masked ? t("Paste or type") : t("Enter a value"))
 
   return (
     <div
@@ -201,7 +203,7 @@ function SecretRow({
           onClick={() => setRevealed((current) => !current)}
           disabled={disabled}
           // A toggle keeps one name; aria-pressed says whether it is on.
-          aria-label={`Show ${label}`}
+          aria-label={t("Show {label}", { label })}
           aria-pressed={revealed}
           aria-controls={id}
           className="mr-1 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-[color,scale] duration-100 ease-out hover:text-foreground active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
@@ -214,6 +216,7 @@ function SecretRow({
 }
 
 export function RequestSecretsMessage({ message, isWaiting }: Props) {
+  const t = useT()
   const { readonly, submitSecrets, loadSecretBackend } = useTranscriptRenderOptions()
   const { reason, fields } = message.input
   const keys = fields.map((field) => field.key)
@@ -254,14 +257,14 @@ export function RequestSecretsMessage({ message, isWaiting }: Props) {
   }, [live, loadSecretBackend])
 
   if (result) {
-    const { icon, text } = outcome(result, keys)
+    const { icon, text } = outcome(result, keys, t)
     return <EventLine reason={reason} icon={icon} animate={answeredHere.current}>{text}</EventLine>
   }
 
   if (!live) {
     return readonly
-      ? <EventLine reason={reason} icon={<KeyRound />} animate={false}>Asked for <Keys keys={keys} /></EventLine>
-      : <EventLine reason={reason} icon={<X />} animate={false}>No longer waiting. Didn't save <Keys keys={keys} /></EventLine>
+      ? <EventLine reason={reason} icon={<KeyRound />} animate={false}>{t("Asked for")} <Keys keys={keys} /></EventLine>
+      : <EventLine reason={reason} icon={<X />} animate={false}>{t("No longer waiting. Didn't save")} <Keys keys={keys} /></EventLine>
   }
 
   const busy = phase !== "editing"
@@ -378,7 +381,7 @@ export function RequestSecretsMessage({ message, isWaiting }: Props) {
             onClick={() => void send({ cancel: true })}
             className="active:scale-[0.97]"
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="submit"
@@ -387,11 +390,11 @@ export function RequestSecretsMessage({ message, isWaiting }: Props) {
             // field is missing instead of doing nothing.
             aria-disabled={!canSave}
             disabled={busy}
-            aria-label={phase === "saving" ? "Saving" : undefined}
+            aria-label={phase === "saving" ? t("Saving") : undefined}
             className={cn("relative w-20 active:scale-[0.97]", !canSave && !busy && "opacity-50")}
           >
             {/* The label stays under the spinner, so the button keeps its width. */}
-            <span className={cn(phase === "saving" && "invisible")}>Save</span>
+            <span className={cn(phase === "saving" && "invisible")}>{t("Save")}</span>
             {phase === "saving" ? (
               <span className="absolute inset-0 flex items-center justify-center">
                 <Loader2 className="size-4 animate-spin" aria-hidden />

@@ -89,6 +89,7 @@ function ChannelPeek({
   onShowMore: () => void
   renderChatHoverCard: RenderChatHoverCard
 }) {
+  const t = useT()
   const listRef = useRef<HTMLDivElement>(null)
   const draftStartTimes = useDraftStartTimes()
   const pendingSends = usePendingSendTimes()
@@ -117,7 +118,7 @@ function ChannelPeek({
       <button type="button" onClick={onNewChat} className="group/peek block w-full py-px text-left">
         <span className="flex w-full items-center gap-2.5 rounded-lg border border-border/0 px-2 py-1.5 text-sm text-muted-foreground transition-colors group-hover/peek:border-border group-hover/peek:bg-muted group-hover/peek:text-foreground">
           <SquarePen className="size-4 shrink-0" />
-          <span>New Chat</span>
+          <span>{t("New Chat")}</span>
         </span>
       </button>
       {/* A long list runs from under New Chat to the bottom of the window,
@@ -179,7 +180,7 @@ function ChannelPeek({
           <button type="button" onClick={onShowMore} className="group/peek block w-full py-px text-left">
             <span className="flex w-full items-center gap-2.5 rounded-lg border border-border/0 px-2 py-1.5 text-sm text-muted-foreground transition-colors group-hover/peek:border-border group-hover/peek:bg-muted">
               <ChevronDown className="size-4 shrink-0" />
-              <span>Show more</span>
+              <span>{t("Show more")}</span>
             </span>
           </button>
         ) : null}

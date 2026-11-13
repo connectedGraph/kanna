@@ -183,6 +183,7 @@ export function PairedSuccess({ appOrigin }: { appOrigin: string }) {
  * blur and scale, so the swap reads as one icon changing, not two popping.
  */
 function CopyLinkButton({ text, disabled = false }: { text: string; disabled?: boolean }) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => () => clearTimeout(timer.current), [])
@@ -192,8 +193,8 @@ function CopyLinkButton({ text, disabled = false }: { text: string; disabled?: b
     <button
       type="button"
       disabled={disabled}
-      title={copied ? "Copied" : "Copy link"}
-      aria-label={copied ? "Copied" : "Copy link"}
+      title={copied ? t("Copied") : t("Copy link")}
+      aria-label={copied ? t("Copied") : t("Copy link")}
       onClick={() => {
         void copyTextToClipboard(text).then((ok) => {
           if (!ok) return

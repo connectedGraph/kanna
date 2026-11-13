@@ -171,7 +171,7 @@ export const ChatPreview = memo(function ChatPreview({ item, context, onClose }:
         </ViewerIconButton>
       ) : undefined}
       toolbar={(
-        <ViewerIconButton label={chatTabsEnabled ? "Open in tab" : "Open chat"} onClick={handleOpenInTab}>
+        <ViewerIconButton label={chatTabsEnabled ? t("Open in tab") : t("Open chat")} onClick={handleOpenInTab}>
           <SquareArrowOutUpRight />
         </ViewerIconButton>
       )}

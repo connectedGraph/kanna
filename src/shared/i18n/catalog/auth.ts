@@ -70,4 +70,6 @@ export const auth: Messages = {
   "Sign in to {provider} to use it for this chat. The switch applies automatically once you're signed in.":
     "登录 {provider}，即可在这个会话中使用。登录后会自动完成切换。",
   "this provider": "这个提供方",
+  "Unlocking...": "解锁中…",
+  "Unlock": "解锁",
 }
